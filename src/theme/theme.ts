@@ -3,13 +3,13 @@ import { createTheme } from '@mui/material/styles';
 export const theme = createTheme({
     palette: {
         primary: {
-            main: '#2563eb', // Professional blue
+            main: '#2563eb',
             light: '#60a5fa',
             dark: '#1d4ed8',
             contrastText: '#ffffff',
         },
         secondary: {
-            main: '#dc2626', // Corporate red
+            main: '#dc2626',
             light: '#ef4444',
             dark: '#b91c1c',
             contrastText: '#ffffff',
