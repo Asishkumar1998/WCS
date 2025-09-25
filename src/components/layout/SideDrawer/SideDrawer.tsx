@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
     Drawer,
     IconButton,
@@ -11,7 +11,9 @@ import {
     Tooltip,
     Divider,
     Collapse,
-} from '@mui/material';
+    useMediaQuery,
+    Theme,
+} from "@mui/material";
 import {
     Home,
     Assignment,
@@ -23,9 +25,11 @@ import {
     ChevronLeft,
     ExpandLess,
     ExpandMore,
-} from '@mui/icons-material';
-import Link from 'next/link';
-import Image from 'next/image';
+    Mail,
+} from "@mui/icons-material";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation"; // ✅ to detect current route
 import logo from "../../../../public/logo.png";
 
 const drawerWidth = 240;
@@ -33,79 +37,179 @@ const collapsedWidth = 60;
 
 const navItems = [
     {
-        text: 'Home Page',
+        text: "Home Page",
         icon: <Home />,
-        href: '/',
+        href: "/",
     },
     {
-        text: 'My Orders',
+        text: "My Orders",
         icon: <Assignment />,
         children: [
-            { text: 'All Orders', href: '/orders' },
-            { text: 'Drafts', href: '/orders/drafts' },
+            { text: "All Orders", href: "/orders" },
+            { text: "Drafts", href: "/orders/drafts" },
         ],
     },
     {
-        text: 'New Order',
+        text: "New Order",
         icon: <AddBox />,
-        href: '/new-order',
+        href: "/new-order",
     },
     {
-        text: 'My Account',
+        text: "My Account",
         icon: <Person />,
-        children: [
-            { text: 'Profile', href: '/account/profile' },
-            { text: 'Settings', href: '/account/settings' },
-        ],
+        children: [{ text: "Settings", href: "/account/settings" }],
     },
     {
-        text: 'FAQ',
+        text: "Notifications",
+        icon: <Mail />,
+        href: "/notifications",
+    },
+    {
+        text: "FAQ",
         icon: <Info />,
-        href: '/faq',
+        href: "/faq",
     },
     {
-        text: 'Sign Out',
+        text: "Sign Out",
         icon: <Logout />,
-        href: '/sign-out',
+        href: "/sign-out",
     },
 ];
 
 const SideDrawer = () => {
     const [open, setOpen] = useState(true);
     const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({});
+    const pathname = usePathname(); // ✅ active link detection
+    const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
 
     const toggleDrawer = () => setOpen((prev) => !prev);
 
     const handleExpand = (itemText: string) => {
+        // Don’t expand if drawer is collapsed
+        if (!open) return;
         setExpanded((prev) => ({
             ...prev,
             [itemText]: !prev[itemText],
         }));
     };
 
+    const renderNavItem = ({ text, icon, href, children }: any) => {
+        const hasChildren = Array.isArray(children);
+
+        // ✅ detect if active
+        const isActive =
+            href && pathname === href
+                ? true
+                : hasChildren
+                    ? children.some((c: any) => pathname.startsWith(c.href))
+                    : false;
+
+        if (!hasChildren) {
+            return (
+                <Link
+                    href={href || "#"}
+                    key={text}
+                    passHref
+                    style={{ textDecoration: "none", color: "inherit" }}
+                    onClick={() => isMobile && setOpen(false)} // ✅ close on mobile
+                >
+                    <Tooltip title={!open ? text : ""} placement="right">
+                        <ListItem
+                            sx={{
+                                backgroundColor: isActive ? "#2c4a6e" : "transparent",
+                                "&:hover": { backgroundColor: "#2c4a6e" },
+                            }}
+                        >
+                            <ListItemIcon sx={{ color: "#fff", minWidth: "40px" }}>
+                                {icon}
+                            </ListItemIcon>
+                            {open && <ListItemText primary={text} />}
+                        </ListItem>
+                    </Tooltip>
+                </Link>
+            );
+        }
+
+        return (
+            <div key={text}>
+                <Tooltip title={!open ? text : ""} placement="right">
+                    <ListItem
+                        onClick={() => handleExpand(text)}
+                        sx={{
+                            backgroundColor: isActive ? "#2c4a6e" : "transparent",
+                            "&:hover": { backgroundColor: "#2c4a6e" },
+                        }}
+                    >
+                        <ListItemIcon sx={{ color: "#fff", minWidth: "40px" }}>
+                            {icon}
+                        </ListItemIcon>
+                        {open && <ListItemText primary={text} />}
+                        {open && (expanded[text] ? <ExpandLess /> : <ExpandMore />)}
+                    </ListItem>
+                </Tooltip>
+
+                {/* ✅ only show children if drawer is open */}
+                {open && (
+                    <Collapse in={expanded[text]} timeout="auto" unmountOnExit>
+                        <List component="div" disablePadding>
+                            {children.map((child) => {
+                                const childActive = pathname.startsWith(child.href);
+                                return (
+                                    <Link
+                                        href={child.href}
+                                        key={child.text}
+                                        passHref
+                                        style={{ textDecoration: "none", color: "inherit" }}
+                                        onClick={() => isMobile && setOpen(false)} // ✅ close on mobile
+                                    >
+                                        <ListItem
+                                            sx={{
+                                                pl: 6,
+                                                backgroundColor: childActive ? "#345a82" : "transparent",
+                                                "&:hover": { backgroundColor: "#345a82" },
+                                            }}
+                                        >
+                                            <ListItemText primary={child.text} />
+                                        </ListItem>
+                                    </Link>
+                                );
+                            })}
+                        </List>
+                    </Collapse>
+                )}
+            </div>
+        );
+    };
+
     return (
         <Drawer
-            variant="permanent"
+            variant={isMobile ? "temporary" : "permanent"} // ✅ responsive
+            open={open}
+            onClose={() => setOpen(false)} // ✅ close drawer on mobile
             sx={{
                 width: open ? drawerWidth : collapsedWidth,
                 flexShrink: 0,
-                '& .MuiDrawer-paper': {
+                "& .MuiDrawer-paper": {
                     width: open ? drawerWidth : collapsedWidth,
-                    transition: 'width 0.3s ease',
-                    overflowX: 'hidden',
-                    whiteSpace: 'nowrap',
-                    backgroundColor: '#1f324f',
-                    color: '#fff',
-                    justifyContent: 'space-between',
+                    transition: "width 0.3s ease",
+                    overflowX: "hidden",
+                    whiteSpace: "nowrap",
+                    backgroundColor: "#1f324f",
+                    color: "#fff",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
                 },
             }}
         >
+            {/* Top Section */}
             <div>
+                {/* Logo */}
                 <div
                     style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                         padding: 20,
                     }}
                 >
@@ -117,80 +221,53 @@ const SideDrawer = () => {
                     />
                 </div>
 
-                <Divider sx={{ borderColor: '#2c3e50' }} />
+                <Divider sx={{ borderColor: "#2c3e50" }} />
 
-                <List>
-                    {navItems.map(({ text, icon, href, children }) => {
-                        const hasChildren = Array.isArray(children);
-
-                        if (!hasChildren) {
-                            return (
-                                <Link
-                                    href={href || '#'}
-                                    key={text}
-                                    passHref
-                                    style={{ textDecoration: 'none', color: 'inherit' }}
-                                >
-                                    <Tooltip title={!open ? text : ''} placement="right">
-                                        <ListItem >
-                                            <ListItemIcon sx={{ color: '#fff', minWidth: '40px' }}>
-                                                {icon}
-                                            </ListItemIcon>
-                                            {open && <ListItemText primary={text} />}
-                                        </ListItem>
-                                    </Tooltip>
-                                </Link>
-                            );
-                        }
-
-                        return (
-                            <div key={text}>
-                                <Tooltip title={!open ? text : ''} placement="right">
-                                    <ListItem onClick={() => handleExpand(text)}>
-                                        <ListItemIcon sx={{ color: '#fff', minWidth: '40px' }}>
-                                            {icon}
-                                        </ListItemIcon>
-                                        {open && <ListItemText primary={text} />}
-                                        {open && (expanded[text] ? <ExpandLess /> : <ExpandMore />)}
-                                    </ListItem>
-                                </Tooltip>
-
-                                <Collapse in={expanded[text]} timeout="auto" unmountOnExit>
-                                    <List component="div" disablePadding>
-                                        {children.map((child) => (
-                                            <Link
-                                                href={child.href}
-                                                key={child.text}
-                                                passHref
-                                                style={{
-                                                    textDecoration: 'none',
-                                                    color: 'inherit',
-                                                }}
-                                            >
-                                                <ListItem sx={{ pl: open ? 6 : 2 }}>
-                                                    <ListItemText primary={child.text} />
-                                                </ListItem>
-                                            </Link>
-                                        ))}
-                                    </List>
-                                </Collapse>
-                            </div>
-                        );
-                    })}
-                </List>
+                {/* Nav Items */}
+                <List>{navItems.map(renderNavItem)}</List>
             </div>
 
+            {/* Bottom Section: Profile + Toggle */}
             <div
                 style={{
-                    display: 'flex',
-                    justifyContent: open ? 'flex-end' : 'center',
-                    padding: 8,
-                    borderTop: '1px solid #2c3e50',
+                    display: "flex",
+                    flexDirection: "column",
+                    borderTop: "1px solid #2c3e50",
                 }}
             >
-                <IconButton onClick={toggleDrawer} sx={{ color: '#fff' }}>
-                    {open ? <ChevronLeft /> : <Menu />}
-                </IconButton>
+                <ListItem
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        px: 1,
+                    }}
+                >
+                    {/* Profile Link */}
+                    <Link
+                        href="/account/profile"
+                        passHref
+                        style={{
+                            textDecoration: "none",
+                            color: "inherit",
+                            flexGrow: 1,
+                            display: "flex",
+                            alignItems: "center",
+                        }}
+                    >
+                        <Tooltip title={!open ? "Profile" : ""} placement="right">
+                            <ListItemIcon sx={{ color: "#fff", minWidth: "40px" }}>
+                                <Person />
+                            </ListItemIcon>
+                        </Tooltip>
+                        {open && <ListItemText primary="Profile" />}
+                    </Link>
+
+                    {/* Collapse/Expand button */}
+                    <IconButton onClick={toggleDrawer} sx={{ color: "#fff" }}>
+                        {open ? <ChevronLeft /> : <Menu />}
+                    </IconButton>
+                </ListItem>
             </div>
         </Drawer>
     );

@@ -21,11 +21,14 @@ import FlightIcon from '@mui/icons-material/Flight';
 
 import ShinyBarChartHorizontal from '@/components/ui/Charts/ShinyBarChartHorizontal';
 import Button from '@/components/ui/Button/Button';
-import { ArrowForward, CheckCircle, Flight, Public, Translate } from '@mui/icons-material';
+import { ArrowForward, CheckCircle, Flight, PieChart, Public, Translate } from '@mui/icons-material';
 import ServiceCard from '@/components/features/WelcomePage/ServiceCard';
 import UpdatesSection from '@/components/features/WelcomePage/UpdateSection';
 import NewsSection from '@/components/features/WelcomePage/NewsSection';
 import EmbassyImage from "../../public/usembassy-dashboard-logo.png"
+import CustomPieChart from '@/components/ui/Charts/PieChart';
+import Navbar from '@/components/layout/NavBar/NavBar';
+import ChartCard from '@/components/features/WelcomePage/ChartCard';
 
 const news = [
   { title: 'WCS Processing New FDA Digital Documents, Business As Usual', date: 'Feb 20, 2024' },
@@ -67,113 +70,45 @@ const services = [
 export default function HomePage() {
   return (
     <Container maxWidth="xl" sx={{ px: 0 }}>
-      {/* Welcome Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ mb: 2, color: 'secondary.main' }}>
-          Welcome to WCS Express
-        </Typography>
-        <Typography variant="h6" color="text.secondary">
-          Professional document legalization services for international use
-        </Typography>
+      <Navbar />
+      <Box sx={{ flexGrow: 1, pt: 3, mt: "64px" }}>
+        <Grid container spacing={3}>
+          {/* Left: Services */}
+          <Grid container spacing={3} size={{ xs: 12, md: 6 }}>
+            <Grid container spacing={2}>
+              {services.map((service, idx) => (
+                <Grid size={{ xs: 12, sm: 6, md: 12 }} key={idx}>
+                  <ServiceCard {...service} />
+                </Grid>
+              ))}
+            </Grid>
+            {/* Bottom: Updates + News */}
+            <Grid size={{ xs: 12, md: 12 }}>
+              <UpdatesSection />
+            </Grid>
+          </Grid>
+
+          {/* Right: Charts */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 12 }}>
+                <ChartCard><ShinyBarChartHorizontal /></ChartCard>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 12 }}>
+                <ChartCard><CustomPieChart /></ChartCard>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 12 }}>
+                <NewsSection />
+              </Grid>
+            </Grid>
+          </Grid>
+
+
+
+        </Grid>
       </Box>
 
-      {/* Services Section */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 3
-        }}>
-          <Typography variant="h5" sx={{ fontWeight: 600 }}>
-            Select from below services
-          </Typography>
-          <Button
-            variant="outlined"
-            endIcon={<ArrowForward />}
-            sx={{ display: { xs: 'none', md: 'flex' } }}
-          >
-            View All Services
-          </Button>
-        </Box>
-
-        <Box sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-          gap: 3,
-          mb: 4
-        }}>
-          {services.map((service, index) => (
-            <ServiceCard
-              key={index}
-              icon={service.icon}
-              title={service.title}
-              description={service.description}
-              onClick={() => console.log(`Selected: ${service.title}`)}
-            />
-          ))}
-        </Box>
-      </Box>
-
-      {/* Statistics Overview */}
-      <Box sx={{ mb: 4 }}>
-        {/* <Card sx={{
-          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-          border: '1px solid #e2e8f0',
-          width: "50%"
-        }}>
-          <CardContent sx={{ p: 4 }}>
-            <Box sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-              gap: 4
-            }}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" color="primary.main" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  500+
-                </Typography>
-                <Typography color="text.secondary">
-                  Orders Processed
-                </Typography>
-              </Box>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" color="primary.main" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  50+
-                </Typography>
-                <Typography color="text.secondary">
-                  Countries Served
-                </Typography>
-              </Box>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" color="primary.main" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  24/7
-                </Typography>
-                <Typography color="text.secondary">
-                  Customer Support
-                </Typography>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card> */}
-        <Card sx={{
-          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-          border: '1px solid #e2e8f0'
-        }}>
-          <CardContent>
-            <ShinyBarChartHorizontal />
-          </CardContent>
-        </Card>
-      </Box>
-
-      {/* Updates and News */}
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-        gap: 4
-      }}>
-        <UpdatesSection />
-        <NewsSection />
-      </Box>
     </Container>
   );
 }

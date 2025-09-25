@@ -12,7 +12,7 @@ export default function ShinyBarChartHorizontal() {
     return (
         <Box width="100%">
             <Typography marginBottom={2}>
-                European countries with lowest & highest voter turnout
+                Sample bar chart stacked horizontally
             </Typography>
             <BarChart
                 height={300}
@@ -59,12 +59,12 @@ export default function ShinyBarChartHorizontal() {
                         labelPosition: 'inline-start',
                         labelFormatter: ({ index }) => {
                             if (index === 0) {
-                                return 'lowest turnout';
+                                return 'sample legend A';
                             }
                             if (index === 1) {
-                                return 'average';
+                                return 'sample legend B';
                             }
-                            return 'highest turnout';
+                            return 'sample legend C';
                         },
                     },
                 }}

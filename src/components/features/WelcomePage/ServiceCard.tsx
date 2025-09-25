@@ -1,8 +1,7 @@
 import { Card, CardContent, Box, Typography, Avatar, SvgIconTypeMap } from '@mui/material';
-import { SvgIconComponent } from '@mui/icons-material';
-import Image, { StaticImageData } from 'next/image';
-import { OverridableComponent } from '@mui/material/OverridableComponent';
-import { StaticImport } from 'next/dist/shared/lib/get-img-props';
+import { ArrowForward } from '@mui/icons-material';
+import Image from 'next/image';
+import Button from '@/components/ui/Button/Button';
 
 interface ServiceCardProps {
     icon: string;
@@ -15,34 +14,38 @@ const ServiceCard = ({ icon, title, description, onClick }: ServiceCardProps) =>
     return (
         <Card
             sx={{
-                cursor: 'pointer',
                 height: '100%',
-                border: '1px solid',
-                borderColor: 'divider'
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                border: '1px solid #e0e0e0',
+                '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                    borderColor: '#1976d2',
+                },
             }}
             onClick={onClick}
         >
-            <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', gap: 2 }}>
+            <CardContent sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
                     <Avatar
                         sx={{
-                            color: 'primary.contrastText',
-                            width: 48,
-                            height: 48,
-                            '& svg': { fontSize: 24 }
+                            width: 56,
+                            height: 56,
+                            mr: 2,
+                            bgcolor: '#f5f5f5',
+                            color: '#1976d2',
                         }}
                     >
-                        <Image alt='Service Icon' height={50} width={50} src={icon} />
+                        <Image src={icon} alt='Service Image' height={50} width={50} />
                     </Avatar>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+                    <Box sx={{ flex: 1 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#2c3e50' }}>
                             {title}
                         </Typography>
-                        {description && (
-                            <Typography variant="body2" color="text.secondary">
-                                {description}
-                            </Typography>
-                        )}
+                        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                            {description}
+                        </Typography>
                     </Box>
                 </Box>
             </CardContent>
