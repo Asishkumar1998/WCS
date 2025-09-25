@@ -13,11 +13,11 @@ import {
   Typography,
 } from "@mui/material";
 import {
-  HelpOutline,
   ShoppingCart,
   Person,
   Search,
   Notifications,
+  Info,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
@@ -97,12 +97,12 @@ export default function Navbar() {
           {/* Icons */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <IconButton color="inherit">
-              <HelpOutline />
-            </IconButton>
-            <IconButton color="inherit">
               <Badge badgeContent={1} color="error">
                 <Notifications />
               </Badge>
+            </IconButton>
+            <IconButton color="inherit">
+              <Info />
             </IconButton>
             <IconButton color="inherit">
               <Badge badgeContent={0} color="error">
@@ -119,7 +119,7 @@ export default function Navbar() {
               onClose={handleClose}
             >
               <MenuItem onClick={handleClose}>Profile</MenuItem>
-              <MenuItem onClick={handleClose}>Logout</MenuItem>
+              <MenuItem onClick={handleClose}>Signout</MenuItem>
             </Menu>
           </Box>
         </Box>

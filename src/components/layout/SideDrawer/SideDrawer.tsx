@@ -26,7 +26,7 @@ import {
   ChevronLeft,
   ExpandLess,
   ExpandMore,
-  Mail,
+  Notifications,
 } from "@mui/icons-material";
 import Link from "next/link";
 import Image from "next/image";
@@ -71,7 +71,7 @@ const navItems = [
   },
   {
     text: "Notifications",
-    icon: <Mail />,
+    icon: <Notifications />,
     href: "/notifications",
   },
   {
