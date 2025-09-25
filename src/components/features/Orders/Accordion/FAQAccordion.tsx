@@ -14,10 +14,14 @@ export interface FAQItem {
 }
 
 interface FAQAccordionListProps {
-  faqs: FAQItem[];
+  faqs?: FAQItem[];
 }
 
 export default function FAQAccordionList({ faqs }: FAQAccordionListProps) {
+  if (!faqs || faqs.length === 0) {
+    return null;
+  }
+
   return (
     <>
       {faqs.map((faq, idx) => (

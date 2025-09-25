@@ -125,15 +125,14 @@ export default function VisaServiceForm() {
       <Grid size={{ xs: 12, sm: 6 }}>
         <DateInput label="Date of Departure from U.S *" />
       </Grid>
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <DateInput label="Expedited Service (Date Needed By)" />
-      </Grid>
 
       {/* Upload Docs */}
       <Grid size={{ xs: 12 }}>
         <FileUploadField label="Upload Documents" />
       </Grid>
-
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <DateInput label="Expedited Service (Date Needed By)" />
+      </Grid>
       {/* Reference */}
       <Grid size={{ xs: 12, sm: 6 }}>
         <InputField label="Customer Reference" />
