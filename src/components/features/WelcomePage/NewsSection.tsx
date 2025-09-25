@@ -1,51 +1,70 @@
-import { Card, CardContent, Box, Typography, Divider } from '@mui/material';
+import { Card, CardContent, Box, Typography, Divider } from "@mui/material";
 
-interface NewsItem {
+interface UpdateItem {
     title: string;
     date: string;
 }
 
-const NewsSection = () => {
-    const news: NewsItem[] = [
+const UpdatesSection = () => {
+    const updates: UpdateItem[] = [
         {
-            title: "WCS Processing New FDA Digital Documents, Business As Usual",
-            date: "Posted Feb 20, 2024"
+            title: "Electronic Export Documents - CFG, COE, EPL",
+            date: "Posted Aug 10, 2023",
         },
         {
-            title: "Unwrapping the Sweet Surprise: Japanese KitKats Take Center Stage",
-            date: "Posted Feb 15, 2024"
+            title: "New Test Processing Updates",
+            date: "Posted Aug 10, 2023",
         },
         {
-            title: "A New Era: China and Canada Join the Apostille Treaty",
-            date: "Posted Feb 10, 2024"
-        }
+            title: "Test Heading 10th Aug 2023",
+            date: "Posted Aug 10, 2023",
+        },
     ];
 
     return (
-        <Card>
-            <Box sx={{
-                backgroundColor: 'grey.100',
-                px: 3,
-                py: 2,
-                borderBottom: '1px solid',
-                borderColor: 'divider'
-            }}>
+        <Card
+            sx={{
+                height: "100%",
+                border: "1px solid #e0e0e0",
+                transition: "all 0.3s ease",
+                "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: "0 8px 25px rgba(0,0,0,0.15)",
+                    borderColor: "#1976d2",
+                },
+            }}
+        >
+            {/* Header */}
+            <Box
+                sx={{
+                    backgroundColor: "grey.100",
+                    px: 3,
+                    py: 2,
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                }}
+            >
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    WCS News
+                    WCS Updates
                 </Typography>
             </Box>
+
+            {/* Content */}
             <CardContent sx={{ p: 3 }}>
-                {news.map((item, index) => (
+                {updates.map((update, index) => (
                     <Box key={index}>
                         <Box sx={{ mb: 2 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 500, mb: 0.5 }}>
-                                {item.title}
+                            <Typography
+                                variant="body1"
+                                sx={{ fontWeight: 500, mb: 0.5, color: "#2c3e50" }}
+                            >
+                                {update.title}
                             </Typography>
                             <Typography variant="body2" color="secondary.main">
-                                {item.date}
+                                {update.date}
                             </Typography>
                         </Box>
-                        {index < news.length - 1 && <Divider sx={{ mb: 2 }} />}
+                        {index < updates.length - 1 && <Divider sx={{ mb: 2 }} />}
                     </Box>
                 ))}
             </CardContent>
@@ -53,4 +72,4 @@ const NewsSection = () => {
     );
 };
 
-export default NewsSection;
+export default UpdatesSection;

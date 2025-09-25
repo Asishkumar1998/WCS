@@ -31,6 +31,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation"; // ✅ to detect current route
 import logo from "../../../../public/logo.png";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/app/store/store";
+import { toggleDrawer } from "@/app/store/features/uiSlice";
 
 const drawerWidth = 240;
 const collapsedWidth = 60;
@@ -55,11 +58,6 @@ const navItems = [
         href: "/new-order",
     },
     {
-        text: "My Account",
-        icon: <Person />,
-        children: [{ text: "Settings", href: "/account/settings" }],
-    },
-    {
         text: "Notifications",
         icon: <Mail />,
         href: "/notifications",
@@ -77,12 +75,11 @@ const navItems = [
 ];
 
 const SideDrawer = () => {
-    const [open, setOpen] = useState(true);
+    const dispatch = useDispatch();
+    const open = useSelector((state: RootState) => state.ui.drawerOpen);
     const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({});
     const pathname = usePathname(); // ✅ active link detection
     const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
-
-    const toggleDrawer = () => setOpen((prev) => !prev);
 
     const handleExpand = (itemText: string) => {
         // Don’t expand if drawer is collapsed
@@ -111,7 +108,7 @@ const SideDrawer = () => {
                     key={text}
                     passHref
                     style={{ textDecoration: "none", color: "inherit" }}
-                    onClick={() => isMobile && setOpen(false)} // ✅ close on mobile
+                    onClick={() => isMobile} // ✅ close on mobile
                 >
                     <Tooltip title={!open ? text : ""} placement="right">
                         <ListItem
@@ -160,7 +157,7 @@ const SideDrawer = () => {
                                         key={child.text}
                                         passHref
                                         style={{ textDecoration: "none", color: "inherit" }}
-                                        onClick={() => isMobile && setOpen(false)} // ✅ close on mobile
+                                        onClick={() => isMobile} // ✅ close on mobile
                                     >
                                         <ListItem
                                             sx={{
@@ -185,7 +182,6 @@ const SideDrawer = () => {
         <Drawer
             variant={isMobile ? "temporary" : "permanent"} // ✅ responsive
             open={open}
-            onClose={() => setOpen(false)} // ✅ close drawer on mobile
             sx={{
                 width: open ? drawerWidth : collapsedWidth,
                 flexShrink: 0,
@@ -233,41 +229,62 @@ const SideDrawer = () => {
                     display: "flex",
                     flexDirection: "column",
                     borderTop: "1px solid #2c3e50",
+                    padding: open ? "0 8px" : "8px 0",
                 }}
             >
-                <ListItem
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        px: 1,
-                    }}
-                >
-                    {/* Profile Link */}
-                    <Link
-                        href="/account/profile"
-                        passHref
-                        style={{
-                            textDecoration: "none",
-                            color: "inherit",
-                            flexGrow: 1,
+                {open ? (
+                    // Expanded layout
+                    <ListItem
+                        sx={{
                             display: "flex",
                             alignItems: "center",
+                            justifyContent: "space-between",
                         }}
                     >
-                        <Tooltip title={!open ? "Profile" : ""} placement="right">
+                        {/* Profile */}
+                        <Link
+                            href="/account/profile"
+                            passHref
+                            style={{
+                                textDecoration: "none",
+                                color: "inherit",
+                                flexGrow: 1,
+                                display: "flex",
+                                alignItems: "center",
+                            }}
+                        >
                             <ListItemIcon sx={{ color: "#fff", minWidth: "40px" }}>
                                 <Person />
                             </ListItemIcon>
-                        </Tooltip>
-                        {open && <ListItemText primary="Profile" />}
-                    </Link>
+                            <ListItemText primary="Profile" />
+                        </Link>
 
-                    {/* Collapse/Expand button */}
-                    <IconButton onClick={toggleDrawer} sx={{ color: "#fff" }}>
-                        {open ? <ChevronLeft /> : <Menu />}
-                    </IconButton>
-                </ListItem>
+                        {/* Collapse Arrow */}
+                        <IconButton onClick={() => dispatch(toggleDrawer())} sx={{ color: "#fff" }}>
+                            <ChevronLeft />
+                        </IconButton>
+                    </ListItem>
+                ) : (
+                    // Collapsed layout
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: "12px",
+                        }}
+                    >
+                        <Tooltip title="Profile" placement="right">
+                            <IconButton component={Link} href="/account/profile" sx={{ color: "#fff" }}>
+                                <Person />
+                            </IconButton>
+                        </Tooltip>
+
+                        <IconButton onClick={() => dispatch(toggleDrawer())} sx={{ color: "#fff" }}>
+                            <Menu />
+                        </IconButton>
+                    </div>
+                )}
             </div>
         </Drawer>
     );
