@@ -2,30 +2,31 @@
 
 import {
   Box,
-  Grid,
   Card,
   CardContent,
   Typography,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  Stack,
   Container,
+  AppBar,
+  Toolbar,
+  IconButton,
+  InputBase,
+  Badge,
 } from '@mui/material';
 
-import GavelIcon from '@mui/icons-material/Gavel';
-import PublicIcon from '@mui/icons-material/Public';
-import TranslateIcon from '@mui/icons-material/Translate';
-import FlightIcon from '@mui/icons-material/Flight';
+import {
+  HelpOutline,
+  Mail,
+  ShoppingCart,
+  Person,
+  Search,
+} from '@mui/icons-material';
 
 import ShinyBarChartHorizontal from '@/components/ui/Charts/ShinyBarChartHorizontal';
-import Button from '@/components/ui/Button/Button';
-import { ArrowForward, CheckCircle, Flight, Public, Translate } from '@mui/icons-material';
 import ServiceCard from '@/components/features/WelcomePage/ServiceCard';
 import UpdatesSection from '@/components/features/WelcomePage/UpdateSection';
 import NewsSection from '@/components/features/WelcomePage/NewsSection';
-import EmbassyImage from "../../public/usembassy-dashboard-logo.png"
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 const news = [
   { title: 'WCS Processing New FDA Digital Documents, Business As Usual', date: 'Feb 20, 2024' },
@@ -65,44 +66,77 @@ const services = [
 ];
 
 export default function HomePage() {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && query.trim()) {
+      router.push(`/orders/${query.trim()}`);
+    }
+  };
   return (
     <Container maxWidth="xl" sx={{ px: 0 }}>
-      {/* Welcome Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ mb: 2, color: 'secondary.main' }}>
-          Welcome to WCS Express
-        </Typography>
-        <Typography variant="h6" color="text.secondary">
-          Professional document legalization services for international use
-        </Typography>
-      </Box>
+      {/* ✅ Top Navbar with Title, Search, and Icons */}
+      <AppBar position="static" sx={{ backgroundColor: "#b5001a", mb: 4 }}>
+        <Toolbar sx={{ justifyContent: "space-between" }}>
+          {/* Left - WCS Express Title */}
+          <Typography variant="h6" sx={{ fontWeight: 600, display: { xs: "none", sm: "none", md: "block" } }}>
+            Welcome to WCS Express
+          </Typography>
+
+          {/* Center - Search */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              backgroundColor: "white",
+              borderRadius: 1,
+              px: 1,
+              width: { xs: "40%", sm: "50%", md: "60%" },
+            }}
+          >
+            <Search sx={{ color: "gray", fontSize: 20 }} />
+            <InputBase
+              placeholder="Search by Order ID…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleSearch}
+              sx={{ ml: 1, flex: 1, color: "black" }}
+            />
+          </Box>
+
+          {/* Right - Icons */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <IconButton color="inherit">
+              <HelpOutline />
+            </IconButton>
+            <IconButton color="inherit">
+              <Badge badgeContent={9} color="error">
+                <Mail />
+              </Badge>
+            </IconButton>
+            <IconButton color="inherit">
+              <Badge badgeContent={0} color="error">
+                <ShoppingCart />
+              </Badge>
+            </IconButton>
+            <IconButton color="inherit">
+              <Person />
+            </IconButton>
+          </Box>
+        </Toolbar>
+      </AppBar>
 
       {/* Services Section */}
       <Box sx={{ mb: 4 }}>
-        <Box sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 3
-        }}>
-          <Typography variant="h5" sx={{ fontWeight: 600 }}>
-            Select from below services
-          </Typography>
-          <Button
-            variant="outlined"
-            endIcon={<ArrowForward />}
-            sx={{ display: { xs: 'none', md: 'flex' } }}
-          >
-            View All Services
-          </Button>
-        </Box>
-
-        <Box sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-          gap: 3,
-          mb: 4
-        }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: 3,
+            mb: 4,
+          }}
+        >
           {services.map((service, index) => (
             <ServiceCard
               key={index}
@@ -117,48 +151,14 @@ export default function HomePage() {
 
       {/* Statistics Overview */}
       <Box sx={{ mb: 4 }}>
-        {/* <Card sx={{
-          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-          border: '1px solid #e2e8f0',
-          width: "50%"
-        }}>
-          <CardContent sx={{ p: 4 }}>
-            <Box sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-              gap: 4
-            }}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" color="primary.main" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  500+
-                </Typography>
-                <Typography color="text.secondary">
-                  Orders Processed
-                </Typography>
-              </Box>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" color="primary.main" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  50+
-                </Typography>
-                <Typography color="text.secondary">
-                  Countries Served
-                </Typography>
-              </Box>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" color="primary.main" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  24/7
-                </Typography>
-                <Typography color="text.secondary">
-                  Customer Support
-                </Typography>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card> */}
-        <Card sx={{
-          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-          border: '1px solid #e2e8f0'
-        }}>
+        <Card
+          sx={{
+            cursor: 'pointer',
+            height: '100%',
+            border: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
           <CardContent>
             <ShinyBarChartHorizontal />
           </CardContent>
@@ -166,11 +166,13 @@ export default function HomePage() {
       </Box>
 
       {/* Updates and News */}
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-        gap: 4
-      }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+          gap: 4,
+        }}
+      >
         <UpdatesSection />
         <NewsSection />
       </Box>

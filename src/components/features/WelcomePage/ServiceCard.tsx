@@ -35,7 +35,7 @@ const ServiceCard = ({ icon, title, description, onClick }: ServiceCardProps) =>
                         <Image alt='Service Icon' height={50} width={50} src={icon} />
                     </Avatar>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
                             {title}
                         </Typography>
                         {description && (
