@@ -6,9 +6,5 @@
     {
         "country": "Country B",
         "turnout": 0
-    },
-    {
-        "country": "Country C",
-        "turnout": 0
     }
 ]
