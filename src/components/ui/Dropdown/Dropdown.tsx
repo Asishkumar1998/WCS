@@ -1,17 +1,11 @@
 import React from "react";
-import {
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  SelectChangeEvent,
-} from "@mui/material";
+import { Autocomplete, TextField, FormControl } from "@mui/material";
 
 interface DropdownProps {
   label: string;
   options: string[];
   value: string;
-  onChange: (event: SelectChangeEvent<string>) => void;
+  onChange: (value: string) => void;
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -20,39 +14,19 @@ const Dropdown: React.FC<DropdownProps> = ({
   value,
   onChange,
 }) => {
-  const base = label.replace(/\s+/g, "-").toLowerCase();
-  const labelId = `${base}-label`;
-  const selectId = `${base}-select`;
-
   return (
-    <FormControl
-      fullWidth
-      variant="outlined"
-      sx={{ "& .MuiOutlinedInput-notchedOutline": { transition: "none" } }}
-    >
-      {/* Label rendered ONCE */}
-      <InputLabel id={labelId}>{label}</InputLabel>
-
-      {/* Select reserves notch space with `label` prop */}
-      <Select
-        labelId={labelId}
-        id={selectId}
+    <FormControl fullWidth>
+      <Autocomplete
+        options={options}
         value={value}
-        onChange={onChange}
-        label={label} // ✅ needed for notch, avoids cut
-        MenuProps={{
-          disableScrollLock: true,
-          keepMounted: true,
-          transitionDuration: 0,
-          PaperProps: { sx: { maxHeight: 320 } },
-        }}
-      >
-        {options.map((option, index) => (
-          <MenuItem key={index} value={option}>
-            {option}
-          </MenuItem>
-        ))}
-      </Select>
+        onChange={(_, newValue) => onChange(newValue || "")}
+        renderInput={(params) => (
+          <TextField {...params} label={label} variant="outlined" />
+        )}
+        disableClearable // removes the "x" button (optional)
+        openOnFocus // opens dropdown when focused
+        ListboxProps={{ style: { maxHeight: 320 } }}
+      />
     </FormControl>
   );
 };
