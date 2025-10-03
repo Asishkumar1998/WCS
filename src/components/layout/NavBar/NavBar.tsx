@@ -41,7 +41,7 @@ export default function Navbar() {
   const handleClose = () => setAnchorEl(null);
 
   const navigateToProfile = () => {
-    router.replace("profile");
+    router.replace("/profile");
     handleClose();
   };
 
@@ -107,7 +107,7 @@ export default function Navbar() {
             <IconButton color="inherit">
               <Info />
             </IconButton>
-            <IconButton onClick={() => router.push("cart")} color="inherit">
+            <IconButton onClick={() => router.replace("/cart")} color="inherit">
               <Badge badgeContent={0} color="error">
                 <ShoppingCart />
               </Badge>

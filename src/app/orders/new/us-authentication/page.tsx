@@ -4,7 +4,7 @@ import { Container, Grid } from "@mui/material";
 import USAppostileAndLegalizationForm from "@/components/features/Orders/Forms/UsAppostileAndLegalizationForm";
 import USAppostileAndLegalizationSidebar from "@/components/features/Orders/Sidebars/UsAppostileAndLegalizationSidebar";
 
-export default function NewOrderPage() {
+export default function USAuthentication() {
   return (
     <Container maxWidth="xl" sx={{ mt: 12 }}>
       <Grid container spacing={2}>

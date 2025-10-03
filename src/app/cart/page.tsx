@@ -27,6 +27,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { useRouter } from "next/navigation";
 
 interface FeeItem {
   label: string;
@@ -147,6 +148,7 @@ const dummyDocs: DocumentGroup[] = [
 
 export default function CartPage() {
   const [docs, setDocs] = useState(dummyDocs);
+  const router = useRouter();
 
   const handleDelete = (id: string) => {
     setDocs(docs.filter((d) => d.id !== id));
@@ -155,6 +157,10 @@ export default function CartPage() {
   const totalAmount = docs
     .reduce((sum, d) => sum + d.fees.reduce((fSum, f) => fSum + f.amount, 0), 0)
     .toFixed(2);
+
+  const checkout = () => {
+    router.push("/cart/payment");
+  };
 
   return (
     <Box
@@ -299,11 +305,7 @@ export default function CartPage() {
         <Button variant="outlined" onClick={() => alert("Add more documents")}>
           Add More Documents
         </Button>
-        <Button
-          variant="contained"
-          size="large"
-          onClick={() => alert("Proceed to Checkout")}
-        >
+        <Button variant="contained" size="large" onClick={checkout}>
           Checkout (USD {totalAmount})
         </Button>
       </Box>

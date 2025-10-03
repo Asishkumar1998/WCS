@@ -5,7 +5,7 @@ import FAQSidebarLayout from "@/components/layout/SideDrawer/FAQSideDrawerLayout
 import GlobalAuthenticationForm from "@/components/features/Orders/Forms/GlobalAuthenticationForm";
 import GlobalAuthenticationSidebar from "@/components/features/Orders/Sidebars/GlobalAuthenticationSidebar";
 
-export default function NewOrderPage() {
+export default function GlobalAuthentication() {
   return (
     <Container maxWidth="xl" sx={{ mt: 12 }}>
       <Grid container spacing={2}>
