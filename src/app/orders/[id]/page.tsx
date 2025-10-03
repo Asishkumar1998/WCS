@@ -30,6 +30,9 @@ import InputField from "@/components/ui/Input/Input";
 import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import DateInput from "@/components/ui/Input/DateInput";
 import Button from "@/components/ui/Button/Button";
+import ConversationDrawer from "@/components/features/Orders/Sidebars/ConversationDrawer";
+import TrackOrderDialog from "@/components/features/Orders/Dialogs/TrackOrderDialog";
+import AttachmentsDialog from "@/components/features/Orders/Dialogs/AttachmentsDialog";
 
 interface Doc {
   docId: number;
@@ -124,7 +127,9 @@ export default function OrdersPage() {
     fromDate: null,
     toDate: null,
   });
-
+  const [conversationDrawerOpen, setConversationDrawerOpen] = useState(false);
+  const [trackOpen, setTrackOpen] = React.useState(false);
+  const [attachmentsOpen, setAttachmentsOpen] = useState(false);
   const allOrderIds = mockOrders.map((o) => o.orderId);
   const allExpanded = expanded.length === allOrderIds.length;
 
@@ -140,6 +145,28 @@ export default function OrdersPage() {
     } else {
       setExpanded(allOrderIds);
     }
+  };
+
+  const viewConversation = (e: any) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setConversationDrawerOpen(true);
+  };
+
+  const trackOrder = (e: any) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setTrackOpen(true);
+  };
+
+  const viewInvoice = () => {};
+
+  const printCover = () => {};
+
+  const viewAttachments = (e: any) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setAttachmentsOpen(true);
   };
 
   return (
@@ -275,7 +302,6 @@ export default function OrdersPage() {
           </Button>
         </Stack>
       </Paper>
-
       {/* Page Header */}
       <Grid container justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5" fontWeight="bold">
@@ -289,7 +315,6 @@ export default function OrdersPage() {
           {allExpanded ? "Collapse All" : "Expand All"}
         </Button>
       </Grid>
-
       {/* Orders List */}
       {mockOrders.map((order) => (
         <Accordion
@@ -314,19 +339,39 @@ export default function OrdersPage() {
               </Typography>
 
               <Stack direction="row" spacing={1} flexWrap="wrap">
-                <Button size="small" startIcon={<PrintIcon />}>
+                <Button
+                  onClick={printCover}
+                  size="small"
+                  startIcon={<PrintIcon />}
+                >
                   Print Cover
                 </Button>
-                <Button size="small" startIcon={<LocalShippingIcon />}>
+                <Button
+                  onClick={trackOrder}
+                  size="small"
+                  startIcon={<LocalShippingIcon />}
+                >
                   Track Order
                 </Button>
-                <Button size="small" startIcon={<AttachFileIcon />}>
+                <Button
+                  onClick={viewAttachments}
+                  size="small"
+                  startIcon={<AttachFileIcon />}
+                >
                   View Attachments
                 </Button>
-                <Button size="small" startIcon={<ReceiptIcon />}>
+                <Button
+                  onClick={viewInvoice}
+                  size="small"
+                  startIcon={<ReceiptIcon />}
+                >
                   View Invoice
                 </Button>
-                <Button size="small" startIcon={<ForumIcon />}>
+                <Button
+                  onClick={viewConversation}
+                  size="small"
+                  startIcon={<ForumIcon />}
+                >
                   View Conversation
                 </Button>
               </Stack>
@@ -385,6 +430,33 @@ export default function OrdersPage() {
           </AccordionDetails>
         </Accordion>
       ))}
+      <ConversationDrawer
+        open={conversationDrawerOpen}
+        setOpen={setConversationDrawerOpen}
+      />
+      <TrackOrderDialog
+        open={trackOpen}
+        onClose={() => setTrackOpen(false)}
+        orderId={250249}
+        docId={94473}
+        steps={[
+          { label: "Order Placed", date: "09/29/2025", completed: true },
+          {
+            label: "Process Started",
+            description: "Est. Processing time 7 days",
+          },
+          { label: "Secretary of State" },
+          {
+            label: "Shipped / Completed",
+            description: "Est. Completion 10/10/2025",
+          },
+        ]}
+        returnInstructions="Enclose Return Shipping Label by mail with documents"
+      />
+      <AttachmentsDialog
+        open={attachmentsOpen}
+        onClose={() => setAttachmentsOpen(false)}
+      />
     </Box>
   );
 }

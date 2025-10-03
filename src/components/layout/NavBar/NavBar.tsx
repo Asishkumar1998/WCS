@@ -22,6 +22,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
+import NotificationPopup from "@/components/features/NotificationPopup/NotificationPopup";
 
 const drawerWidth = 240;
 const collapsedWidth = 60;
@@ -36,7 +37,13 @@ export default function Navbar() {
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
+
   const handleClose = () => setAnchorEl(null);
+
+  const navigateToProfile = () => {
+    router.replace("profile");
+    handleClose();
+  };
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && query.trim()) {
@@ -96,15 +103,11 @@ export default function Navbar() {
 
           {/* Icons */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <IconButton color="inherit">
-              <Badge badgeContent={1} color="error">
-                <Notifications />
-              </Badge>
-            </IconButton>
+            <NotificationPopup />
             <IconButton color="inherit">
               <Info />
             </IconButton>
-            <IconButton color="inherit">
+            <IconButton onClick={() => router.push("cart")} color="inherit">
               <Badge badgeContent={0} color="error">
                 <ShoppingCart />
               </Badge>
@@ -118,7 +121,7 @@ export default function Navbar() {
               open={Boolean(anchorEl)}
               onClose={handleClose}
             >
-              <MenuItem onClick={handleClose}>Profile</MenuItem>
+              <MenuItem onClick={navigateToProfile}>Profile</MenuItem>
               <MenuItem onClick={handleClose}>Signout</MenuItem>
             </Menu>
           </Box>

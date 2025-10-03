@@ -3,7 +3,7 @@ import React from "react";
 import { TextField, TextFieldProps } from "@mui/material";
 
 type InputFieldProps = TextFieldProps & {
-  label: string;
+  label?: string;
   placeholder?: string;
   helperText?: string;
 };
