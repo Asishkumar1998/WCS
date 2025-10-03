@@ -31,7 +31,7 @@ export default function TranslationServiceForm() {
           label="Original Language *"
           options={languages}
           value={originalLang}
-          onChange={handleDropdownChange(setOriginalLang)}
+          onChange={() => handleDropdownChange(setOriginalLang)}
         />
       </Grid>
       <Grid size={{ xs: 12, sm: 6 }}>
@@ -39,7 +39,7 @@ export default function TranslationServiceForm() {
           label="Translated Language *"
           options={languages}
           value={translatedLang}
-          onChange={handleDropdownChange(setTranslatedLang)}
+          onChange={() => handleDropdownChange(setTranslatedLang)}
         />
       </Grid>
 
@@ -49,7 +49,7 @@ export default function TranslationServiceForm() {
           label="Number of Docs *"
           options={docsCount}
           value={docs}
-          onChange={handleDropdownChange(setDocs)}
+          onChange={() => handleDropdownChange(setDocs)}
         />
       </Grid>
 
@@ -90,7 +90,7 @@ export default function TranslationServiceForm() {
           label="Payment *"
           options={payments}
           value={payment}
-          onChange={handleDropdownChange(setPayment)}
+          onChange={() => handleDropdownChange(setPayment)}
         />
       </Grid>
     </FormLayout>

@@ -16,14 +16,14 @@ import InputField from "@/components/ui/Input/Input";
 import FileUploadField from "@/components/ui/Input/FileInput";
 import FormLayout from "@/components/ui/Forms/FormLayout";
 
-const countries = ["USA", "Canada", "Kuwait", "India"];
+const mockCountries = ["USA", "Canada", "Kuwait", "India"];
 const documents = ["Passport", "Certificate", "License"];
-const services = ["Apostille", "Authentication", "Translation"];
+const services = ["Embassy Legalization"];
 const additionalServices = ["Courier", "Notary", "Legalization"];
 const payments = ["Credit Card", "PayPal", "Bank Transfer"];
 
-export default function USAppostileAndLegalizationForm() {
-  const [country, setCountry] = useState("");
+export default function BulkOrderingFormTypeOne() {
+  const [countries, setCountries] = useState<string[]>([]);
   const [document, setDocument] = useState("");
   const [service, setService] = useState("");
   const [additionalService, setAdditionalService] = useState("");
@@ -36,18 +36,8 @@ export default function USAppostileAndLegalizationForm() {
     };
 
   return (
-    <FormLayout title="U.S. Apostilles and Legalizations">
+    <FormLayout title="Bulk Ordering - Add single document for multiple countries.">
       <Grid container spacing={2}>
-        {/* Country */}
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Dropdown
-            label="Select Country *"
-            options={countries}
-            value={country}
-            onChange={() => handleDropdownChange(setCountry)}
-          />
-        </Grid>
-
         {/* Document */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <Dropdown
@@ -57,7 +47,16 @@ export default function USAppostileAndLegalizationForm() {
             onChange={() => handleDropdownChange(setDocument)}
           />
         </Grid>
-
+        {/* Country */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Dropdown
+            label="Select Countries"
+            options={mockCountries}
+            value={countries}
+            onChange={setCountries}
+            multiple
+          />
+        </Grid>
         {/* Upload */}
         <Grid size={{ xs: 12 }}>
           <FileUploadField label="Upload Document *" />

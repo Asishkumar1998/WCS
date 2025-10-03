@@ -36,7 +36,7 @@ export default function VisaServiceForm() {
           label="Destination Country for Visa *"
           options={countries}
           value={destinationCountry}
-          onChange={handleDropdownChange(setDestinationCountry)}
+          onChange={() => handleDropdownChange(setDestinationCountry)}
         />
       </Grid>
 
@@ -46,7 +46,7 @@ export default function VisaServiceForm() {
           label="Type of Visa *"
           options={visaTypes}
           value={visaType}
-          onChange={handleDropdownChange(setVisaType)}
+          onChange={() => handleDropdownChange(setVisaType)}
         />
       </Grid>
 
@@ -56,7 +56,7 @@ export default function VisaServiceForm() {
           label="Type of Passport *"
           options={passportTypes}
           value={passportType}
-          onChange={handleDropdownChange(setPassportType)}
+          onChange={() => handleDropdownChange(setPassportType)}
         />
       </Grid>
 
@@ -66,7 +66,7 @@ export default function VisaServiceForm() {
           label="Origin Country of Passport *"
           options={countries}
           value={originCountry}
-          onChange={handleDropdownChange(setOriginCountry)}
+          onChange={() => handleDropdownChange(setOriginCountry)}
         />
       </Grid>
 
@@ -107,7 +107,7 @@ export default function VisaServiceForm() {
           label="Applicant State of Residence *"
           options={states}
           value={residenceState}
-          onChange={handleDropdownChange(setResidenceState)}
+          onChange={() => handleDropdownChange(setResidenceState)}
         />
       </Grid>
 
@@ -117,7 +117,7 @@ export default function VisaServiceForm() {
           label="Number of Entry/IES *"
           options={entries}
           value={entryType}
-          onChange={handleDropdownChange(setEntryType)}
+          onChange={() => handleDropdownChange(setEntryType)}
         />
       </Grid>
 

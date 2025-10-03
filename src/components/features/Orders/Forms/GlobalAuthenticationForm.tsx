@@ -31,7 +31,7 @@ export default function GlobalAuthenticationForm() {
           label="Origin Country *"
           options={countries}
           value={origin}
-          onChange={handleDropdownChange(setOrigin)}
+          onChange={() => handleDropdownChange(setOrigin)}
         />
       </Grid>
       <Grid size={{ xs: 12, sm: 6 }}>
@@ -39,7 +39,7 @@ export default function GlobalAuthenticationForm() {
           label="Destination Country *"
           options={countries}
           value={destination}
-          onChange={handleDropdownChange(setDestination)}
+          onChange={() => handleDropdownChange(setDestination)}
         />
       </Grid>
 
@@ -49,7 +49,7 @@ export default function GlobalAuthenticationForm() {
           label="Number of Docs *"
           options={docsCount}
           value={docs}
-          onChange={handleDropdownChange(setDocs)}
+          onChange={() => handleDropdownChange(setDocs)}
         />
       </Grid>
 
@@ -90,7 +90,7 @@ export default function GlobalAuthenticationForm() {
           label="Payment *"
           options={payments}
           value={payment}
-          onChange={handleDropdownChange(setPayment)}
+          onChange={() => handleDropdownChange(setPayment)}
         />
       </Grid>
     </FormLayout>

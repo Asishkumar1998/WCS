@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { Drawer, Box, Typography, Button, Paper } from "@mui/material";
+import {
+  Drawer,
+  Box,
+  Typography,
+  Button,
+  Paper,
+  IconButton,
+} from "@mui/material";
+import { Close, ArrowOutward } from "@mui/icons-material";
 import Link from "next/link";
 import InputField from "@/components/ui/Input/Input";
 import { useRouter } from "next/navigation";
@@ -80,16 +88,27 @@ export default function ConversationDrawer({
             color: "white",
           }}
         >
-          <Typography variant="subtitle1" fontWeight="bold">
-            Order #250249 • Conversation
-          </Typography>
-          <Button
-            size="small"
-            color="inherit"
-            onClick={() => router.push(`/orders/${123}/conversation`)}
-          >
-            Full View ↗
-          </Button>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            {/* Left - Title */}
+            <Typography variant="subtitle1" fontWeight="bold">
+              Order #250249 • Conversation
+            </Typography>
+            <IconButton
+              size="small"
+              color="inherit"
+              sx={{ textTransform: "none" }}
+              onClick={() => router.push(`/orders/${123}/conversation`)}
+            >
+              <ArrowOutward sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Box>
+
+          {/* Right - Actions */}
+          <Box>
+            <IconButton onClick={() => setOpen(false)} color="inherit">
+              <Close sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Box>
         </Box>
 
         {/* Messages Scroll Area */}
@@ -123,6 +142,7 @@ export default function ConversationDrawer({
               Tarun Thakur • Oct 1, 2025, 11:30 AM
             </Typography>
           </Box>
+
           {/* Outgoing */}
           <Box
             sx={{
@@ -154,8 +174,6 @@ export default function ConversationDrawer({
               You • Oct 1, 2025, 11:32 AM
             </Typography>
           </Box>
-          {/* More messages (repeat pattern) */}
-          ...
         </Box>
 
         {/* Input */}

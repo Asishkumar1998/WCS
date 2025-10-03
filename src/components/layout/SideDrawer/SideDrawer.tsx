@@ -27,6 +27,7 @@ import {
   ExpandLess,
   ExpandMore,
   Notifications,
+  LibraryAdd,
 } from "@mui/icons-material";
 import Link from "next/link";
 import Image from "next/image";
@@ -68,6 +69,11 @@ const navItems = [
       { text: "Notary Service", href: "/orders/new/notary-service" },
       { text: "Dispatch Service", href: "/orders/new/dispatch-service" },
     ],
+  },
+  {
+    text: "Bulk Ordering",
+    icon: <LibraryAdd />,
+    href: "/orders/bulk-ordering",
   },
   {
     text: "Notifications",
