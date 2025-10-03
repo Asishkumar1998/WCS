@@ -15,11 +15,10 @@ import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
 import FileUploadField from "@/components/ui/Input/FileInput";
 import FormLayout from "@/components/ui/Forms/FormLayout";
+import { AdditionalServices, Services } from "@/dataset/constants/constants";
 
 const countries = ["USA", "Canada", "Kuwait", "India"];
 const mockDocuments = ["Passport", "Certificate", "License"];
-const services = ["Embassy Legalisation"];
-const additionalServices = ["Courier", "Notary", "Legalization"];
 const payments = ["Credit Card", "PayPal", "Bank Transfer"];
 
 interface DocumentEntry {
@@ -32,7 +31,7 @@ export default function BulkOrderingFormTypeTwo() {
   const [country, setCountry] = useState("");
   const [documents, setDocuments] = useState<string[]>([]);
   const [service, setService] = useState("");
-  const [additionalService, setAdditionalService] = useState("");
+  const [additionalServices, setAdditionalServices] = useState<string[]>([]);
   const [payment, setPayment] = useState("");
 
   const [docEntries, setDocEntries] = useState<DocumentEntry[]>([]);
@@ -108,7 +107,7 @@ export default function BulkOrderingFormTypeTwo() {
         <Grid size={{ xs: 12, sm: 6 }}>
           <Dropdown
             label="Select Service *"
-            options={services}
+            options={Services}
             value={service}
             onChange={setService}
           />
@@ -118,9 +117,10 @@ export default function BulkOrderingFormTypeTwo() {
         <Grid size={{ xs: 12, sm: 6 }}>
           <Dropdown
             label="Additional Service"
-            options={additionalServices}
-            value={additionalService}
-            onChange={setAdditionalService}
+            options={AdditionalServices}
+            value={additionalServices}
+            onChange={setAdditionalServices}
+            multiple
           />
         </Grid>
 
