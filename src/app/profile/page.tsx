@@ -75,17 +75,82 @@ const faqs = [
   {
     question: "How can I be a customer of WCS?",
     answer:
-      "You can register on our platform and complete your profile to become a customer.",
+      "Register on the WCS Express portal by visiting www.wcss.com, then choose the Order Now tab on the home page. The new customer will receive a welcome message with password.",
   },
   {
-    question: "How can I submit US-origin documents?",
+    question: "How can I submit my document with U.S. origination?",
     answer:
-      "Go to New Order → US Order section and upload the required documents.",
+      "Once logged in to WCS Express, choose among destination categories: All Countries, Hague and Non-Hague. Then select the country of destination from the list. Proceed as instructed, until Check Out. This is the process submitting documents originating in US. The process for legalization of international documents originating from outside the U.S. is available in the international section.",
   },
   {
-    question: "What do you mean by government documents?",
+    question:
+      "How can I submit my document with OUS-, international-originating documents?",
     answer:
-      "These include official documents issued by recognized government authorities.",
+      "Click the green button labeled Global Document Authentication. Select both originating and destination countries, then proceed to order documents. Once the order is submitted, WCS will contact the customer to explain specific requirements for the countries chosen.",
+  },
+  {
+    question:
+      "What do you mean by general document, government document, and shipping/commercial document?",
+    answer:
+      "There are three basic document types requiring official authentication: 1) General Documents: These are issued privately or by a state or local government body (for example: Letter of Attorney, ISO Certifications, Affidavits, Agreements) 2) Government Documents: Issued by Federal agencies like the FDA, DHS, FBI, and others (e.g., birth certificates, FBI background checks) 3) Shipping/Commercial Documents: Documents used for importing/exporting products (Certificates of Origin, Bills of Lading, Commercial Invoices).",
+  },
+  {
+    question: "How can I communicate with WCS?",
+    answer:
+      "Each pending order has a Communication Tab on the order page, to which the customer has full and constant access. Inbound messages and queries from WCS will also be in this tab.",
+  },
+  {
+    question: "How can I add return shipping label?",
+    answer:
+      "Shipping labels can be uploaded to the order, where prompted for shipping options. Shipping labels can also be mailed with original documents or ordered via the WCS Fedex Account.",
+  },
+  {
+    question: "What are the various modes through which I can make payments?",
+    answer:
+      "WCS offers easy payments through Debit Card, Credit Card, and Pay Later options, which include Check, Purchase Order, Wire/ACH Transfer, and Credit Card.",
+  },
+  {
+    question: "How can I download/print Cover letter of my order?",
+    answer:
+      "Completing Check Out, the order forms and cover letter will appear, available to print and download.",
+  },
+  {
+    question: "How can I view my pending/completed orders and proceed?",
+    answer:
+      "Access all orders in the Profile section of WCS Express. All you need is to sign-in.",
+  },
+  {
+    question: "How can I change my user password?",
+    answer:
+      "Log into the Customer Portal and click on your name beside the Profile icon. Then click on Change Password and follow the prompts.",
+  },
+  {
+    question: "How can I add another shipping/billing address?",
+    answer:
+      "Enter the Profile section. From there, view existing address and add new address with + button. The Default address can also be changed.",
+  },
+  {
+    question: "How can I edit my profile?",
+    answer: "Edit/view customer data from the Profile tab in My Account.",
+  },
+  {
+    question: "Which countries have special requirements?",
+    answer:
+      "Once an order is completed in Check Out, WCS reviews the order and advises the client, based on document type and countries involved, of any special requirements.",
+  },
+  {
+    question: "If a file does not upload successfully, what should I do?",
+    answer:
+      "Please email the files to info@wcss.com and WCS will process the documents for you.",
+  },
+  {
+    question: "What should I do if file size exceeds 5MB?",
+    answer: "WCS has increased the upload capacity to 10 MB.",
+  },
+  {
+    question: "Can I email documents to WCS?",
+    answer:
+      "Yes, but the preferred method for electronic documents is to upload in WCS Express.",
   },
 ];
 
@@ -109,27 +174,14 @@ export default function ProfilePage() {
         variant="scrollable"
         scrollButtons="auto"
       >
-        <Tab label="Orders" />
         <Tab label="Addresses" />
         <Tab label="Profile Info" />
         <Tab label="FAQs" />
         <Tab label="News" />
       </Tabs>
 
-      {/* Orders */}
-      <TabPanel value={tab} index={0}>
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="h6">Orders</Typography>
-          <Divider sx={{ my: 2 }} />
-          {/* Reuse your Orders component here */}
-          <Typography variant="body2" color="text.secondary">
-            Orders table will appear here.
-          </Typography>
-        </Paper>
-      </TabPanel>
-
       {/* Addresses */}
-      <TabPanel value={tab} index={1}>
+      <TabPanel value={tab} index={0}>
         <Grid container spacing={3}>
           {/* Add Address Card */}
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
@@ -247,7 +299,7 @@ export default function ProfilePage() {
       </TabPanel>
 
       {/* Profile Info */}
-      <TabPanel value={tab} index={2}>
+      <TabPanel value={tab} index={1}>
         <Card
           sx={{
             mb: 3,
@@ -353,7 +405,7 @@ export default function ProfilePage() {
       </TabPanel>
 
       {/* FAQs */}
-      <TabPanel value={tab} index={3}>
+      <TabPanel value={tab} index={2}>
         {/* Search */}
         <TextField
           fullWidth
@@ -365,37 +417,58 @@ export default function ProfilePage() {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon color="action" />
+                <SearchIcon color="primary" />
               </InputAdornment>
             ),
           }}
-          sx={{ mb: 3 }}
+          sx={{
+            mb: 3,
+            borderRadius: 2,
+            bgcolor: "background.paper",
+            boxShadow: 1,
+          }}
         />
 
         {/* FAQ List */}
-        {filteredFaqs.map((faq, idx) => (
-          <Accordion
-            key={idx}
-            disableGutters
-            sx={{
-              mb: 2,
-              borderRadius: 2,
-            }}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1" fontWeight={600}>
-                {faq.question}
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography variant="body2" color="text.secondary">
-                {faq.answer}
-              </Typography>
-            </AccordionDetails>
-          </Accordion>
-        ))}
+        {filteredFaqs
+          .filter((f) =>
+            f.question.toLowerCase().includes(search.toLowerCase())
+          )
+          .map((faq, idx) => (
+            <Accordion
+              key={idx}
+              disableGutters
+              sx={{
+                mb: 1.5,
+                borderRadius: 2,
+                "&:before": { display: "none" },
+                boxShadow: 1,
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon color="primary" />}
+                sx={{
+                  minHeight: "42px !important", // smaller height
+                  "& .MuiAccordionSummary-content": {
+                    my: "4px", // compact
+                  },
+                }}
+              >
+                <Typography variant="subtitle2" fontWeight={600}>
+                  {faq.question}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ py: 1.5 }}>
+                <Typography variant="body2" color="text.secondary">
+                  {faq.answer}
+                </Typography>
+              </AccordionDetails>
+            </Accordion>
+          ))}
 
-        {filteredFaqs.length === 0 && (
+        {filteredFaqs.filter((f) =>
+          f.question.toLowerCase().includes(search.toLowerCase())
+        ).length === 0 && (
           <Typography
             variant="body2"
             color="text.secondary"
@@ -408,7 +481,7 @@ export default function ProfilePage() {
       </TabPanel>
 
       {/* News */}
-      <TabPanel value={tab} index={4}>
+      <TabPanel value={tab} index={3}>
         <Paper sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom>
             Latest News
