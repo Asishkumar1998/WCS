@@ -16,14 +16,13 @@ import InputField from "@/components/ui/Input/Input";
 import FileUploadField from "@/components/ui/Input/FileInput";
 import FormLayout from "@/components/ui/Forms/FormLayout";
 import { AdditionalServices } from "@/dataset/constants/constants";
+import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
 
-const countries = ["USA", "Canada", "Kuwait", "India"];
 const documents = ["Passport", "Certificate", "License"];
-const additionalServices = ["Courier", "Notary", "Legalization"];
 const payments = ["Credit Card", "PayPal", "Bank Transfer"];
 
 export default function NotaryServiceForm() {
-  const [country, setCountry] = useState("");
+  const [country, setCountry] = useState<any>(null);
   const [document, setDocument] = useState("");
   const [additionalServices, setAdditionalServices] = useState<string[]>([]);
   const [payment, setPayment] = useState("");
@@ -39,11 +38,10 @@ export default function NotaryServiceForm() {
       <Grid container spacing={2}>
         {/* Country */}
         <Grid size={{ xs: 12, sm: 6 }}>
-          <Dropdown
+          <CountrySelect
             label="Select Country *"
-            options={countries}
             value={country}
-            onChange={() => handleDropdownChange(setCountry)}
+            onChange={setCountry}
           />
         </Grid>
 

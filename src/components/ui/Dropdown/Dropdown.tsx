@@ -1,5 +1,13 @@
 import React from "react";
-import { Autocomplete, TextField, FormControl } from "@mui/material";
+import {
+  Autocomplete,
+  TextField,
+  FormControl,
+  Checkbox,
+  ListItemText,
+} from "@mui/material";
+import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
+import CheckBoxIcon from "@mui/icons-material/CheckBox";
 
 interface BaseDropdownProps {
   label: string;
@@ -21,6 +29,9 @@ interface MultiDropdownProps extends BaseDropdownProps {
 
 type DropdownProps = SingleDropdownProps | MultiDropdownProps;
 
+const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
+const checkedIcon = <CheckBoxIcon fontSize="small" />;
+
 const Dropdown: React.FC<DropdownProps> = ({
   label,
   options,
@@ -33,17 +44,32 @@ const Dropdown: React.FC<DropdownProps> = ({
       <Autocomplete
         multiple={multiple}
         options={options}
-        value={value as any} // TS needs coercion here
+        value={value as any}
         onChange={(_, newValue) =>
           multiple
             ? (onChange as (v: string[]) => void)(newValue as string[])
             : (onChange as (v: string) => void)(newValue as string)
         }
+        renderOption={(props, option, { selected }) =>
+          multiple ? (
+            <li {...props}>
+              <Checkbox
+                icon={icon}
+                checkedIcon={checkedIcon}
+                style={{ marginRight: 8 }}
+                checked={selected}
+              />
+              <ListItemText primary={option} />
+            </li>
+          ) : (
+            <li {...props}>{option}</li>
+          )
+        }
         renderInput={(params) => (
           <TextField {...params} label={label} variant="outlined" />
         )}
-        disableClearable={!multiple} // in single mode, remove "x" button
-        disableCloseOnSelect={multiple} // keep menu open for multiple
+        disableClearable={!multiple}
+        disableCloseOnSelect={multiple}
         openOnFocus
         ListboxProps={{ style: { maxHeight: 320 } }}
       />

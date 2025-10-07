@@ -7,18 +7,18 @@ import InputField from "@/components/ui/Input/Input";
 import FileUploadField from "@/components/ui/Input/FileInput";
 import FormLayout from "@/components/ui/Forms/FormLayout";
 import DateInput from "@/components/ui/Input/DateInput";
+import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
 
-const countries = ["USA", "Canada", "India", "Kuwait"];
 const visaTypes = ["Tourist", "Business", "Work", "Student"];
 const passportTypes = ["Regular", "Diplomatic", "Official"];
 const states = ["California", "New York", "Texas", "Florida"];
 const entries = ["Single Entry", "Double Entry", "Multiple Entry"];
 
 export default function VisaServiceForm() {
-  const [destinationCountry, setDestinationCountry] = useState("");
+  const [destinationCountry, setDestinationCountry] = useState<any>(null);
   const [visaType, setVisaType] = useState("");
   const [passportType, setPassportType] = useState("");
-  const [originCountry, setOriginCountry] = useState("");
+  const [originCountry, setOriginCountry] = useState<any>(null);
   const [residenceState, setResidenceState] = useState("");
   const [entryType, setEntryType] = useState("");
 
@@ -32,11 +32,10 @@ export default function VisaServiceForm() {
     <FormLayout title="Visa Service">
       {/* Destination Country */}
       <Grid size={{ xs: 12, sm: 6 }}>
-        <Dropdown
+        <CountrySelect
           label="Destination Country for Visa *"
-          options={countries}
           value={destinationCountry}
-          onChange={() => handleDropdownChange(setDestinationCountry)}
+          onChange={setDestinationCountry}
         />
       </Grid>
 
@@ -62,11 +61,10 @@ export default function VisaServiceForm() {
 
       {/* Origin Country */}
       <Grid size={{ xs: 12, sm: 6 }}>
-        <Dropdown
+        <CountrySelect
           label="Origin Country of Passport *"
-          options={countries}
           value={originCountry}
-          onChange={() => handleDropdownChange(setOriginCountry)}
+          onChange={setOriginCountry}
         />
       </Grid>
 

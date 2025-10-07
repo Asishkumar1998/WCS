@@ -6,14 +6,14 @@ import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
 import FileUploadField from "@/components/ui/Input/FileInput";
 import FormLayout from "@/components/ui/Forms/FormLayout";
+import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
 
-const countries = ["USA", "Canada", "Kuwait", "India"];
 const docsCount = ["1", "2", "3", "4", "5"];
 const payments = ["Credit Card", "PayPal", "Bank Transfer"];
 
 export default function GlobalAuthenticationForm() {
-  const [origin, setOrigin] = useState("");
-  const [destination, setDestination] = useState("");
+  const [origin, setOrigin] = useState<any>(null);
+  const [destination, setDestination] = useState<any>(null);
   const [docs, setDocs] = useState("");
   const [payment, setPayment] = useState("");
 
@@ -27,19 +27,17 @@ export default function GlobalAuthenticationForm() {
     <FormLayout title="Global Authentication">
       {/* Origin + Destination */}
       <Grid size={{ xs: 12, sm: 6 }}>
-        <Dropdown
+        <CountrySelect
           label="Origin Country *"
-          options={countries}
           value={origin}
-          onChange={() => handleDropdownChange(setOrigin)}
+          onChange={setOrigin}
         />
       </Grid>
       <Grid size={{ xs: 12, sm: 6 }}>
-        <Dropdown
+        <CountrySelect
           label="Destination Country *"
-          options={countries}
           value={destination}
-          onChange={() => handleDropdownChange(setDestination)}
+          onChange={setDestination}
         />
       </Grid>
 
