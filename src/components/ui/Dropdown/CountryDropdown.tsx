@@ -6,47 +6,29 @@ import {
   Avatar,
   Box,
   FormControl,
-  ListItemText,
   Checkbox,
 } from "@mui/material";
-import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
-import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { countries } from "@/dataset/countries";
-
-const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
-const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
 interface Country {
   code: string;
   label: string;
 }
 
-interface BaseProps {
-  label?: string;
+interface CountrySelectProps {
+  label?: string; // placeholder text
   multiple?: boolean;
   fullWidth?: boolean;
+  value: Country | Country[] | null;
+  onChange: (value: Country | Country[] | null) => void;
 }
-
-interface SingleSelectProps extends BaseProps {
-  multiple?: false;
-  value: Country | null;
-  onChange: (value: Country | null) => void;
-}
-
-interface MultiSelectProps extends BaseProps {
-  multiple: true;
-  value: Country[];
-  onChange: (value: Country[]) => void;
-}
-
-type CountrySelectProps = SingleSelectProps | MultiSelectProps;
 
 const CountrySelect: React.FC<CountrySelectProps> = ({
-  label = "Select Country",
+  label = "Search...",
   multiple = false,
-  value,
-  onChange,
   fullWidth = true,
+  value = null,
+  onChange,
 }) => {
   return (
     <FormControl fullWidth={fullWidth}>
@@ -55,54 +37,78 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
         options={countries}
         getOptionLabel={(option) => option.label}
         value={value as any}
-        onChange={(_, newValue) =>
-          multiple
-            ? (onChange as (v: Country[]) => void)(newValue as Country[])
-            : (onChange as (v: Country | null) => void)(
-                newValue as Country | null
-              )
-        }
-        // ✅ Enables searching by both label and code
+        onChange={(_, newValue) => onChange(newValue as any)}
         filterOptions={(options, { inputValue }) =>
-          options.filter(
-            (option) =>
-              option.label.toLowerCase().includes(inputValue.toLowerCase()) ||
-              option.code.toLowerCase().includes(inputValue.toLowerCase())
+          options.filter((o) =>
+            o.label.toLowerCase().includes(inputValue.toLowerCase())
           )
         }
+        disableCloseOnSelect={multiple}
+        openOnFocus
+        ListboxProps={{
+          sx: {
+            maxHeight: 320,
+            borderRadius: "10px",
+            boxShadow: "0 6px 18px rgba(15,23,42,0.06)",
+            bgcolor: "background.paper",
+            overflow: "auto",
+            // subtle scrollbar styling can be added here if desired
+          },
+        }}
         renderOption={(props, option, { selected }) => (
           <li {...props}>
-            <Box display="flex" alignItems="center" gap={1}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                width: "100%",
+                px: 1.25,
+                py: 0.75,
+                // separator between rows
+                borderBottom: "1px solid rgba(0,0,0,0.06)",
+                "&:last-of-type": { borderBottom: "none" },
+                // hover highlight
+                "&:hover": { backgroundColor: "#f7f7fb" },
+              }}
+            >
               {multiple && (
                 <Checkbox
-                  icon={icon}
-                  checkedIcon={checkedIcon}
-                  style={{ marginRight: 8 }}
                   checked={selected}
+                  size="small"
+                  sx={{ ml: -0.5 }}
+                  tabIndex={-1}
                 />
               )}
               <Avatar
                 src={`https://flagcdn.com/w20/${option.code.toLowerCase()}.png`}
                 alt={option.label}
-                sx={{ width: 24, height: 18 }}
+                sx={{ width: 24, height: 18, borderRadius: "3px" }}
                 variant="square"
               />
-              <ListItemText
-                primary={option.label}
-                secondary={option.code}
-                secondaryTypographyProps={{
-                  sx: { color: "text.secondary", fontSize: "0.75rem" },
-                }}
-              />
+              <Box component="span" sx={{ ml: 0.5, fontSize: "0.95rem" }}>
+                {option.label}
+              </Box>
             </Box>
           </li>
         )}
         renderInput={(params) => (
-          <TextField {...params} label={label} variant="outlined" />
+          <TextField
+            {...params}
+            placeholder={label}
+            variant="outlined"
+            size="small"
+            InputProps={{
+              ...params.InputProps,
+              sx: { height: 44, borderRadius: "12px" },
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "12px",
+              },
+            }}
+          />
         )}
-        disableCloseOnSelect={multiple}
-        openOnFocus
-        ListboxProps={{ style: { maxHeight: 320 } }}
       />
     </FormControl>
   );
