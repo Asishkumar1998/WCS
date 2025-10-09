@@ -10,11 +10,13 @@ import {
 interface FileUploadFieldProps {
   label: string;
   onChange?: (file: File | null) => void;
+  disabled?: boolean; // ✅ new prop
 }
 
 export default function FileUploadField({
   label,
   onChange,
+  disabled = false,
 }: FileUploadFieldProps) {
   const [fileName, setFileName] = useState("");
   const [isDragging, setIsDragging] = useState(false);
@@ -30,6 +32,7 @@ export default function FileUploadField({
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    if (disabled) return; // prevent drop when disabled
     setIsDragging(false);
     if (e.dataTransfer.files.length > 0) {
       handleFileChange(e.dataTransfer.files[0]);
@@ -40,7 +43,7 @@ export default function FileUploadField({
     <Box
       onDragOver={(e) => {
         e.preventDefault();
-        setIsDragging(true);
+        if (!disabled) setIsDragging(true);
       }}
       onDragLeave={() => setIsDragging(false)}
       onDrop={handleDrop}
@@ -51,6 +54,8 @@ export default function FileUploadField({
         p: 2,
         transition: "0.2s",
         backgroundColor: isDragging ? "action.hover" : "transparent",
+        pointerEvents: disabled ? "none" : "auto", // optional: block all interaction
+        opacity: disabled ? 0.6 : 1, // visual cue
       }}
     >
       <TextField
@@ -70,6 +75,7 @@ export default function FileUploadField({
                 component="label"
                 size="small"
                 sx={{ textTransform: "none" }}
+                disabled={disabled} // disable button
               >
                 Choose File
                 <input type="file" hidden onChange={handleInputChange} />

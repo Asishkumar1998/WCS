@@ -16,7 +16,7 @@ interface Country {
 }
 
 interface CountrySelectProps {
-  label?: string; // placeholder text
+  label?: string; // dropdown label
   multiple?: boolean;
   fullWidth?: boolean;
   value: Country | Country[] | null;
@@ -24,7 +24,7 @@ interface CountrySelectProps {
 }
 
 const CountrySelect: React.FC<CountrySelectProps> = ({
-  label = "Search...",
+  label = "Select country",
   multiple = false,
   fullWidth = true,
   value = null,
@@ -38,23 +38,10 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
         getOptionLabel={(option) => option.label}
         value={value as any}
         onChange={(_, newValue) => onChange(newValue as any)}
-        filterOptions={(options, { inputValue }) =>
-          options.filter((o) =>
-            o.label.toLowerCase().includes(inputValue.toLowerCase())
-          )
-        }
         disableCloseOnSelect={multiple}
+        disableClearable={!multiple}
         openOnFocus
-        ListboxProps={{
-          sx: {
-            maxHeight: 320,
-            borderRadius: "10px",
-            boxShadow: "0 6px 18px rgba(15,23,42,0.06)",
-            bgcolor: "background.paper",
-            overflow: "auto",
-            // subtle scrollbar styling can be added here if desired
-          },
-        }}
+        ListboxProps={{ style: { maxHeight: 320 } }}
         renderOption={(props, option, { selected }) => (
           <li {...props}>
             <Box
@@ -65,10 +52,8 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
                 width: "100%",
                 px: 1.25,
                 py: 0.75,
-                // separator between rows
                 borderBottom: "1px solid rgba(0,0,0,0.06)",
                 "&:last-of-type": { borderBottom: "none" },
-                // hover highlight
                 "&:hover": { backgroundColor: "#f7f7fb" },
               }}
             >
@@ -95,18 +80,8 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            placeholder={label}
-            variant="outlined"
-            size="small"
-            InputProps={{
-              ...params.InputProps,
-              sx: { height: 44, borderRadius: "12px" },
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "12px",
-              },
-            }}
+            label={label} // ✅ same as normal dropdown
+            variant="outlined" // ✅ same as normal dropdown
           />
         )}
       />
