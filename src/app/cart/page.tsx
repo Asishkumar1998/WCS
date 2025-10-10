@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState } from "react";
 import {
   Box,
@@ -24,36 +23,20 @@ import {
   TextField,
   RadioGroup,
   Radio,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteIcon from "@mui/icons-material/Delete";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
-interface FeeItem {
-  label: string;
-  amount: number;
-}
-
-interface TimelineStep {
-  label: string;
-  sub: string;
-}
-
-interface DocumentGroup {
-  id: string;
-  country: string;
-  authority: string;
-  timeline: TimelineStep[];
-  fees: FeeItem[];
-}
-
-// 🔹 Custom Connector
+// ===== Custom Stepper Styles =====
 const CustomConnector = styled(StepConnector)(({ theme }) => ({
-  [`&.${stepConnectorClasses.alternativeLabel}`]: {
-    top: 22,
-  },
+  [`&.${stepConnectorClasses.alternativeLabel}`]: { top: 22 },
   [`& .${stepConnectorClasses.line}`]: {
     height: 3,
     border: 0,
@@ -62,7 +45,6 @@ const CustomConnector = styled(StepConnector)(({ theme }) => ({
   },
 }));
 
-// 🔹 Custom Step Icon
 const StepIconRoot = styled("div")<{
   ownerState: { active?: boolean; completed?: boolean };
 }>(({ theme, ownerState }) => ({
@@ -91,7 +73,6 @@ function CustomStepIcon(props: any) {
     3: <ScheduleIcon fontSize="small" />,
     4: <CheckCircleIcon fontSize="small" />,
   };
-
   return (
     <StepIconRoot ownerState={{ active, completed }}>
       {icons[String(icon)]}
@@ -99,8 +80,8 @@ function CustomStepIcon(props: any) {
   );
 }
 
-// Dummy Data
-const dummyDocs: DocumentGroup[] = [
+// ===== Dummy Data =====
+const dummyDocs = [
   {
     id: "1",
     country: "Albania",
@@ -135,31 +116,18 @@ const dummyDocs: DocumentGroup[] = [
 export default function OrderMilestonePage() {
   const [docs, setDocs] = useState(dummyDocs);
   const [invoiceRef, setInvoiceRef] = useState("");
+  const [paymentType, setPaymentType] = useState("payNow");
 
-  const handleDelete = (id: string) => {
-    setDocs(docs.filter((d) => d.id !== id));
-  };
+  const handleDelete = (id: string) => setDocs(docs.filter((d) => d.id !== id));
 
   const totalAmount = docs
     .reduce((sum, d) => sum + d.fees.reduce((fSum, f) => fSum + f.amount, 0), 0)
     .toFixed(2);
 
   return (
-    <Box
-      sx={{
-        p: 3,
-        bgcolor: "background.default",
-        minHeight: "100vh",
-        mt: "64px",
-      }}
-    >
-      {/* Shipping Instructions */}
-      <Card
-        sx={{
-          border: "1px solid #e0e0e0",
-          mb: 3,
-        }}
-      >
+    <Box sx={{ p: 3, bgcolor: "background.default", mt: "64px" }}>
+      {/* ===== Shipping Section ===== */}
+      <Card sx={{ border: "1px solid #e0e0e0", mb: 3 }}>
         <CardContent>
           <Box
             display="flex"
@@ -172,8 +140,6 @@ export default function OrderMilestonePage() {
             <Typography variant="h6" fontWeight={600}>
               Shipping Label / Return Instructions
             </Typography>
-
-            {/* 🔸 Small, rounded Invoice Reference Field */}
             <TextField
               placeholder="Invoice Reference / PO Number"
               size="small"
@@ -189,7 +155,6 @@ export default function OrderMilestonePage() {
             />
           </Box>
 
-          {/* Shipping options */}
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <FormControlLabel
@@ -200,13 +165,13 @@ export default function OrderMilestonePage() {
             <Grid size={{ xs: 12, md: 4 }}>
               <FormControlLabel
                 control={<Checkbox />}
-                label="Enclose return shipping label by mail with documents"
+                label="Enclose return shipping label by mail"
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <FormControlLabel
                 control={<Checkbox />}
-                label="Use WCS courier account for additional fee"
+                label="Use WCS courier account"
               />
             </Grid>
           </Grid>
@@ -214,7 +179,7 @@ export default function OrderMilestonePage() {
       </Card>
 
       <Grid container spacing={3}>
-        {/* LEFT COLUMN — Document Milestones */}
+        {/* ===== LEFT COLUMN - Documents ===== */}
         <Grid size={{ xs: 12, md: 7 }}>
           {docs.map((doc) => (
             <Card
@@ -250,7 +215,6 @@ export default function OrderMilestonePage() {
                   </Tooltip>
                 </Box>
 
-                {/* Stepper */}
                 <Typography variant="body2" fontWeight={600} gutterBottom>
                   Processing Stops & Timelines
                 </Typography>
@@ -274,8 +238,6 @@ export default function OrderMilestonePage() {
                 </Stepper>
 
                 <Divider sx={{ my: 2 }} />
-
-                {/* Fees */}
                 <List dense disablePadding>
                   {doc.fees.map((f, idx) => (
                     <ListItem key={idx} sx={{ py: 0.5 }}>
@@ -296,142 +258,150 @@ export default function OrderMilestonePage() {
           ))}
         </Grid>
 
-        {/* RIGHT COLUMN — Order Summary & Payment */}
+        {/* ===== RIGHT COLUMN - Sticky Sidebar ===== */}
         <Grid size={{ xs: 12, md: 5 }}>
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" fontWeight={600} mb={2}>
-                Order Summary
-              </Typography>
-              <TextField
-                label="Customer Name"
-                fullWidth
-                size="medium"
-                sx={{ mb: 4 }}
-                defaultValue="Raghvendra Roy"
-              />
-              <TextField
-                label="Email Address"
-                fullWidth
-                size="medium"
-                sx={{ mb: 4 }}
-                defaultValue="raghvendra@redintegro.com"
-              />
-              <TextField
-                label="Phone Number"
-                fullWidth
-                size="medium"
-                sx={{ mb: 4 }}
-                defaultValue="7987076459"
-              />
-              <TextField
-                label="Billing Address"
-                fullWidth
-                size="medium"
-                sx={{ mb: 4 }}
-                defaultValue="146, 5-B, 3, TB, Aditya Nagar, Indore, MP-452010"
-              />
-              <TextField
-                label="Return/Shipping Instructions"
-                fullWidth
-                size="small"
-                multiline
-                rows={2}
-                defaultValue="Enclose Return Shipping Label by mail with documents"
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent>
-              <Typography variant="h6" fontWeight={600} mb={2}>
-                Pay Now
-              </Typography>
-              <Typography variant="body2" mb={1}>
-                Please select the type of Card:
-              </Typography>
-              <RadioGroup row defaultValue="credit">
-                <FormControlLabel
-                  value="debit"
-                  control={<Radio />}
-                  label="Debit"
-                />
-                <FormControlLabel
-                  value="credit"
-                  control={<Radio />}
-                  label="Credit"
-                />
-              </RadioGroup>
-              <Typography variant="caption" color="text.secondary">
-                * 3.5% service charge applies to all debit and credit
-                transactions.
-              </Typography>
-
-              <Box mt={2}>
+          <Box
+            sx={{
+              position: { md: "sticky" },
+              top: "80px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
+            {/* Order Summary Accordion */}
+            <Accordion defaultExpanded sx={{ borderRadius: 2 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography fontWeight={600}>Order Summary</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
                 <TextField
-                  label="Cardholder's Name"
+                  label="Customer Name"
                   fullWidth
-                  size="small"
-                  sx={{ mb: 2 }}
+                  size="medium"
+                  sx={{ mb: 4 }}
+                  defaultValue="Raghvendra Roy"
                 />
                 <TextField
-                  label="Card Number"
+                  label="Email Address"
                   fullWidth
-                  size="small"
-                  sx={{ mb: 2 }}
+                  size="medium"
+                  sx={{ mb: 4 }}
+                  defaultValue="raghvendra@redintegro.com"
                 />
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 6 }}>
-                    <TextField label="Expiry (MM/YY)" fullWidth size="small" />
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <TextField label="CVV" fullWidth size="small" />
-                  </Grid>
-                </Grid>
+                <TextField
+                  label="Phone Number"
+                  fullWidth
+                  size="medium"
+                  sx={{ mb: 4 }}
+                  defaultValue="7987076459"
+                />
+                <TextField
+                  label="Billing Address"
+                  fullWidth
+                  size="medium"
+                  multiline
+                  rows={2}
+                  sx={{ mb: 2 }}
+                  defaultValue="146, 5-B, 3, TB, Aditya Nagar, Indore, MP-452010"
+                />
+              </AccordionDetails>
+            </Accordion>
+
+            {/* Payment Accordion */}
+            <Accordion defaultExpanded sx={{ borderRadius: 2 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography fontWeight={600}>Payment Options</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <RadioGroup
+                  row
+                  value={paymentType}
+                  onChange={(e) => setPaymentType(e.target.value)}
+                >
+                  <FormControlLabel
+                    value="payNow"
+                    control={<Radio />}
+                    label="Pay Now"
+                  />
+                  <FormControlLabel
+                    value="payLater"
+                    control={<Radio />}
+                    label="Pay Later"
+                  />
+                </RadioGroup>
+
+                {paymentType === "payNow" && (
+                  <>
+                    <Typography variant="body2" mt={1} mb={2}>
+                      * 3.5% service charge applies to all card transactions.
+                    </Typography>
+                    <TextField
+                      label="Cardholder's Name"
+                      fullWidth
+                      size="small"
+                      sx={{ mb: 2 }}
+                    />
+                    <TextField
+                      label="Card Number"
+                      fullWidth
+                      size="small"
+                      sx={{ mb: 2 }}
+                    />
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 6 }}>
+                        <TextField
+                          label="Expiry (MM/YY)"
+                          fullWidth
+                          size="small"
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 6 }}>
+                        <TextField label="CVV" fullWidth size="small" />
+                      </Grid>
+                    </Grid>
+                  </>
+                )}
+
                 <FormControlLabel
                   control={<Checkbox />}
-                  label="I have read and accepted the terms of use"
+                  label="I accept the terms of use"
                   sx={{ mt: 1 }}
                 />
-                <Button
-                  variant="contained"
-                  fullWidth
-                  sx={{
-                    mt: 2,
-                    py: 1,
-                    backgroundColor: "#c30010",
-                    "&:hover": { backgroundColor: "#a0000d" },
-                  }}
-                >
-                  Pay ${totalAmount}
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
+
+                {/* Checkout Buttons */}
+                <Divider sx={{ my: 2 }} />
+                <Box display="flex" gap={1.5} flexWrap="wrap">
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={() => alert("Add more documents")}
+                  >
+                    Add More Documents
+                  </Button>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    size="large"
+                    sx={{
+                      backgroundColor:
+                        paymentType === "payLater" ? "#1976d2" : "#c30010",
+                      "&:hover": {
+                        backgroundColor:
+                          paymentType === "payLater" ? "#115293" : "#a0000d",
+                      },
+                    }}
+                  >
+                    {paymentType === "payLater"
+                      ? "Confirm Pay Later"
+                      : `Pay $${totalAmount}`}
+                  </Button>
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+          </Box>
         </Grid>
       </Grid>
-
-      {/* Sticky Footer */}
-      <Box
-        sx={{
-          position: "sticky",
-          bottom: 0,
-          bgcolor: "background.paper",
-          p: 2,
-          display: "flex",
-          gap: 2,
-          justifyContent: "flex-end",
-          borderTop: "1px solid #ddd",
-          mt: 3,
-        }}
-      >
-        <Button variant="outlined" onClick={() => alert("Add more documents")}>
-          Add More Documents
-        </Button>
-        <Button variant="contained" size="large">
-          Checkout (USD {totalAmount})
-        </Button>
-      </Box>
     </Box>
   );
 }
