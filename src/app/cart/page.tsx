@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -26,6 +26,12 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Paper,
+  Collapse,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -33,6 +39,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import Modal from "@/components/ui/Modal/Modal";
+import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
 
 // ===== Custom Stepper Styles =====
 const CustomConnector = styled(StepConnector)(({ theme }) => ({
@@ -117,6 +125,28 @@ export default function OrderMilestonePage() {
   const [docs, setDocs] = useState(dummyDocs);
   const [invoiceRef, setInvoiceRef] = useState("");
   const [paymentType, setPaymentType] = useState("payNow");
+  const [checked, setChecked] = useState<{ option: string | null }>({
+    option: null,
+  });
+  const [openDialog, setOpenDialog] = useState(false);
+  const [form, setForm] = useState<Record<string, string>>({
+    region: "",
+    contactName: "",
+    company: "",
+    address: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    phone: "",
+    email: "",
+  });
+  const [country, setCountry] = useState<any>(null);
+
+  const handleChange = (key: string, value: string) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleAdd = () => {};
 
   const handleDelete = (id: string) => setDocs(docs.filter((d) => d.id !== id));
 
@@ -124,59 +154,148 @@ export default function OrderMilestonePage() {
     .reduce((sum, d) => sum + d.fees.reduce((fSum, f) => fSum + f.amount, 0), 0)
     .toFixed(2);
 
+  useEffect(() => {
+    if (checked.option === "courier") setOpenDialog(true);
+  }, [checked]);
+
   return (
     <Box sx={{ p: 3, bgcolor: "background.default", mt: "64px" }}>
       {/* ===== Shipping Section ===== */}
-      <Card sx={{ border: "1px solid #e0e0e0", mb: 3 }}>
-        <CardContent>
+      <Paper
+        elevation={0}
+        sx={{
+          p: 3,
+          mb: 3,
+          borderRadius: 3,
+          border: "1px solid",
+          borderColor: "divider",
+          backgroundColor: "background.paper",
+        }}
+      >
+        {/* Header Row */}
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          flexWrap="wrap"
+          gap={2}
+          mb={2.5}
+        >
+          {/* Left title */}
+          <Typography variant="subtitle1" fontWeight={600} color="text.primary">
+            Shipping Label / Return Instructions
+          </Typography>
+
+          {/* Right-aligned Invoice Reference / PO Number */}
           <Box
             display="flex"
-            justifyContent="space-between"
             alignItems="center"
-            flexWrap="wrap"
-            mb={2}
-            gap={2}
+            sx={{ borderRadius: 1, overflow: "hidden" }}
           >
-            <Typography variant="h6" fontWeight={600}>
-              Shipping Label / Return Instructions
-            </Typography>
+            <Box
+              sx={{
+                backgroundColor: "primary.main",
+                color: "#fff",
+                px: 2,
+                height: 40,
+                fontWeight: 700,
+                fontSize: "0.85rem",
+                textTransform: "uppercase",
+                letterSpacing: 0.5,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              Invoice Reference / PO Number
+            </Box>
             <TextField
               placeholder="Invoice Reference / PO Number"
+              variant="outlined"
               size="small"
-              value={invoiceRef}
-              onChange={(e) => setInvoiceRef(e.target.value)}
               sx={{
-                width: { xs: "100%", sm: "300px" },
+                width: 260,
                 "& .MuiOutlinedInput-root": {
-                  borderRadius: "50px",
-                  bgcolor: "background.paper",
+                  borderRadius: 0,
+                  height: 40,
+                  "& fieldset": {
+                    borderColor: "#1976d2",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#1565c0",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#1976d2",
+                  },
                 },
               }}
             />
           </Box>
+        </Box>
 
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <FormControlLabel
-                control={<Checkbox />}
-                label="Upload return shipping label"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <FormControlLabel
-                control={<Checkbox />}
-                label="Enclose return shipping label by mail"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <FormControlLabel
-                control={<Checkbox />}
-                label="Use WCS courier account"
-              />
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+        {/* Radio Buttons */}
+        <RadioGroup
+          row
+          value={checked.option}
+          onChange={(e) => setChecked({ option: e.target.value })}
+        >
+          <FormControlLabel
+            value="upload"
+            control={<Radio size="small" />}
+            label="Upload return shipping label"
+          />
+          <FormControlLabel
+            value="mail"
+            control={<Radio size="small" />}
+            label="Enclose return shipping label by mail"
+          />
+          <FormControlLabel
+            value="courier"
+            control={<Radio size="small" />}
+            label="Use WCS courier account"
+          />
+        </RadioGroup>
+
+        {/* Collapsible Content */}
+        <Collapse in={!!checked.option} timeout="auto">
+          <Box mt={2} pl={4}>
+            {checked.option === "upload" && (
+              <Box mb={2}>
+                <Typography variant="body2" color="text.secondary">
+                  * When creating a prepaid return label, please use your
+                  company information (name, address, phone) as the
+                  shipper/sender. Do Not use WCS information (name, address,
+                  phone) as the shipper/sender.
+                </Typography>
+                <Box
+                  mt={1}
+                  p={2}
+                  sx={{
+                    border: "1px dashed",
+                    borderColor: "divider",
+                    borderRadius: 2,
+                    textAlign: "center",
+                    cursor: "pointer",
+                    "&:hover": { borderColor: "primary.main" },
+                  }}
+                >
+                  <Typography variant="body2" color="primary.main">
+                    Click to upload
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+
+            {checked.option === "mail" && (
+              <Typography variant="body2" color="text.secondary" mb={2}>
+                * When creating a prepaid return label, please use your company
+                information (name, address, phone) as the shipper/sender. Do Not
+                use WCS information (name, address, phone) as the
+                shipper/sender.
+              </Typography>
+            )}
+          </Box>
+        </Collapse>
+      </Paper>
 
       <Grid container spacing={3}>
         {/* ===== LEFT COLUMN - Documents ===== */}
@@ -278,32 +397,44 @@ export default function OrderMilestonePage() {
                 <TextField
                   label="Customer Name"
                   fullWidth
-                  size="medium"
-                  sx={{ mb: 4 }}
+                  size="small"
+                  sx={{ mb: 3 }}
                   defaultValue="Raghvendra Roy"
+                  InputProps={{
+                    readOnly: true, // 🔹 makes the input read-only
+                  }}
                 />
                 <TextField
                   label="Email Address"
                   fullWidth
-                  size="medium"
-                  sx={{ mb: 4 }}
+                  size="small"
+                  sx={{ mb: 3 }}
                   defaultValue="raghvendra@redintegro.com"
+                  InputProps={{
+                    readOnly: true, // 🔹 makes the input read-only
+                  }}
                 />
                 <TextField
                   label="Phone Number"
                   fullWidth
-                  size="medium"
-                  sx={{ mb: 4 }}
+                  size="small"
+                  sx={{ mb: 3 }}
                   defaultValue="7987076459"
+                  InputProps={{
+                    readOnly: true, // 🔹 makes the input read-only
+                  }}
                 />
                 <TextField
                   label="Billing Address"
                   fullWidth
-                  size="medium"
+                  size="small"
                   multiline
                   rows={2}
-                  sx={{ mb: 2 }}
+                  sx={{ mb: 3 }}
                   defaultValue="146, 5-B, 3, TB, Aditya Nagar, Indore, MP-452010"
+                  InputProps={{
+                    readOnly: true, // 🔹 makes the input read-only
+                  }}
                 />
               </AccordionDetails>
             </Accordion>
@@ -320,18 +451,28 @@ export default function OrderMilestonePage() {
                   onChange={(e) => setPaymentType(e.target.value)}
                 >
                   <FormControlLabel
-                    value="payNow"
+                    value="card"
                     control={<Radio />}
-                    label="Pay Now"
+                    label="Card"
                   />
                   <FormControlLabel
-                    value="payLater"
+                    value="check"
                     control={<Radio />}
-                    label="Pay Later"
+                    label="Check"
+                  />
+                  <FormControlLabel
+                    value="wire"
+                    control={<Radio />}
+                    label="Wire/ACH Transfer"
+                  />
+                  <FormControlLabel
+                    value="purchase-order"
+                    control={<Radio />}
+                    label="Pay with Purchase Order(PO)"
                   />
                 </RadioGroup>
 
-                {paymentType === "payNow" && (
+                {paymentType === "card" && (
                   <>
                     <Typography variant="body2" mt={1} mb={2}>
                       * 3.5% service charge applies to all card transactions.
@@ -402,6 +543,122 @@ export default function OrderMilestonePage() {
           </Box>
         </Grid>
       </Grid>
+      <Modal
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        title="Add New WCS Courier Address"
+        type="custom"
+        showActions={false} // we handle buttons inside children
+      >
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            {/* <TextField
+              label="Country"
+              fullWidth
+              size="small"
+              value={form.country}
+              onChange={(e) => handleChange("country", e.target.value)}
+            /> */}
+            <CountrySelect
+              label="Select Country *"
+              value={country}
+              onChange={setCountry}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              label="Region"
+              fullWidth
+              size="medium"
+              value={form.region}
+              onChange={(e) => handleChange("region", e.target.value)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              label="Contact Name"
+              fullWidth
+              size="medium"
+              value={form.contactName}
+              onChange={(e) => handleChange("contactName", e.target.value)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              label="Company"
+              fullWidth
+              size="medium"
+              value={form.company}
+              onChange={(e) => handleChange("company", e.target.value)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <TextField
+              label="Address"
+              fullWidth
+              size="medium"
+              multiline
+              rows={2}
+              value={form.address}
+              onChange={(e) => handleChange("address", e.target.value)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              label="City"
+              fullWidth
+              size="medium"
+              value={form.city}
+              onChange={(e) => handleChange("city", e.target.value)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              label="State"
+              fullWidth
+              size="medium"
+              value={form.state}
+              onChange={(e) => handleChange("state", e.target.value)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              label="Postal Code"
+              fullWidth
+              size="medium"
+              value={form.postalCode}
+              onChange={(e) => handleChange("postalCode", e.target.value)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              label="Phone Number"
+              fullWidth
+              size="medium"
+              value={form.phone}
+              onChange={(e) => handleChange("phone", e.target.value)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <TextField
+              label="Email Address"
+              fullWidth
+              size="medium"
+              value={form.email}
+              onChange={(e) => handleChange("email", e.target.value)}
+            />
+          </Grid>
+        </Grid>
+
+        <Box display="flex" gap={2} mt={3} flexWrap="wrap">
+          <Button variant="contained" color="primary" onClick={handleAdd}>
+            Add Address
+          </Button>
+          <Button variant="outlined" onClick={() => {}}>
+            Use Existing Address
+          </Button>
+        </Box>
+      </Modal>
     </Box>
   );
 }

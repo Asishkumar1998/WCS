@@ -28,6 +28,7 @@ import {
   ExpandMore,
   Notifications,
   LibraryAdd,
+  ShoppingCart,
 } from "@mui/icons-material";
 import Link from "next/link";
 import Image from "next/image";
@@ -86,9 +87,14 @@ const navItems = [
     href: "/faq",
   },
   {
-    text: "Sign Out",
-    icon: <Logout />,
-    href: "/sign-out",
+    text: "Cart",
+    icon: <ShoppingCart />,
+    href: "/cart",
+  },
+  {
+    text: "Profile",
+    icon: <Person />,
+    href: "/accounts/profile",
   },
 ];
 
@@ -309,7 +315,7 @@ const SideDrawer = () => {
             }}
           >
             <Link
-              href="/account/profile"
+              href="/signout"
               passHref
               style={{
                 textDecoration: "none",
@@ -320,9 +326,9 @@ const SideDrawer = () => {
               }}
             >
               <ListItemIcon sx={{ color: "#fff", minWidth: "40px" }}>
-                <Person />
+                <Logout />
               </ListItemIcon>
-              <ListItemText primary="Profile" />
+              <ListItemText primary="Sign Out" />
             </Link>
 
             <IconButton
@@ -341,13 +347,13 @@ const SideDrawer = () => {
               gap: "12px",
             }}
           >
-            <Tooltip title="Profile" placement="right">
+            <Tooltip title="Sign Out" placement="right">
               <IconButton
                 component={Link}
                 href="/account/profile"
                 sx={{ color: "#fff" }}
               >
-                <Person />
+                <Logout />
               </IconButton>
             </Tooltip>
 
