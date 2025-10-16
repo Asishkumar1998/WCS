@@ -362,7 +362,7 @@ export default function NonHagueDocUpload({
   documentType?: number;
 }) {
   const [activeStep, setActiveStep] = useState(0);
-  const [shouldProceed, setShouldProceed] = useState(false);
+  const [shouldProceed, setShouldProceed] = useState(true);
 
   const [values, setValues] = useState({
     uploadType: null,
