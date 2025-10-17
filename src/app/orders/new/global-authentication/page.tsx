@@ -1,7 +1,6 @@
 "use client";
 
 import { Container, Grid } from "@mui/material";
-import FAQSidebarLayout from "@/components/layout/SideDrawer/FAQSideDrawerLayout";
 import GlobalAuthenticationForm from "@/components/features/Orders/Forms/GlobalAuthenticationForm";
 import GlobalAuthenticationSidebar from "@/components/features/Orders/Sidebars/GlobalAuthenticationSidebar";
 

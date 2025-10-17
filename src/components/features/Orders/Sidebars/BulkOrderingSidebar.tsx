@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Typography,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Divider,
-} from "@mui/material";
-import { ExpandMore } from "@mui/icons-material";
+import { Typography, Divider } from "@mui/material";
 import FAQSidebarLayout from "@/components/layout/SideDrawer/FAQSideDrawerLayout";
 import FAQAccordionList from "../Accordion/FAQAccordion";
 

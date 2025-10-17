@@ -1,7 +1,6 @@
 "use client";
 
 import { Container, Grid } from "@mui/material";
-import FAQSidebar from "@/components/layout/SideDrawer/FAQSideDrawerLayout";
 import TranslationServiceForm from "@/components/features/Orders/Forms/TranslationServiceForm";
 import TranslationServiceSidebar from "@/components/features/Orders/Sidebars/TranslationServiceSidebar";
 

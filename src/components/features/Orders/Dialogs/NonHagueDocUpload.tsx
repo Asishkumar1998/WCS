@@ -9,8 +9,6 @@ import {
   Stepper,
   Step,
   StepLabel,
-  TextField,
-  Autocomplete,
   FormControlLabel,
   RadioGroup,
   Radio,
@@ -64,7 +62,7 @@ function UploadDocs({
             </RadioGroup>
           </>
         )}
-      <DocumentUpload country={country} documentType={documentType} />
+      <DocumentUpload country={country} />
     </Box>
   );
 }
@@ -107,7 +105,7 @@ function AddPhotocopies() {
   );
 }
 
-function Confirmation({ values }: { values?: any }) {
+function Confirmation() {
   return (
     <Box
       sx={{

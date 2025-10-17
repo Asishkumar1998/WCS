@@ -21,13 +21,7 @@ import { CheckCircleOutline } from "@mui/icons-material";
 
 const couriers = ["FEDEX", "UPS", "USPS", "DHL", "OTHERS"];
 
-function UploadDocs({
-  country,
-  documentType,
-}: {
-  country: any;
-  documentType: any;
-}) {
+function UploadDocs({ country }: { country: any }) {
   const [docMailToWCS, setDocMailToWCS] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [courier, setCourier] = useState<string | null>(null);
@@ -72,7 +66,7 @@ function UploadDocs({
           )}
         </Box>
       ) : (
-        <DocumentUpload country={country} documentType={documentType} />
+        <DocumentUpload country={country} />
       )}
     </>
   );
@@ -136,7 +130,7 @@ function NotarizedFromUSAddress({
   );
 }
 
-function Confirmation({ values }: { values: any }) {
+function Confirmation() {
   return (
     <Box
       sx={{

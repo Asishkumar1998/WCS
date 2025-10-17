@@ -1,71 +1,15 @@
 "use client";
 
-import {
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  Stack,
-  Container,
-} from "@mui/material";
-
-import GavelIcon from "@mui/icons-material/Gavel";
-import PublicIcon from "@mui/icons-material/Public";
-import TranslateIcon from "@mui/icons-material/Translate";
-import FlightIcon from "@mui/icons-material/Flight";
+import { Box, Grid, Container } from "@mui/material";
 
 import ShinyBarChartHorizontal from "@/components/ui/Charts/ShinyBarChartHorizontal";
-import Button from "@/components/ui/Button/Button";
-import {
-  ArrowForward,
-  CheckCircle,
-  Flight,
-  PieChart,
-  Public,
-  Translate,
-} from "@mui/icons-material";
+
 import ServiceCard from "@/components/features/Dashboard/ServiceCard";
 import UpdatesSection from "@/components/features/Dashboard/UpdateSection";
 import NewsSection from "@/components/features/Dashboard/NewsSection";
-import EmbassyImage from "../../public/usembassy-dashboard-logo.png";
 import CustomPieChart from "@/components/ui/Charts/PieChart";
-import Navbar from "@/components/layout/NavBar/NavBar";
 import ChartCard from "@/components/features/Dashboard/ChartCard";
 import { useRouter } from "next/navigation";
-
-const news = [
-  {
-    title: "WCS Processing New FDA Digital Documents, Business As Usual",
-    date: "Feb 20, 2024",
-  },
-  {
-    title: "Unwrapping the Sweet Surprise: Japanese KitKats Take Center Stage",
-    date: "Feb 15, 2024",
-  },
-  {
-    title: "A New Era: China and Canada Join the Apostille Treaty",
-    date: "Feb 1, 2024",
-  },
-  {
-    title: "FDA Plans More Digital Documents - CFG, COE, EPL",
-    date: "Jan 4, 2024",
-  },
-  { title: "China is Up and Running", date: "Dec 5, 2023" },
-];
-
-const updates = [
-  {
-    title: "Electronic Export Documents - CFG, COE, EPL",
-    date: "Aug 10, 2023",
-  },
-  { title: "New Test", date: "Aug 10, 2023" },
-  { title: "Test Heading 10th Aug 2023", date: "Aug 10, 2023" },
-];
 
 const services = [
   {

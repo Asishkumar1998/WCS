@@ -28,10 +28,6 @@ import {
   AccordionDetails,
   Paper,
   Collapse,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -123,7 +119,6 @@ const dummyDocs = [
 
 export default function OrderMilestonePage() {
   const [docs, setDocs] = useState(dummyDocs);
-  const [invoiceRef, setInvoiceRef] = useState("");
   const [paymentType, setPaymentType] = useState("payNow");
   const [checked, setChecked] = useState<{ option: string | null }>({
     option: null,

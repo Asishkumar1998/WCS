@@ -51,10 +51,7 @@ const navItems = [
   {
     text: "My Orders",
     icon: <Assignment />,
-    children: [
-      { text: "All Orders", href: "/orders/all" },
-      { text: "Drafts", href: "/orders/drafts" },
-    ],
+    children: [{ text: "All Orders", href: "/orders/all" }],
   },
   {
     text: "New Order",
@@ -77,12 +74,12 @@ const navItems = [
     href: "/orders/bulk-ordering",
   },
   {
-    text: "Notifications",
+    text: "Notifications*",
     icon: <Notifications />,
     href: "/notifications",
   },
   {
-    text: "FAQ",
+    text: "FAQ*",
     icon: <Info />,
     href: "/faq",
   },
@@ -92,7 +89,7 @@ const navItems = [
     href: "/cart",
   },
   {
-    text: "Profile",
+    text: "Profile*",
     icon: <Person />,
     href: "/accounts/profile",
   },

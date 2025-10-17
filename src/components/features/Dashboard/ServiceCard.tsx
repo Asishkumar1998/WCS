@@ -1,14 +1,5 @@
-import {
-  Card,
-  CardContent,
-  Box,
-  Typography,
-  Avatar,
-  SvgIconTypeMap,
-} from "@mui/material";
-import { ArrowForward } from "@mui/icons-material";
+import { Card, CardContent, Box, Typography, Avatar } from "@mui/material";
 import Image from "next/image";
-import Button from "@/components/ui/Button/Button";
 
 interface ServiceCardProps {
   icon: string;
@@ -39,7 +30,13 @@ const ServiceCard = ({
       onClick={onClick}
     >
       <CardContent
-        sx={{ p: 2, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}
+        sx={{
+          p: 2,
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+        }}
       >
         <Box sx={{ display: "flex", alignItems: "center" }}>
           <Avatar

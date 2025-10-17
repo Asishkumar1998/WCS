@@ -12,13 +12,7 @@ import { useState } from "react";
 
 const couriers = ["FEDEX", "UPS", "USPS", "DHL", "OTHERS"];
 
-export default function DocumentUpload({
-  country,
-  documentType,
-}: {
-  country: any;
-  documentType: any;
-}) {
+export default function DocumentUpload({ country }: { country: any }) {
   const [topSelection, setTopSelection] = useState<
     "uploadOrDrag" | "originalMailedTop" | null
   >(null);

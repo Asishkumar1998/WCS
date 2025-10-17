@@ -63,12 +63,9 @@ export default function ShinyBarChartHorizontal() {
             markType: "square",
             labelPosition: "inline-start",
             labelFormatter: ({ index }) => {
-              if (index === 0) {
-                return "Count of orders";
-              }
-              if (index === 1) {
-                return "Count of documents";
-              } else return null;
+              if (index === 0) return "Count of orders";
+              if (index === 1) return "Count of documents";
+              return null;
             },
           },
         }}
@@ -77,41 +74,41 @@ export default function ShinyBarChartHorizontal() {
   );
 }
 
+// ---------------- Bar with shaded background ----------------
 export function BarShadedBackground(props: BarProps) {
-  const {
-    ownerState,
-    skipAnimation,
-    id,
-    dataIndex,
-    xOrigin,
-    yOrigin,
-    ...other
-  } = props;
+  const { ownerState, x, y, width, height } = props; // only used props
   const theme = useTheme();
-
   const animatedProps = useAnimateBar(props);
-  const { width } = useDrawingArea();
+  const { width: drawingWidth } = useDrawingArea();
+
   return (
     <React.Fragment>
+      {/* Static background */}
       <rect
-        {...other}
+        x={x}
+        y={y}
+        width={drawingWidth}
+        height={height}
         fill={(theme.vars || theme).palette.text.primary}
         opacity={theme.palette.mode === "dark" ? 0.05 : 0.1}
-        x={other.x}
-        width={width}
       />
+
+      {/* Animated foreground bar */}
       <rect
-        {...other}
+        x={animatedProps.x ?? x}
+        y={animatedProps.y ?? y}
+        width={width}
+        height={height}
         filter={ownerState.isHighlighted ? "brightness(120%)" : undefined}
         opacity={ownerState.isFaded ? 0.3 : 1}
         data-highlighted={ownerState.isHighlighted || undefined}
         data-faded={ownerState.isFaded || undefined}
-        {...animatedProps}
       />
     </React.Fragment>
   );
 }
 
+// ---------------- Label text styling ----------------
 const Text = styled("text")(({ theme }) => ({
   ...theme?.typography?.body2,
   stroke: "none",
@@ -123,24 +120,9 @@ const Text = styled("text")(({ theme }) => ({
   fontWeight: 600,
 }));
 
+// ---------------- Bar label at base ----------------
 function BarLabelAtBase(props: BarLabelProps) {
-  const {
-    seriesId,
-    dataIndex,
-    color,
-    isFaded,
-    isHighlighted,
-    classes,
-    xOrigin,
-    yOrigin,
-    x,
-    y,
-    width,
-    height,
-    layout,
-    skipAnimation,
-    ...otherProps
-  } = props;
+  const { xOrigin, y, height, skipAnimation, ...otherProps } = props; // only used props
 
   const animatedProps = useAnimate(
     { x: xOrigin + 8, y: y + height / 2 },

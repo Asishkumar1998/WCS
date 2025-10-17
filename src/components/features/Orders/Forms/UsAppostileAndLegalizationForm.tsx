@@ -1,19 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  SelectChangeEvent,
-  Grid,
-  Paper,
-  Divider,
-} from "@mui/material";
+import { Button, SelectChangeEvent, Grid } from "@mui/material";
 import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
-import FileUploadField from "@/components/ui/Input/FileInput";
 import FormLayout from "@/components/ui/Forms/FormLayout";
 import { AdditionalServices, Services } from "@/dataset/constants/constants";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
@@ -22,7 +12,6 @@ import DocumentDropdown, {
   DocType,
 } from "@/components/ui/Dropdown/DocumentDropdown";
 import Modal from "@/components/ui/Modal/Modal";
-import DagueDocUpload from "../Dialogs/HagueDocUpload";
 import HagueDocUpload from "../Dialogs/HagueDocUpload";
 import NonHagueDocUpload from "../Dialogs/NonHagueDocUpload";
 import InfoCard from "../Common/InfoCard";

@@ -201,6 +201,7 @@ export default function ConversationDrawer({
             variant="contained"
             color="primary"
             sx={{ ml: 1, px: 3, borderRadius: "8px", textTransform: "none" }}
+            onClick={handleSend}
           >
             Send
           </Button>

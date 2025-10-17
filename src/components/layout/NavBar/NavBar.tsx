@@ -12,13 +12,7 @@ import {
   MenuItem,
   Typography,
 } from "@mui/material";
-import {
-  ShoppingCart,
-  Person,
-  Search,
-  Notifications,
-  Info,
-} from "@mui/icons-material";
+import { ShoppingCart, Person, Search, Info } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
