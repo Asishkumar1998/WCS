@@ -35,7 +35,7 @@ const dummyNotifications: Notification[] = [
     id: "1",
     title: "Order Review",
     message:
-      "Based on our review of the order placed by you, additional fees...",
+      "Based on our review of the order placed by you, additional fees may apply.",
     country: "Albania",
     date: "2025-08-19T12:27:00",
     unread: true,
@@ -43,7 +43,7 @@ const dummyNotifications: Notification[] = [
   {
     id: "2",
     title: "Payment Cancelled",
-    message: "Your payment request has been cancelled...",
+    message: "Your payment request has been cancelled successfully.",
     country: "UAE",
     date: "2025-07-30T21:23:00",
     unread: false,
@@ -87,7 +87,7 @@ export default function NotificationPopup() {
         transformOrigin={{ vertical: "top", horizontal: "right" }}
         PaperProps={{
           sx: {
-            width: 380,
+            width: 400,
             maxHeight: 500,
             borderRadius: 2,
             overflow: "hidden",
@@ -126,68 +126,113 @@ export default function NotificationPopup() {
 
         {/* List */}
         <List dense disablePadding sx={{ maxHeight: 400, overflowY: "auto" }}>
-          {dummyNotifications.map((n) => (
-            <ListItem
-              key={n.id}
-              alignItems="flex-start"
-              sx={{
-                px: 2,
-                py: 1.5,
-                display: "flex",
-                flexDirection: "row",
-                gap: 1,
-                bgcolor: n.unread ? "rgba(25, 118, 210, 0.08)" : "transparent",
-                "&:hover": { bgcolor: "action.hover" },
-              }}
-            >
-              {/* Avatar */}
-              <Avatar sx={{ bgcolor: "primary.main", fontSize: 14 }}>
-                {n.country[0]}
-              </Avatar>
+          {dummyNotifications.map((n) => {
+            const formattedDate = new Date(n.date).toLocaleString(undefined, {
+              dateStyle: "medium",
+              timeStyle: "short",
+            });
 
-              {/* Text & Timestamp */}
-              <Box flex={1} minWidth={0}>
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Typography
-                    variant="body2"
-                    fontWeight={600}
-                    sx={{
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {n.title}
-                  </Typography>
-                  {n.unread && (
-                    <CircleIcon color="primary" sx={{ fontSize: 8 }} />
-                  )}
-                </Box>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  noWrap
-                  sx={{ display: "block" }}
+            return (
+              <ListItem
+                key={n.id}
+                sx={{
+                  px: 2,
+                  py: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 1,
+                  bgcolor: n.unread
+                    ? "rgba(25, 118, 210, 0.08)"
+                    : "transparent",
+                  "&:hover": { bgcolor: "action.hover" },
+                }}
+              >
+                {/* Left side (Avatar + Text + Date) */}
+                <Tooltip
+                  title={n.message}
+                  arrow
+                  placement="top-start"
+                  componentsProps={{
+                    tooltip: {
+                      sx: { fontSize: "0.875rem", padding: 1 }, // Adjust fontSize as needed
+                    },
+                  }}
                 >
-                  {n.message}
-                </Typography>
-                <Typography variant="caption" color="text.disabled">
-                  {new Date(n.date).toLocaleString()}
-                </Typography>
-              </Box>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    gap={1}
+                    flex={1}
+                    minWidth={0}
+                  >
+                    <Avatar
+                      sx={{
+                        bgcolor: "primary.main",
+                        fontSize: 14,
+                        width: 30,
+                        height: 30,
+                      }}
+                    >
+                      {n.country[0]}
+                    </Avatar>
 
-              {/* Actions */}
-              <Tooltip title={n.unread ? "Mark as read" : "Dismiss"}>
-                <IconButton size="small">
-                  {n.unread ? (
-                    <DoneIcon fontSize="small" />
-                  ) : (
-                    <CloseIcon fontSize="small" />
-                  )}
-                </IconButton>
-              </Tooltip>
-            </ListItem>
-          ))}
+                    <Box
+                      display="flex"
+                      flexDirection="column"
+                      flex={1}
+                      minWidth={0}
+                    >
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        gap={0.5}
+                        flexWrap="nowrap"
+                      >
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                          sx={{
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            flexShrink: 1,
+                          }}
+                        >
+                          {n.title}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {n.country} • {formattedDate}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Tooltip>
+
+                {/* Right side icons */}
+                <Box display="flex" alignItems="center" gap={0.5}>
+                  <Tooltip title="Mark as read">
+                    <IconButton size="small">
+                      <DoneIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Dismiss">
+                    <IconButton size="small">
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </ListItem>
+            );
+          })}
         </List>
 
         {/* Footer */}
