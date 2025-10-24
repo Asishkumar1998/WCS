@@ -174,7 +174,6 @@ export default function OrderMilestonePage() {
           alignItems="center"
           flexWrap="wrap"
           gap={2}
-          mb={2.5}
         >
           {/* Left title */}
           <Typography variant="subtitle1" fontWeight={600} color="text.primary">
@@ -182,49 +181,28 @@ export default function OrderMilestonePage() {
           </Typography>
 
           {/* Right-aligned Invoice Reference / PO Number */}
-          <Box
-            display="flex"
-            alignItems="center"
-            sx={{ borderRadius: 1, overflow: "hidden" }}
-          >
-            <Box
-              sx={{
-                backgroundColor: "primary.main",
-                color: "#fff",
-                px: 2,
+          <TextField
+            label="Invoice Reference / PO Number"
+            placeholder="Enter invoice reference or PO number"
+            variant="outlined"
+            size="small"
+            fullWidth
+            sx={{
+              maxWidth: 320,
+              "& .MuiOutlinedInput-root": {
                 height: 40,
-                fontWeight: 700,
-                fontSize: "0.85rem",
-                textTransform: "uppercase",
-                letterSpacing: 0.5,
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              Invoice Reference / PO Number
-            </Box>
-            <TextField
-              placeholder="Invoice Reference / PO Number"
-              variant="outlined"
-              size="small"
-              sx={{
-                width: 260,
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 0,
-                  height: 40,
-                  "& fieldset": {
-                    borderColor: "#1976d2",
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "#1565c0",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#1976d2",
-                  },
+                "& fieldset": {
+                  borderColor: "#1976d2",
                 },
-              }}
-            />
-          </Box>
+                "&:hover fieldset": {
+                  borderColor: "#1565c0",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#1976d2",
+                },
+              },
+            }}
+          />
         </Box>
 
         {/* Radio Buttons */}
@@ -434,107 +412,108 @@ export default function OrderMilestonePage() {
               </AccordionDetails>
             </Accordion>
 
-            {/* Payment Accordion */}
-            <Accordion defaultExpanded sx={{ borderRadius: 2 }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography fontWeight={600}>Payment Options</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <RadioGroup
-                  row
-                  value={paymentType}
-                  onChange={(e) => setPaymentType(e.target.value)}
-                >
-                  <FormControlLabel
-                    value="card"
-                    control={<Radio />}
-                    label="Card"
-                  />
-                  <FormControlLabel
-                    value="check"
-                    control={<Radio />}
-                    label="Check"
-                  />
-                  <FormControlLabel
-                    value="wire"
-                    control={<Radio />}
-                    label="Wire/ACH Transfer"
-                  />
-                  <FormControlLabel
-                    value="purchase-order"
-                    control={<Radio />}
-                    label="Pay with Purchase Order(PO)"
-                  />
-                </RadioGroup>
+            {/* Payment Card */}
+            <Card sx={{ borderRadius: 2, p: 3 }}>
+              <Typography fontWeight={600} mb={2}>
+                Payment Options
+              </Typography>
 
-                {paymentType === "card" && (
-                  <>
-                    <Typography variant="body2" mt={1} mb={2}>
-                      * 3.5% service charge applies to all card transactions.
-                    </Typography>
-                    <TextField
-                      label="Cardholder's Name"
-                      fullWidth
-                      size="small"
-                      sx={{ mb: 2 }}
-                    />
-                    <TextField
-                      label="Card Number"
-                      fullWidth
-                      size="small"
-                      sx={{ mb: 2 }}
-                    />
-                    <Grid container spacing={2}>
-                      <Grid size={{ xs: 6 }}>
-                        <TextField
-                          label="Expiry (MM/YY)"
-                          fullWidth
-                          size="small"
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 6 }}>
-                        <TextField label="CVV" fullWidth size="small" />
-                      </Grid>
-                    </Grid>
-                  </>
-                )}
-
+              <RadioGroup
+                row
+                value={paymentType}
+                onChange={(e) => setPaymentType(e.target.value)}
+              >
                 <FormControlLabel
-                  control={<Checkbox />}
-                  label="I accept the terms of use"
-                  sx={{ mt: 1 }}
+                  value="card"
+                  control={<Radio />}
+                  label="Card"
                 />
+                <FormControlLabel
+                  value="check"
+                  control={<Radio />}
+                  label="Check"
+                />
+                <FormControlLabel
+                  value="wire"
+                  control={<Radio />}
+                  label="Wire/ACH Transfer"
+                />
+                <FormControlLabel
+                  value="purchase-order"
+                  control={<Radio />}
+                  label="Pay with Purchase Order (PO)"
+                />
+              </RadioGroup>
 
-                {/* Checkout Buttons */}
-                <Divider sx={{ my: 2 }} />
-                <Box display="flex" gap={1.5} flexWrap="wrap">
-                  <Button
-                    variant="outlined"
+              {paymentType === "card" && (
+                <>
+                  <Typography variant="body2" mt={1} mb={2}>
+                    * 3.5% service charge applies to all card transactions.
+                  </Typography>
+
+                  <TextField
+                    label="Cardholder's Name"
                     fullWidth
-                    onClick={() => alert("Add more documents")}
-                  >
-                    Add More Documents
-                  </Button>
-                  <Button
-                    variant="contained"
+                    size="small"
+                    sx={{ mb: 2 }}
+                  />
+                  <TextField
+                    label="Card Number"
                     fullWidth
-                    size="large"
-                    sx={{
+                    size="small"
+                    sx={{ mb: 2 }}
+                  />
+
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 6 }}>
+                      <TextField
+                        label="Expiry (MM/YY)"
+                        fullWidth
+                        size="small"
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 6 }}>
+                      <TextField label="CVV" fullWidth size="small" />
+                    </Grid>
+                  </Grid>
+                </>
+              )}
+
+              <FormControlLabel
+                control={<Checkbox />}
+                label="I accept the terms of use"
+                sx={{ mt: 1 }}
+              />
+
+              <Divider sx={{ my: 2 }} />
+
+              <Box display="flex" gap={1.5} flexWrap="wrap">
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={() => alert("Add more documents")}
+                >
+                  Add More Documents
+                </Button>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  sx={{
+                    backgroundColor:
+                      paymentType === "payLater" ? "#1976d2" : "#c30010",
+                    "&:hover": {
                       backgroundColor:
-                        paymentType === "payLater" ? "#1976d2" : "#c30010",
-                      "&:hover": {
-                        backgroundColor:
-                          paymentType === "payLater" ? "#115293" : "#a0000d",
-                      },
-                    }}
-                  >
-                    {paymentType === "payLater"
-                      ? "Confirm Pay Later"
-                      : `Pay $${totalAmount}`}
-                  </Button>
-                </Box>
-              </AccordionDetails>
-            </Accordion>
+                        paymentType === "payLater" ? "#115293" : "#a0000d",
+                    },
+                  }}
+                >
+                  {paymentType === "payLater"
+                    ? "Confirm Pay Later"
+                    : `Pay $${totalAmount}`}
+                </Button>
+              </Box>
+            </Card>
           </Box>
         </Grid>
       </Grid>

@@ -386,7 +386,7 @@ export default function OrdersPage() {
                     <strong>Doc Id</strong>
                   </TableCell>
                   <TableCell>
-                    <strong>Country Id</strong>
+                    <strong>Country Name</strong>
                   </TableCell>
                   <TableCell>
                     <strong>Country Type</strong>
@@ -404,7 +404,7 @@ export default function OrdersPage() {
                     <strong>Order Date</strong>
                   </TableCell>
                   <TableCell>
-                    <strong>Est Date of Completion</strong>
+                    <strong>Est. Date of Completion</strong>
                   </TableCell>
                   <TableCell>
                     <strong>Order Status</strong>

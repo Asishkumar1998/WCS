@@ -2,7 +2,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   Typography,
   Divider,
   Paper,
@@ -12,10 +11,10 @@ import {
   TableCell,
   TableBody,
   IconButton,
-  Button,
   Tooltip,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
+import CloseIcon from "@mui/icons-material/Close";
 
 export default function AttachmentsDialog({
   open,
@@ -40,6 +39,8 @@ export default function AttachmentsDialog({
           bgcolor: "primary.main",
           color: "white",
           fontWeight: "bold",
+          position: "relative",
+          pr: 6,
         }}
       >
         Attachments (Order ID: {orderId})
@@ -49,6 +50,19 @@ export default function AttachmentsDialog({
         >
           Doc Id: {docId}
         </Typography>
+        {/* Close Icon */}
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+            color: "white",
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
 
       <DialogContent dividers sx={{ p: 3 }}>
@@ -144,12 +158,6 @@ export default function AttachmentsDialog({
           </TableBody>
         </Table>
       </DialogContent>
-
-      <DialogActions>
-        <Button onClick={onClose} color="secondary" variant="outlined">
-          Close
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }

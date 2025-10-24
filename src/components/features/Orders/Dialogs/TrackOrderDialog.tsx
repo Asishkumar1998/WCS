@@ -4,15 +4,15 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
   Stepper,
   Step,
   StepLabel,
   Typography,
   Box,
   Divider,
+  IconButton,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 
 interface TrackOrderDialogProps {
   open: boolean;
@@ -53,6 +53,8 @@ export default function TrackOrderDialog({
           color: "white",
           fontWeight: "bold",
           mb: 4,
+          position: "relative",
+          pr: 6,
         }}
       >
         Track Details (Order ID: {orderId})
@@ -62,6 +64,19 @@ export default function TrackOrderDialog({
         >
           Doc Id: {docId}
         </Typography>
+        {/* Close Icon */}
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+            color: "white",
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
 
       {/* Content */}
@@ -101,18 +116,6 @@ export default function TrackOrderDialog({
           </Box>
         )}
       </DialogContent>
-
-      {/* Actions */}
-      <DialogActions sx={{ p: 2 }}>
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={onClose}
-          sx={{ textTransform: "none" }}
-        >
-          Close
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }
