@@ -22,6 +22,7 @@ import Modal from "@/components/ui/Modal/Modal";
 import HagueDocUpload from "../Dialogs/HagueDocUpload";
 import NonHagueDocUpload from "../Dialogs/NonHagueDocUpload";
 import InfoCard from "../Common/InfoCard";
+import DocumentUpload from "../Common/DocumentUpload";
 
 const payments = ["Credit Card", "PayPal", "Bank Transfer"];
 
@@ -43,6 +44,8 @@ export default function USAppostileAndLegalizationForm() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [uploadDocumentModalOpen, setUploadDocumentModalOpen] = useState(false);
   const [uploadButtonDisabled, setUploadButtonDisabled] = useState(true);
+  const [preSubmissionDetailsAvailable, setPreSubmissionDetailsAvailable] =
+    useState(false);
   const [filteredDocuments, setFilteredDocuments] =
     useState<DocType[]>(documentTypes);
   const [infoCardVisible, setInfoCardVisible] = useState(false);
@@ -257,36 +260,64 @@ export default function USAppostileAndLegalizationForm() {
 
         {/* Upload */}
         <Grid size={{ xs: 12 }}>
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() => setUploadDocumentModalOpen(true)}
-            disabled={uploadButtonDisabled}
-            sx={{
+          <div
+            style={{
+              border: "1px solid rgba(0,0,0,0.12)",
+              borderRadius: "8px",
+              padding: "20px",
+              backgroundColor: "#fafbfc",
               width: "100%",
-              py: 1,
-              "&.Mui-disabled": {
-                color: "grey.500",
-              },
             }}
           >
-            Upload Documents
-          </Button>
-          {country?.countryTypeId === 501 ? (
-            <HagueDocUpload
-              open={uploadDocumentModalOpen}
-              setOpen={setUploadDocumentModalOpen}
-              country={country}
-              documentType={document?.docCategoryId}
-            />
-          ) : (
-            <NonHagueDocUpload
-              open={uploadDocumentModalOpen}
-              setOpen={setUploadDocumentModalOpen}
-              country={country}
-              documentType={document?.docCategoryId}
-            />
-          )}
+            <h4
+              style={{
+                fontSize: "1.05rem",
+                fontWeight: 600,
+                marginBottom: "16px",
+                color: "#333",
+              }}
+            >
+              Document Submission
+            </h4>
+
+            {/* Upload Popup Button */}
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => setUploadDocumentModalOpen(true)}
+              disabled={uploadButtonDisabled || !preSubmissionDetailsAvailable}
+              sx={{
+                mb: 2,
+                width: "100%",
+                "&.Mui-disabled": { color: "grey.500" },
+              }}
+            >
+              Provide Pre-Submission Details
+            </Button>
+
+            {/* Integrated Document Upload Section */}
+
+            <DocumentUpload country={country} />
+
+            {/* Conditional Modals for Hague / Non-Hague */}
+            {country?.countryTypeId === 501 ? (
+              <HagueDocUpload
+                open={uploadDocumentModalOpen}
+                setOpen={setUploadDocumentModalOpen}
+                country={country}
+                documentType={document?.docCategoryId}
+                onStepsAvailableChange={setPreSubmissionDetailsAvailable}
+              />
+            ) : country?.countryTypeId === 502 ? (
+              <NonHagueDocUpload
+                open={uploadDocumentModalOpen}
+                setOpen={setUploadDocumentModalOpen}
+                country={country}
+                documentType={document?.docCategoryId}
+                onStepsAvailableChange={setPreSubmissionDetailsAvailable}
+              />
+            ) : null}
+          </div>
         </Grid>
 
         {/* Service */}

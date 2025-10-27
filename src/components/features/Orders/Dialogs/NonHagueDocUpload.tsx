@@ -353,11 +353,13 @@ export default function NonHagueDocUpload({
   setOpen,
   country,
   documentType,
+  onStepsAvailableChange,
 }: {
   open: any;
   setOpen: any;
   country?: any;
   documentType?: number;
+  onStepsAvailableChange?: (hasSteps: boolean) => void;
 }) {
   const [activeStep, setActiveStep] = useState(0);
   const [shouldProceed, setShouldProceed] = useState(true);
@@ -399,19 +401,16 @@ export default function NonHagueDocUpload({
           props: { onValidate: setShouldProceed },
         }
       : null,
-
-    {
-      label: "Document Upload",
-      component: UploadDocs,
-      props: { country, documentType },
-    },
-    { label: "Photocopy upload", component: AddPhotocopies },
-    { label: "Confirmation", component: Confirmation, props: { values } },
   ].filter(Boolean) as {
     label: string;
     component: React.ComponentType<any>;
     props?: any;
   }[];
+
+  // ✅ Notify parent whether steps exist
+  useEffect(() => {
+    onStepsAvailableChange?.(steps.length > 0);
+  }, [steps.length, onStepsAvailableChange]);
 
   const handleNext = () => {
     setActiveStep((s) => Math.min(s + 1, steps.length - 1));
@@ -436,6 +435,8 @@ export default function NonHagueDocUpload({
     handleClose();
   };
 
+  if (!steps.length) return null;
+
   return (
     <Modal open={open} onClose={handleClose}>
       <Box
@@ -457,13 +458,6 @@ export default function NonHagueDocUpload({
           gap: 2,
         }}
       >
-        <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 2 }}>
-          {steps.map(({ label }) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
         <Box sx={{ mt: 1, minHeight: 160 }}>
           {(() => {
             const StepComponent = steps[activeStep].component;
