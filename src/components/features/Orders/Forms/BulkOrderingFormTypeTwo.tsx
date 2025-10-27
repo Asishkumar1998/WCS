@@ -9,6 +9,9 @@ import {
   Button,
   Typography,
   Grid,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
@@ -35,6 +38,9 @@ export default function BulkOrderingFormTypeTwo() {
 
   const [docEntries, setDocEntries] = useState<DocumentEntry[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [additionalServicesState, setAdditionalServicesState] =
+    useState(AdditionalServices);
+  const [disabled, setDisabled] = useState(false);
 
   // When docs are chosen in dropdown and user clicks upload
   const openDialogForDocs = () => {
@@ -102,17 +108,17 @@ export default function BulkOrderingFormTypeTwo() {
         </Grid>
 
         {/* Service */}
-        <Grid size={{ xs: 12, sm: 6 }}>
+        {/* <Grid size={{ xs: 12, sm: 6 }}>
           <Dropdown
             label="Select Service *"
             options={Services}
             value={service}
             onChange={setService}
           />
-        </Grid>
+        </Grid> */}
 
         {/* Additional Service */}
-        <Grid size={{ xs: 12, sm: 6 }}>
+        {/* <Grid size={{ xs: 12, sm: 6 }}>
           <Dropdown
             label="Additional Service"
             options={AdditionalServices}
@@ -120,6 +126,78 @@ export default function BulkOrderingFormTypeTwo() {
             onChange={setAdditionalServices}
             multiple
           />
+        </Grid> */}
+        <Grid size={{ xs: 12 }}>
+          <div
+            style={{
+              border: "1px solid rgba(0,0,0,0.12)",
+              borderRadius: "8px",
+              padding: "16px 20px",
+              backgroundColor: "#fafbfc",
+              width: "100%",
+            }}
+          >
+            <h4
+              style={{
+                fontSize: "1.05rem",
+                fontWeight: 600,
+                marginBottom: "12px",
+                color: "#333",
+              }}
+            >
+              Additional Services
+            </h4>
+
+            <FormGroup
+              style={{
+                paddingLeft: "4px", // keeps checkboxes visually aligned with title
+              }}
+            >
+              <Grid container spacing={1.5}>
+                {additionalServicesState.map((service) => (
+                  <Grid key={service} size={{ xs: 12, sm: 6, md: 4 }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={additionalServices.includes(service)}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setAdditionalServices((prev) =>
+                              checked
+                                ? [...prev, service]
+                                : prev.filter((s) => s !== service)
+                            );
+                          }}
+                          disabled={disabled}
+                          sx={{
+                            color: "#1a73e8",
+                            "&.Mui-checked": {
+                              color: "#1a73e8",
+                            },
+                          }}
+                        />
+                      }
+                      label={service}
+                      sx={{
+                        border: "1px solid rgba(0,0,0,0.12)",
+                        borderRadius: "8px",
+                        px: 1.5,
+                        py: 0.75,
+                        width: "100%",
+                        backgroundColor: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        transition: "background-color 0.2s ease",
+                        "&:hover": {
+                          backgroundColor: "#f7f9fc",
+                        },
+                      }}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </FormGroup>
+          </div>
         </Grid>
 
         {/* Comments */}
@@ -133,14 +211,14 @@ export default function BulkOrderingFormTypeTwo() {
         </Grid>
 
         {/* Payment */}
-        <Grid size={{ xs: 12 }}>
+        {/* <Grid size={{ xs: 12 }}>
           <Dropdown
             label="Payment Method *"
             options={payments}
             value={payment}
             onChange={setPayment}
           />
-        </Grid>
+        </Grid> */}
       </Grid>
 
       {/* Popup for uploading + references */}

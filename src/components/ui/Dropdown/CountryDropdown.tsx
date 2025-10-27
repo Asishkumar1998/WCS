@@ -8,6 +8,7 @@ import {
   FormControl,
   Checkbox,
 } from "@mui/material";
+import { createFilterOptions } from "@mui/material/Autocomplete";
 import { countries } from "@/dataset/countries";
 
 interface Country {
@@ -37,8 +38,14 @@ interface CountrySelectProps {
   fullWidth?: boolean;
   value: Country | Country[] | null;
   onChange: (value: Country | Country[] | null) => void;
-  style?: React.CSSProperties; // 🔹 new style prop
+  style?: React.CSSProperties;
 }
+
+// Custom filter to include both short and full names
+const filter = createFilterOptions<Country>({
+  stringify: (option) =>
+    `${option.countryName} ${option.countryShortName} ${option.GENC2ACode}`,
+});
 
 const CountrySelect: React.FC<CountrySelectProps> = ({
   label = "Select country",
@@ -53,7 +60,8 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
       <Autocomplete
         multiple={multiple}
         options={countries}
-        getOptionLabel={(option) => option.countryName}
+        getOptionLabel={(option) => option.countryShortName || ""}
+        filterOptions={(options, params) => filter(options, params)}
         value={value as any}
         onChange={(_, newValue) => onChange(newValue as any)}
         disableCloseOnSelect={multiple}

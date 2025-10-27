@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Button, SelectChangeEvent, Grid } from "@mui/material";
+import {
+  Button,
+  SelectChangeEvent,
+  Grid,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
+} from "@mui/material";
 import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
 import FormLayout from "@/components/ui/Forms/FormLayout";
@@ -181,6 +188,12 @@ export default function USAppostileAndLegalizationForm() {
     }
   };
 
+  const handleCountrySelect = (value: any) => {
+    setCountry(value);
+    setDocument(null);
+    setAdditionalServices([]);
+  };
+
   useEffect(() => {
     if (country) {
       if (country.isShipping === 0) {
@@ -224,7 +237,7 @@ export default function USAppostileAndLegalizationForm() {
           <CountrySelect
             label="Select Country *"
             value={country}
-            onChange={setCountry}
+            onChange={handleCountrySelect}
           />
         </Grid>
 
@@ -277,7 +290,7 @@ export default function USAppostileAndLegalizationForm() {
         </Grid>
 
         {/* Service */}
-        <Grid size={{ xs: 12, sm: 6 }}>
+        {/* <Grid size={{ xs: 12, sm: 6 }}>
           <Dropdown
             label="Select Service *"
             options={Services}
@@ -285,10 +298,10 @@ export default function USAppostileAndLegalizationForm() {
             onChange={() => handleDropdownChange(setService)}
             disabled={disabled}
           />
-        </Grid>
+        </Grid> */}
 
         {/* Additional Service */}
-        <Grid size={{ xs: 12, sm: 6 }}>
+        {/* <Grid size={{ xs: 12, sm: 6 }}>
           <Dropdown
             label="Additional Service"
             options={additionalServicesState}
@@ -297,6 +310,78 @@ export default function USAppostileAndLegalizationForm() {
             multiple
             disabled={disabled}
           />
+        </Grid> */}
+        <Grid size={{ xs: 12 }}>
+          <div
+            style={{
+              border: "1px solid rgba(0,0,0,0.12)",
+              borderRadius: "8px",
+              padding: "16px 20px",
+              backgroundColor: "#fafbfc",
+              width: "100%",
+            }}
+          >
+            <h4
+              style={{
+                fontSize: "1.05rem",
+                fontWeight: 600,
+                marginBottom: "12px",
+                color: "#333",
+              }}
+            >
+              Additional Services
+            </h4>
+
+            <FormGroup
+              style={{
+                paddingLeft: "4px", // keeps checkboxes visually aligned with title
+              }}
+            >
+              <Grid container spacing={1.5}>
+                {additionalServicesState.map((service) => (
+                  <Grid key={service} size={{ xs: 12, sm: 6, md: 4 }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={additionalServices.includes(service)}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setAdditionalServices((prev) =>
+                              checked
+                                ? [...prev, service]
+                                : prev.filter((s) => s !== service)
+                            );
+                          }}
+                          disabled={disabled}
+                          sx={{
+                            color: "#1a73e8",
+                            "&.Mui-checked": {
+                              color: "#1a73e8",
+                            },
+                          }}
+                        />
+                      }
+                      label={service}
+                      sx={{
+                        border: "1px solid rgba(0,0,0,0.12)",
+                        borderRadius: "8px",
+                        px: 1.5,
+                        py: 0.75,
+                        width: "100%",
+                        backgroundColor: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        transition: "background-color 0.2s ease",
+                        "&:hover": {
+                          backgroundColor: "#f7f9fc",
+                        },
+                      }}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </FormGroup>
+          </div>
         </Grid>
 
         <InfoCard
@@ -305,20 +390,20 @@ export default function USAppostileAndLegalizationForm() {
         />
 
         {/* Customer Reference + Return Instructions (side by side) */}
-        <Grid size={{ xs: 12, sm: 6 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 12 }}>
           <InputField
             label="Customer Reference"
             placeholder="Enter reference number"
             disabled={disabled}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
+        {/* <Grid size={{ xs: 12, sm: 6 }}>
           <InputField
             label="Return Instructions"
             placeholder="e.g. Shipping label details"
             disabled={disabled}
           />
-        </Grid>
+        </Grid> */}
 
         {/* Additional Comments (multiline) */}
         <Grid size={{ xs: 12 }}>
@@ -332,7 +417,7 @@ export default function USAppostileAndLegalizationForm() {
         </Grid>
 
         {/* Payment */}
-        <Grid size={{ xs: 12 }}>
+        {/* <Grid size={{ xs: 12 }}>
           <Dropdown
             label="Payment Method *"
             options={payments}
@@ -340,7 +425,7 @@ export default function USAppostileAndLegalizationForm() {
             onChange={() => handleDropdownChange(setPayment)}
             disabled={disabled}
           />
-        </Grid>
+        </Grid> */}
       </Grid>
       <Modal
         open={modal.open}

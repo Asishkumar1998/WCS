@@ -51,11 +51,6 @@ export default function GlobalAuthenticationForm() {
         />
       </Grid>
 
-      {/* Upload */}
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <FileUploadField label="Upload Docs *" />
-      </Grid>
-
       {/* Reference */}
       <Grid size={{ xs: 12, sm: 6 }}>
         <InputField
@@ -64,12 +59,17 @@ export default function GlobalAuthenticationForm() {
         />
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 6 }}>
+      {/* Upload */}
+      <Grid size={{ xs: 12, sm: 6, md: 12 }}>
+        <FileUploadField label="Upload Docs *" />
+      </Grid>
+
+      {/* <Grid size={{ xs: 12, sm: 6 }}>
         <InputField
           label="Return Instructions *"
           placeholder="Shipping Label/Return Instructions"
         />
-      </Grid>
+      </Grid> */}
 
       {/* Comments */}
       <Grid size={{ xs: 12 }}>
@@ -83,14 +83,14 @@ export default function GlobalAuthenticationForm() {
 
       {/* Return + Payment */}
 
-      <Grid size={{ xs: 12, sm: 6, md: 12 }}>
+      {/* <Grid size={{ xs: 12, sm: 6, md: 12 }}>
         <Dropdown
           label="Payment *"
           options={payments}
           value={payment}
           onChange={() => handleDropdownChange(setPayment)}
         />
-      </Grid>
+      </Grid> */}
     </FormLayout>
   );
 }

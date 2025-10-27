@@ -31,10 +31,10 @@ const FormLayout: React.FC<FormLayoutProps> = ({ title, children }) => {
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}
         >
           <Button variant="outlined" color="primary">
-            Save
+            Add to cart
           </Button>
           <Button variant="contained" color="primary">
-            Submit
+            Proceed to cart
           </Button>
         </Grid>
       </Grid>

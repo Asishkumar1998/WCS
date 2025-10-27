@@ -33,7 +33,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import logo from "../../../../public/logo.png";
+import logo from "../../../../public/logo-new.png";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import { toggleDrawer } from "@/app/store/features/uiSlice";
@@ -281,12 +281,25 @@ const SideDrawer = () => {
             padding: 20,
           }}
         >
-          <Image
-            src={logo}
-            width={open ? 100 : 50}
-            height={open ? 100 : 50}
-            alt="Logo"
-          />
+          <Link href={"/"}>
+            <div
+              style={{
+                position: "relative",
+                width: open ? 150 : 50,
+                height: open ? 60 : 30, // Adjust height to match actual aspect ratio
+              }}
+            >
+              <Image
+                src={logo}
+                alt="Logo"
+                fill
+                style={{
+                  objectFit: "contain", // keeps aspect ratio intact
+                }}
+                priority
+              />
+            </div>
+          </Link>
         </div>
 
         <Divider sx={{ borderColor: "#2c3e50" }} />
