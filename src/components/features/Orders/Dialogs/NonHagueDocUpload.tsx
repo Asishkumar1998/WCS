@@ -189,9 +189,11 @@ function ShippingCoCI({
 
 function NotarizedFromSecretaryOfState({
   onValidate,
+  onValueChange,
   country,
 }: {
   onValidate: (valid: boolean) => void;
+  onValueChange: (key: string, value: any) => void;
   country: any;
 }) {
   const [isNotarized, setIsNotarized] = useState("");
@@ -202,9 +204,27 @@ function NotarizedFromSecretaryOfState({
     useState("");
 
   useEffect(() => {
-    if (isNotarized === "yes") onValidate(true);
-    else onValidate(false);
-  }, [isNotarized]);
+    // Validation
+    onValidate(isNotarized === "yes");
+
+    // Push summary key-values up
+    onValueChange("Notarized & certified in your state?", isNotarized);
+    onValueChange(
+      "Document from another state?",
+      country?.countryShortName == "Lebanon"
+        ? docOriginFromSelectiveStates
+        : otherState
+    );
+    onValueChange(
+      "U.S. Dept. of State certified?",
+      certificationObtainedFromUS
+    );
+  }, [
+    isNotarized,
+    otherState,
+    docOriginFromSelectiveStates,
+    certificationObtainedFromUS,
+  ]);
 
   return (
     <Box>
@@ -354,12 +374,14 @@ export default function NonHagueDocUpload({
   country,
   documentType,
   onStepsAvailableChange,
+  onValueChange,
 }: {
   open: any;
   setOpen: any;
   country?: any;
   documentType?: number;
   onStepsAvailableChange?: (hasSteps: boolean) => void;
+  onValueChange: (key: string, value: any) => void;
 }) {
   const [activeStep, setActiveStep] = useState(0);
   const [shouldProceed, setShouldProceed] = useState(true);
@@ -390,7 +412,7 @@ export default function NonHagueDocUpload({
       ? {
           label: "Notarized from In-State SOS",
           component: NotarizedFromSecretaryOfState,
-          props: { onValidate: setShouldProceed, country },
+          props: { onValidate: setShouldProceed, country, onValueChange },
         }
       : null,
 

@@ -164,12 +164,14 @@ export default function HagueDocUpload({
   country,
   documentType,
   onStepsAvailableChange,
+  onValueChange,
 }: {
   open: any;
   setOpen: any;
   country?: any;
   documentType?: number;
   onStepsAvailableChange?: (hasSteps: boolean) => void;
+  onValueChange: (key: string, value: any) => void;
 }) {
   const [activeStep, setActiveStep] = useState(0);
   const [shouldProceed, setShouldProceed] = useState(true);

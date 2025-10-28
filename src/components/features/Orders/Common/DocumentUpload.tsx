@@ -29,20 +29,21 @@ export default function DocumentUpload({ country }: { country: any }) {
       sx={{
         border: "1px solid rgba(0,0,0,0.12)",
         borderRadius: "8px",
-        p: 2.5,
+        py: 1,
+        px: 2.5,
         backgroundColor: "#fafbfc",
         width: "100%",
       }}
     >
       <Typography
         variant="h6"
-        sx={{ mb: 2, fontSize: "1.05rem", fontWeight: 600, color: "#333" }}
+        sx={{ mb: 1, fontSize: "1.05rem", fontWeight: 600, color: "#333" }}
       >
         Upload Documents
       </Typography>
 
       {/* Upload Button */}
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 1 }}>
         <FileUploadField label="Choose file" />
       </Box>
 
@@ -50,9 +51,14 @@ export default function DocumentUpload({ country }: { country: any }) {
       <RadioGroup
         value={nestedSelection}
         onChange={(e) => setNestedSelection(e.target.value as any)}
+        sx={{
+          "& .MuiFormControlLabel-root": {
+            mb: -1,
+          },
+        }}
       >
         {/* Proceed with Attached Documents */}
-        <Box sx={{ mb: 1.5, display: "flex", flexDirection: "column" }}>
+        <Box sx={{ display: "flex", flexDirection: "column" }}>
           <FormControlLabel
             value="proceedWithAttached"
             control={<Radio />}
@@ -65,7 +71,7 @@ export default function DocumentUpload({ country }: { country: any }) {
               value={numPages}
               onChange={(e) => setNumPages(e.target.value)}
               size="small"
-              sx={{ mt: 1, width: { xs: "100%", sm: "50%" } }}
+              sx={{ width: { xs: "100%", sm: "50%" } }}
             />
           )}
         </Box>

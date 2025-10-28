@@ -8,6 +8,8 @@ import {
   FormGroup,
   FormControlLabel,
   Checkbox,
+  Typography,
+  Box,
 } from "@mui/material";
 import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
@@ -28,6 +30,56 @@ const payments = ["Credit Card", "PayPal", "Bank Transfer"];
 
 const STOP_DOCS_HAGUE_COUNTRIES = [6, 15, 28, 29, 30, 31, 35, 36];
 const STOP_DOCS_NON_HAGUE_COUNTRIES = [6, 12, 28, 29, 30, 31, 35, 36];
+
+function SummaryStep({ stepData }: { stepData: Record<string, any> }) {
+  const relevantKeys = [
+    "Notarized & certified in your state?",
+    "Document from another state?",
+    "U.S. Dept. of State certified?",
+  ];
+
+  const filteredData = relevantKeys
+    .map((key) => [key, stepData[key]])
+    .filter(([_, v]) => v !== undefined && v !== "");
+
+  return (
+    <Box>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 1.5,
+          mt: 2,
+        }}
+      >
+        {filteredData.map(([key, value]) => (
+          <Box
+            key={key}
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              p: 1,
+              bgcolor: "white",
+              borderRadius: 1,
+              boxShadow: "0 0 3px rgba(0,0,0,0.05)",
+            }}
+          >
+            <Typography sx={{ fontWeight: 600 }}>{key}</Typography>
+            <Typography
+              sx={{
+                color: value === "yes" ? "success.main" : "error.main",
+                textTransform: "capitalize",
+              }}
+            >
+              {value || "-"}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+}
 
 export default function USAppostileAndLegalizationForm() {
   const [country, setCountry] = useState<any>(null);
@@ -51,6 +103,16 @@ export default function USAppostileAndLegalizationForm() {
   const [infoCardVisible, setInfoCardVisible] = useState(false);
   const [additionalServicesState, setAdditionalServicesState] =
     useState(AdditionalServices);
+  const [summaryData, setSummaryData] = useState<Record<string, any>>({});
+
+  const handleValueChange = (key: string, value: any) => {
+    setSummaryData((prev) => ({
+      ...prev,
+      [key]: value, // update or add key
+    }));
+  };
+
+  console.log(summaryData, "summary dat");
 
   const handleDropdownChange =
     (setter: React.Dispatch<React.SetStateAction<string>>) =>
@@ -221,11 +283,13 @@ export default function USAppostileAndLegalizationForm() {
         ...AdditionalServices,
         "Optional Arab Chamber Stamp",
       ]);
+    } else {
+      setAdditionalServicesState([...AdditionalServices]);
     }
   }, [country, document]);
 
   useEffect(() => {
-    if (additionalServices.includes("Rush/Expedited Service")) {
+    if (additionalServices.includes("Rush")) {
       setInfoCardVisible(true);
     } else {
       setInfoCardVisible(false);
@@ -234,7 +298,7 @@ export default function USAppostileAndLegalizationForm() {
 
   return (
     <FormLayout title="U.S. Apostilles and Legalizations">
-      <Grid container spacing={2}>
+      <Grid alignItems="stretch" container spacing={2}>
         {/* Country */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <CountrySelect
@@ -242,6 +306,25 @@ export default function USAppostileAndLegalizationForm() {
             value={country}
             onChange={handleCountrySelect}
           />
+        </Grid>
+
+        {/* Service */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              border: "1px solid rgba(0,0,0,0.12)",
+              borderRadius: "4px",
+              gap: 1,
+              padding: "15px",
+            }}
+          >
+            <Typography sx={{ fontWeight: 500 }}>Selected Service:</Typography>
+            <Typography color="primary" sx={{ fontWeight: 600 }}>
+              {"Appostile"}
+            </Typography>
+          </Box>
         </Grid>
 
         {/* Document */}
@@ -257,47 +340,93 @@ export default function USAppostileAndLegalizationForm() {
             disabled={country ? false : true}
           />
         </Grid>
-
-        {/* Upload */}
-        <Grid size={{ xs: 12 }}>
-          <div
-            style={{
+        {/*Additional Services */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid
+            container
+            alignItems="center"
+            sx={{
               border: "1px solid rgba(0,0,0,0.12)",
-              borderRadius: "8px",
-              padding: "20px",
-              backgroundColor: "#fafbfc",
-              width: "100%",
+              borderRadius: "4px",
+              padding: "6px 14px",
             }}
           >
-            <h4
-              style={{
+            <Grid>{/* <Typography>Add. Services</Typography> */}</Grid>
+            <Grid>
+              <FormGroup row>
+                {additionalServicesState.map((service) => (
+                  <FormControlLabel
+                    key={service}
+                    control={
+                      <Checkbox
+                        checked={additionalServices.includes(service)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setAdditionalServices((prev) =>
+                            checked
+                              ? [...prev, service]
+                              : prev.filter((s) => s !== service)
+                          );
+                        }}
+                        disabled={disabled}
+                      />
+                    }
+                    label={service}
+                  />
+                ))}
+              </FormGroup>
+            </Grid>
+          </Grid>
+        </Grid>
+
+        {/* Document Upload */}
+        <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex" }}>
+          <Box sx={{ flex: 1 }}>
+            <DocumentUpload country={country} />
+          </Box>
+        </Grid>
+
+        {/* Upload Section */}
+        <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex" }}>
+          <Box
+            sx={{
+              flex: 1,
+              bgcolor: "#fafbfc",
+              borderRadius: 2,
+              px: 2,
+              py: 1,
+              border: "1px solid rgba(0,0,0,0.1)",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 1,
                 fontSize: "1.05rem",
                 fontWeight: 600,
-                marginBottom: "16px",
                 color: "#333",
               }}
             >
-              Document Submission
-            </h4>
-
-            {/* Upload Popup Button */}
+              Additional Details
+            </Typography>
             <Button
               variant="outlined"
               color="primary"
               onClick={() => setUploadDocumentModalOpen(true)}
               disabled={uploadButtonDisabled || !preSubmissionDetailsAvailable}
               sx={{
-                mb: 2,
                 width: "100%",
                 "&.Mui-disabled": { color: "grey.500" },
               }}
             >
-              Provide Pre-Submission Details
+              Select Additional Details
             </Button>
 
-            {/* Integrated Document Upload Section */}
-
-            <DocumentUpload country={country} />
+            <Box sx={{ flex: 1, overflow: "auto" }}>
+              <SummaryStep stepData={summaryData} />
+            </Box>
 
             {/* Conditional Modals for Hague / Non-Hague */}
             {country?.countryTypeId === 501 ? (
@@ -307,6 +436,7 @@ export default function USAppostileAndLegalizationForm() {
                 country={country}
                 documentType={document?.docCategoryId}
                 onStepsAvailableChange={setPreSubmissionDetailsAvailable}
+                onValueChange={handleValueChange}
               />
             ) : country?.countryTypeId === 502 ? (
               <NonHagueDocUpload
@@ -315,104 +445,10 @@ export default function USAppostileAndLegalizationForm() {
                 country={country}
                 documentType={document?.docCategoryId}
                 onStepsAvailableChange={setPreSubmissionDetailsAvailable}
+                onValueChange={handleValueChange}
               />
             ) : null}
-          </div>
-        </Grid>
-
-        {/* Service */}
-        {/* <Grid size={{ xs: 12, sm: 6 }}>
-          <Dropdown
-            label="Select Service *"
-            options={Services}
-            value={service}
-            onChange={() => handleDropdownChange(setService)}
-            disabled={disabled}
-          />
-        </Grid> */}
-
-        {/* Additional Service */}
-        {/* <Grid size={{ xs: 12, sm: 6 }}>
-          <Dropdown
-            label="Additional Service"
-            options={additionalServicesState}
-            value={additionalServices}
-            onChange={setAdditionalServices}
-            multiple
-            disabled={disabled}
-          />
-        </Grid> */}
-        <Grid size={{ xs: 12 }}>
-          <div
-            style={{
-              border: "1px solid rgba(0,0,0,0.12)",
-              borderRadius: "8px",
-              padding: "16px 20px",
-              backgroundColor: "#fafbfc",
-              width: "100%",
-            }}
-          >
-            <h4
-              style={{
-                fontSize: "1.05rem",
-                fontWeight: 600,
-                marginBottom: "12px",
-                color: "#333",
-              }}
-            >
-              Additional Services
-            </h4>
-
-            <FormGroup
-              style={{
-                paddingLeft: "4px", // keeps checkboxes visually aligned with title
-              }}
-            >
-              <Grid container spacing={1.5}>
-                {additionalServicesState.map((service) => (
-                  <Grid key={service} size={{ xs: 12, sm: 6, md: 4 }}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={additionalServices.includes(service)}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            setAdditionalServices((prev) =>
-                              checked
-                                ? [...prev, service]
-                                : prev.filter((s) => s !== service)
-                            );
-                          }}
-                          disabled={disabled}
-                          sx={{
-                            color: "#1a73e8",
-                            "&.Mui-checked": {
-                              color: "#1a73e8",
-                            },
-                          }}
-                        />
-                      }
-                      label={service}
-                      sx={{
-                        border: "1px solid rgba(0,0,0,0.12)",
-                        borderRadius: "8px",
-                        px: 1.5,
-                        py: 0.75,
-                        width: "100%",
-                        backgroundColor: "#fff",
-                        display: "flex",
-                        alignItems: "center",
-                        transition: "background-color 0.2s ease",
-                        "&:hover": {
-                          backgroundColor: "#f7f9fc",
-                        },
-                      }}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            </FormGroup>
-          </div>
+          </Box>
         </Grid>
 
         <InfoCard
@@ -421,42 +457,22 @@ export default function USAppostileAndLegalizationForm() {
         />
 
         {/* Customer Reference + Return Instructions (side by side) */}
-        <Grid size={{ xs: 12, sm: 6, md: 12 }}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <InputField
             label="Customer Reference"
             placeholder="Enter reference number"
             disabled={disabled}
           />
         </Grid>
-        {/* <Grid size={{ xs: 12, sm: 6 }}>
-          <InputField
-            label="Return Instructions"
-            placeholder="e.g. Shipping label details"
-            disabled={disabled}
-          />
-        </Grid> */}
 
         {/* Additional Comments (multiline) */}
-        <Grid size={{ xs: 12 }}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <InputField
             label="Additional Comments"
             placeholder="Enter comments..."
-            multiline
-            rows={3}
             disabled={disabled}
           />
         </Grid>
-
-        {/* Payment */}
-        {/* <Grid size={{ xs: 12 }}>
-          <Dropdown
-            label="Payment Method *"
-            options={payments}
-            value={payment}
-            onChange={() => handleDropdownChange(setPayment)}
-            disabled={disabled}
-          />
-        </Grid> */}
       </Grid>
       <Modal
         open={modal.open}

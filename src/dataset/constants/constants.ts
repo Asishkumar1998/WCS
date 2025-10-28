@@ -5,8 +5,4 @@ export const Services = [
   "Dispatch",
 ];
 
-export const AdditionalServices = [
-  "Pre-Scan",
-  "Post-Scan",
-  "Rush/Expedited Service",
-];
+export const AdditionalServices = ["Pre-Scan", "Post-Scan", "Rush"];
