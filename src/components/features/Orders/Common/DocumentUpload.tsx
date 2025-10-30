@@ -52,6 +52,10 @@ export default function DocumentUpload({ country }: { country: any }) {
         value={nestedSelection}
         onChange={(e) => setNestedSelection(e.target.value as any)}
         sx={{
+          "& .MuiFormControlLabel-label": {
+            fontSize: { xs: "0.85rem", sm: "0.9rem" },
+            whiteSpace: "nowrap",
+          },
           "& .MuiFormControlLabel-root": {
             mb: -1,
           },

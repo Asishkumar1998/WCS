@@ -6,7 +6,7 @@ import USAppostileAndLegalizationSidebar from "@/components/features/Orders/Side
 
 export default function NotaryService() {
   return (
-    <Container maxWidth="xl" sx={{ mt: 12 }}>
+    <Container maxWidth="xl" sx={{ mt: 11 }}>
       <Grid container spacing={2}>
         {/* Left side - form */}
         <Grid size={{ xs: 12, md: 8 }}>

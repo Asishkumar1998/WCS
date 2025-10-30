@@ -9,6 +9,7 @@ import SideDrawer from "@/components/layout/SideDrawer/SideDrawer";
 import { ThemeProvider } from "@mui/material";
 import { theme } from "@/theme/theme";
 import Navbar from "@/components/layout/NavBar/NavBar";
+import { usePathname } from "next/navigation";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -21,6 +22,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const hideLayout = ["/login", "/signup"].includes(pathname);
+
   return (
     <html lang="en">
       <body className={`${roboto.variable}`}>
@@ -28,9 +32,9 @@ export default function RootLayout({
           <Provider store={store}>
             <ThemeProvider theme={theme}>
               <div style={{ display: "flex" }}>
-                <SideDrawer />
-                <Navbar />
-                <main style={{ flexGrow: 1, padding: "1rem" }}>{children}</main>
+                {!hideLayout && <SideDrawer />}
+                {!hideLayout && <Navbar />}
+                <main style={{ flexGrow: 1 }}>{children}</main>
               </div>
             </ThemeProvider>
           </Provider>

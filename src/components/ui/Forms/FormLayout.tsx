@@ -11,16 +11,16 @@ interface FormLayoutProps {
 
 const FormLayout: React.FC<FormLayoutProps> = ({ title, children }) => {
   return (
-    <Paper sx={{ height: "100%", border: "1px solid #e0e0e0", p: 3 }}>
+    <Paper sx={{ height: "100%", border: "1px solid #e0e0e0", py: 1.5, px: 3 }}>
       <Typography
         color="primary.main"
         variant="h5"
-        sx={{ mb: 2, fontWeight: 600 }}
+        sx={{ mb: 1, fontWeight: 600 }}
       >
         {title}
       </Typography>
 
-      <Divider sx={{ mb: 4 }} />
+      <Divider sx={{ mb: 2.5 }} />
 
       <Grid container spacing={2}>
         {children}

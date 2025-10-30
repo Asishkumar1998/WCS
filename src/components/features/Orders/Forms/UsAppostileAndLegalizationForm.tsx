@@ -353,7 +353,20 @@ export default function USAppostileAndLegalizationForm() {
           >
             <Grid>{/* <Typography>Add. Services</Typography> */}</Grid>
             <Grid>
-              <FormGroup row>
+              <FormGroup
+                row
+                sx={{
+                  flexWrap: "nowrap",
+                  overflowX: "auto",
+                  "& .MuiFormControlLabel-label": {
+                    fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                    lineHeight: "16px",
+                  },
+                  "& .MuiCheckbox-root": {
+                    padding: "8px",
+                  },
+                }}
+              >
                 {additionalServicesState.map((service) => (
                   <FormControlLabel
                     key={service}

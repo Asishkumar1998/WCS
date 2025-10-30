@@ -6,7 +6,7 @@ import GlobalAuthenticationSidebar from "@/components/features/Orders/Sidebars/G
 
 export default function GlobalAuthentication() {
   return (
-    <Container maxWidth="xl" sx={{ mt: 12 }}>
+    <Container maxWidth="xl" sx={{ mt: 11 }}>
       <Grid container spacing={2}>
         {/* Left side - form */}
         <Grid size={{ xs: 12, md: 8 }}>
