@@ -219,7 +219,6 @@ export default function HagueDocUpload({
   };
   const handleSubmit = () => {
     // Submit logic goes here
-    console.log(values);
     handleClose();
   };
 

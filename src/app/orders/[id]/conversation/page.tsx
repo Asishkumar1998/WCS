@@ -39,13 +39,11 @@ export default function ConversationPage() {
 
   const handleSend = () => {
     const content = editorRef.current?.getContent();
-    console.log("Send:", content);
   };
 
   const handleBack = () => {
     // 👇 You can use router.back() if using Next.js router
     router.back();
-    console.log("Go back to orders page");
   };
 
   return (

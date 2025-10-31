@@ -453,7 +453,6 @@ export default function NonHagueDocUpload({
   };
   const handleSubmit = () => {
     // Submit logic goes here
-    console.log(values);
     handleClose();
   };
 

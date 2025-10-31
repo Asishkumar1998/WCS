@@ -1,31 +1,10 @@
+import { NewsItem } from "@/types";
 import { Card, CardContent, Box, Typography, Divider } from "@mui/material";
 
-interface NewsItem {
-  title: string;
-  date: string;
-}
-
-const NewsSection = () => {
-  const news: NewsItem[] = [
-    {
-      title: "WCS Processing New FDA Digital Documents, Business As Usual",
-      date: "Posted Feb 20, 2024",
-    },
-    {
-      title:
-        "Unwrapping the Sweet Surprise: Japanese KitKats Take Center Stage",
-      date: "Posted Feb 15, 2024",
-    },
-    {
-      title: "A New Era: China and Canada Join the Apostille Treaty",
-      date: "Posted Feb 10, 2024",
-    },
-  ];
-
+const NewsSection = ({ news }: { news: NewsItem[] }) => {
   return (
     <Card
       sx={{
-        height: "100%",
         border: "1px solid #e0e0e0",
         transition: "all 0.3s ease",
         "&:hover": {
@@ -51,18 +30,18 @@ const NewsSection = () => {
       </Box>
 
       {/* Content */}
-      <CardContent sx={{ p: 3 }}>
-        {news.map((item, index) => (
+      <CardContent sx={{ p: 3, overflowY: "auto", height: "35vh" }}>
+        {news?.map((item, index) => (
           <Box key={index}>
             <Box sx={{ mb: 2 }}>
               <Typography
                 variant="body1"
                 sx={{ fontWeight: 500, mb: 0.5, color: "#2c3e50" }}
               >
-                {item.title}
+                {item.title.rendered}
               </Typography>
               <Typography variant="body2" color="secondary.main">
-                {item.date}
+                {item.modified}
               </Typography>
             </Box>
             {index < news.length - 1 && <Divider sx={{ mb: 2 }} />}

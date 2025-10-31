@@ -1,8 +1,11 @@
 // src/components/forms/FormLayout.tsx
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Paper, Typography, Divider, Grid, Button } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/app/store/store";
+import { fetchFormsSharedData } from "@/app/store/features/formsSlice";
 
 interface FormLayoutProps {
   title: string;
@@ -10,6 +13,15 @@ interface FormLayoutProps {
 }
 
 const FormLayout: React.FC<FormLayoutProps> = ({ title, children }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const sharedFormData = useSelector((state: RootState) => state.formsData);
+
+  useEffect(() => {
+    if (!sharedFormData.countries.length) {
+      dispatch(fetchFormsSharedData());
+    }
+  }, [dispatch, sharedFormData]);
+
   return (
     <Paper sx={{ height: "100%", border: "1px solid #e0e0e0", py: 1.5, px: 3 }}>
       <Typography

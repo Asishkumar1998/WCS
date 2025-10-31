@@ -25,6 +25,9 @@ import HagueDocUpload from "../Dialogs/HagueDocUpload";
 import NonHagueDocUpload from "../Dialogs/NonHagueDocUpload";
 import InfoCard from "../Common/InfoCard";
 import DocumentUpload from "../Common/DocumentUpload";
+import { useSelector } from "react-redux";
+import { RootState } from "@/app/store/store";
+import Loader from "@/components/ui/Loader/Loader";
 
 const payments = ["Credit Card", "PayPal", "Bank Transfer"];
 
@@ -82,6 +85,7 @@ function SummaryStep({ stepData }: { stepData: Record<string, any> }) {
 }
 
 export default function USAppostileAndLegalizationForm() {
+  const { loading } = useSelector((state: RootState) => state.formsData);
   const [country, setCountry] = useState<any>(null);
   const [document, setDocument] = useState<DocType | null>(null);
   const [service, setService] = useState("");
@@ -111,8 +115,6 @@ export default function USAppostileAndLegalizationForm() {
       [key]: value, // update or add key
     }));
   };
-
-  console.log(summaryData, "summary dat");
 
   const handleDropdownChange =
     (setter: React.Dispatch<React.SetStateAction<string>>) =>
@@ -295,6 +297,8 @@ export default function USAppostileAndLegalizationForm() {
       setInfoCardVisible(false);
     }
   }, [additionalServices]);
+
+  if (loading) return <Loader />;
 
   return (
     <FormLayout title="U.S. Apostilles and Legalizations">

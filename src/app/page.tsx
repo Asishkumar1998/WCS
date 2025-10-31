@@ -10,56 +10,56 @@ import NewsSection from "@/components/features/Dashboard/NewsSection";
 import CustomPieChart from "@/components/ui/Charts/PieChart";
 import ChartCard from "@/components/features/Dashboard/ChartCard";
 import { useRouter } from "next/navigation";
-
-const services = [
-  {
-    icon: "/usembassy-dashboard-logo.png",
-    title: "U.S. Apostilles & Legalizations",
-    description: "Fast and reliable apostille services for US documents",
-    href: "/orders/new/us-authentication",
-  },
-  {
-    icon: "/globalembassy-dashboard-logo.png",
-    title: "Global Authentication (Canada, Europe, UK & Others)",
-    description: "International document authentication for worldwide use",
-    href: "/orders/new/global-authentication",
-  },
-  {
-    icon: "/translation-dashboard-logo.png",
-    title: "Translation Service",
-    description: "Certified translation services in multiple languages",
-    href: "/orders/new/translation-service",
-  },
-  {
-    icon: "/visaservice-dashboard-logo.png",
-    title: "Visa Service",
-    description: "Expert visa application assistance and processing",
-    href: "/orders/new/visa-service",
-  },
-  {
-    icon: "/notary-dashboard-logo.png",
-    title: "Notary Service",
-    description: "Official notarization of your documents.",
-    href: "/orders/new/notary-service",
-  },
-  {
-    icon: "/dispatch-dashboard-logo.png",
-    title: "Dispatch Service",
-    description: "Secure courier delivery with tracking.",
-    href: "/orders/new/dispatch-service",
-  },
-];
+import { DashboardServices } from "@/dataset/constants/constants";
+import { getNews, getUpdates } from "@/services/dashboardService";
+import { useEffect, useState } from "react";
+import { NewsItem, UpdateItem } from "@/types";
+import Loader from "@/components/ui/Loader/Loader";
 
 export default function HomePage() {
   const router = useRouter();
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [updates, setUpdates] = useState<UpdateItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function loadDashboardData() {
+    try {
+      const payload = {
+        news: {},
+        updates: {
+          updateStatus: 1621,
+          "order.desc.by": "publishedDate",
+          MR: 5,
+          PN: 1,
+        },
+      };
+      const [news, updates] = await Promise.all([
+        getNews(payload.news),
+        getUpdates(payload.updates),
+      ]);
+      setNews(news);
+      setUpdates(updates);
+    } catch (err) {
+      console.error("Error loading dashboard:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  if (loading) return <Loader />;
+
   return (
-    <Container maxWidth="xl" sx={{ px: 0 }}>
+    <Container maxWidth="xl" sx={{ px: 0, py: 2 }}>
       <Box sx={{ flexGrow: 1, pt: 3, mt: "64px" }}>
         <Grid container spacing={3}>
           {/* Left: Services */}
           <Grid container spacing={3} size={{ xs: 12, md: 6 }}>
             <Grid container spacing={2}>
-              {services.map((service, idx) => (
+              {DashboardServices.map((service, idx) => (
                 <Grid size={{ xs: 12, sm: 6, md: 12 }} key={idx}>
                   <ServiceCard
                     onClick={() => router.push(service.href)}
@@ -70,7 +70,7 @@ export default function HomePage() {
             </Grid>
             {/* Bottom: Updates + News */}
             <Grid size={{ xs: 12, md: 12 }}>
-              <UpdatesSection />
+              <UpdatesSection updates={updates} />
             </Grid>
           </Grid>
 
@@ -88,7 +88,7 @@ export default function HomePage() {
                 </ChartCard>
               </Grid>
               <Grid size={{ xs: 12, md: 12 }}>
-                <NewsSection />
+                <NewsSection news={news} />
               </Grid>
             </Grid>
           </Grid>
