@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -19,38 +19,18 @@ import {
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import CloseIcon from "@mui/icons-material/Close";
 import DoneIcon from "@mui/icons-material/Done";
-import CircleIcon from "@mui/icons-material/Circle";
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  country: string;
-  date: string;
-  unread: boolean;
-}
-
-const dummyNotifications: Notification[] = [
-  {
-    id: "1",
-    title: "Order Review",
-    message:
-      "Based on our review of the order placed by you, additional fees may apply.",
-    country: "Albania",
-    date: "2025-08-19T12:27:00",
-    unread: true,
-  },
-  {
-    id: "2",
-    title: "Payment Cancelled",
-    message: "Your payment request has been cancelled successfully.",
-    country: "UAE",
-    date: "2025-07-30T21:23:00",
-    unread: false,
-  },
-];
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/app/store/store";
+import {
+  markNotificationRead,
+  removeNotification,
+} from "@/app/store/features/userSlice";
+import type { Notification } from "@/types";
 
 export default function NotificationPopup() {
+  const dispatch = useDispatch();
+  const { notifications } = useSelector((state: RootState) => state.userData);
+
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [tab, setTab] = useState(0);
 
@@ -60,19 +40,40 @@ export default function NotificationPopup() {
   const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
+  const handleClose = () => setAnchorEl(null);
 
-  const handleClose = () => {
-    setAnchorEl(null);
+  // 🔹 Filtered notifications by tab
+  const filteredNotifications = useMemo(() => {
+    switch (tab) {
+      case 1:
+        return notifications.filter((n) => n.readStatus === "unread");
+      case 2:
+        return notifications.filter((n) => n.readStatus === "read");
+      default:
+        return notifications;
+    }
+  }, [tab, notifications]);
+
+  // 🔸 Count unread for badge
+  const unreadCount = notifications.filter(
+    (n) => n.readStatus === "unread"
+  ).length;
+
+  // 🔹 Mark as Read
+  const handleMarkAsRead = (notificationId: number) => {
+    dispatch(markNotificationRead(notificationId));
+  };
+
+  // 🔹 Dismiss notification
+  const handleDismiss = (notificationId: number) => {
+    dispatch(removeNotification(notificationId));
   };
 
   return (
     <>
       {/* Notification Bell */}
       <IconButton color="inherit" onClick={handleOpen}>
-        <Badge
-          badgeContent={dummyNotifications.filter((n) => n.unread).length}
-          color="error"
-        >
+        <Badge badgeContent={unreadCount} color="error">
           <NotificationsIcon />
         </Badge>
       </IconButton>
@@ -87,7 +88,7 @@ export default function NotificationPopup() {
         transformOrigin={{ vertical: "top", horizontal: "right" }}
         PaperProps={{
           sx: {
-            width: 400,
+            width: { xs: "90vw", sm: 400 },
             maxHeight: 500,
             borderRadius: 2,
             overflow: "hidden",
@@ -120,119 +121,129 @@ export default function NotificationPopup() {
         >
           <Tab label="All" />
           <Tab label="Unread" />
-          <Tab label="History" />
+          <Tab label="Read" />
         </Tabs>
         <Divider />
 
         {/* List */}
         <List dense disablePadding sx={{ maxHeight: 400, overflowY: "auto" }}>
-          {dummyNotifications.map((n) => {
-            const formattedDate = new Date(n.date).toLocaleString(undefined, {
-              dateStyle: "medium",
-              timeStyle: "short",
-            });
+          {filteredNotifications.length === 0 ? (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ textAlign: "center", py: 3 }}
+            >
+              {tab === 1
+                ? "No unread notifications 🎉"
+                : "No notifications yet"}
+            </Typography>
+          ) : (
+            filteredNotifications.map((n: Notification) => {
+              const formattedDate = new Date(n.createdAt).toLocaleString(
+                undefined,
+                {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                }
+              );
 
-            return (
-              <ListItem
-                key={n.id}
-                sx={{
-                  px: 2,
-                  py: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 1,
-                  bgcolor: n.unread
-                    ? "rgba(25, 118, 210, 0.08)"
-                    : "transparent",
-                  "&:hover": { bgcolor: "action.hover" },
-                }}
-              >
-                {/* Left side (Avatar + Text + Date) */}
-                <Tooltip
-                  title={n.message}
-                  arrow
-                  placement="top-start"
-                  componentsProps={{
-                    tooltip: {
-                      sx: { fontSize: "0.875rem", padding: 1 }, // Adjust fontSize as needed
-                    },
+              return (
+                <ListItem
+                  key={n.notificationId}
+                  sx={{
+                    px: 2,
+                    py: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 1,
+                    bgcolor:
+                      n.readStatus === "unread"
+                        ? "rgba(25, 118, 210, 0.08)"
+                        : "transparent",
+                    "&:hover": { bgcolor: "action.hover" },
+                    transition: "background-color 0.2s ease",
                   }}
                 >
-                  <Box
-                    display="flex"
-                    alignItems="center"
-                    gap={1}
-                    flex={1}
-                    minWidth={0}
+                  {/* Left side */}
+                  <Tooltip
+                    title={n.messageBody}
+                    arrow
+                    placement="top-start"
+                    componentsProps={{
+                      tooltip: {
+                        sx: { fontSize: "0.875rem", padding: 1 },
+                      },
+                    }}
                   >
-                    <Avatar
-                      sx={{
-                        bgcolor: "primary.main",
-                        fontSize: 14,
-                        width: 30,
-                        height: 30,
-                      }}
-                    >
-                      {n.country[0]}
-                    </Avatar>
-
                     <Box
                       display="flex"
-                      flexDirection="column"
+                      alignItems="center"
+                      gap={1}
                       flex={1}
                       minWidth={0}
                     >
+                      <Avatar
+                        sx={{
+                          bgcolor: "primary.main",
+                          fontSize: 14,
+                          width: 30,
+                          height: 30,
+                        }}
+                      >
+                        {n.countryName?.[0] || "N"}
+                      </Avatar>
+
                       <Box
                         display="flex"
-                        alignItems="center"
-                        gap={0.5}
-                        flexWrap="nowrap"
+                        flexDirection="column"
+                        flex={1}
+                        minWidth={0}
                       >
                         <Typography
                           variant="body2"
                           fontWeight={600}
-                          sx={{
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            flexShrink: 1,
-                          }}
+                          noWrap
+                          title={n.messageBody}
                         >
-                          {n.title}
+                          {n.messageBody}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          noWrap
+                        >
+                          {n.countryName} • {formattedDate}
                         </Typography>
                       </Box>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {n.country} • {formattedDate}
-                      </Typography>
                     </Box>
-                  </Box>
-                </Tooltip>
+                  </Tooltip>
 
-                {/* Right side icons */}
-                <Box display="flex" alignItems="center" gap={0.5}>
-                  <Tooltip title="Mark as read">
-                    <IconButton size="small">
-                      <DoneIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Dismiss">
-                    <IconButton size="small">
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </ListItem>
-            );
-          })}
+                  {/* Right side icons */}
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    {n.readStatus === "unread" && (
+                      <Tooltip title="Mark as read">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleMarkAsRead(n.notificationId)}
+                        >
+                          <DoneIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    <Tooltip title="Dismiss notification">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDismiss(n.notificationId)}
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </ListItem>
+              );
+            })
+          )}
         </List>
 
         {/* Footer */}

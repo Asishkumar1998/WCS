@@ -1,6 +1,8 @@
-import axios from '@/lib/axios';
+import axios from "@/lib/axios";
 
-export const getUser = async () => {
-    const response = await axios.get('/user');
-    return response.data;
+export const getUserNotifications = async (payload: any) => {
+  const response = await axios.get("notifications/0/getUserNotifications", {
+    params: payload,
+  });
+  return response.data;
 };

@@ -41,3 +41,33 @@ export interface Country {
   isEMBShipping: number;
   regionId: number;
 }
+
+interface Notification {
+  notificationId: number;
+  createdBy: string;
+  createdAt: string;
+  modifiedBy: string;
+  modifiedAt: string;
+  subject: string;
+  messageBody: string;
+  readStatus: string;
+  parentId: number;
+  customerId: number;
+  initiatedBy: number;
+  orderId: number;
+  docketId: number;
+  docId: number;
+  invoiceId: number;
+  paymentId: number;
+  emailToCustomer: number;
+  putOnHold: number;
+  rootId: number;
+  attachments: any[];
+  origin: number;
+  emailUserId: number;
+  docState: number;
+  orderDate: string;
+  countryId: number;
+  countryName: string;
+  cName: string;
+}

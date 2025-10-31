@@ -15,8 +15,12 @@ import { getNews, getUpdates } from "@/services/dashboardService";
 import { useEffect, useState } from "react";
 import { NewsItem, UpdateItem } from "@/types";
 import Loader from "@/components/ui/Loader/Loader";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "./store/store";
+import { fetchUserNotifications } from "./store/features/userSlice";
 
 export default function HomePage() {
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [updates, setUpdates] = useState<UpdateItem[]>([]);
@@ -36,6 +40,7 @@ export default function HomePage() {
       const [news, updates] = await Promise.all([
         getNews(payload.news),
         getUpdates(payload.updates),
+        dispatch(fetchUserNotifications()),
       ]);
       setNews(news);
       setUpdates(updates);
