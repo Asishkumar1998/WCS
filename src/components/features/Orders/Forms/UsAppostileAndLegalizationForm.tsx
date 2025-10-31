@@ -11,12 +11,10 @@ import {
   Typography,
   Box,
 } from "@mui/material";
-import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
 import FormLayout from "@/components/ui/Forms/FormLayout";
 import { AdditionalServices, Services } from "@/dataset/constants/constants";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
-import { documentTypes } from "@/dataset/document_types";
 import DocumentDropdown, {
   DocType,
 } from "@/components/ui/Dropdown/DocumentDropdown";
@@ -102,8 +100,6 @@ export default function USAppostileAndLegalizationForm() {
   const [uploadButtonDisabled, setUploadButtonDisabled] = useState(true);
   const [preSubmissionDetailsAvailable, setPreSubmissionDetailsAvailable] =
     useState(false);
-  const [filteredDocuments, setFilteredDocuments] =
-    useState<DocType[]>(documentTypes);
   const [infoCardVisible, setInfoCardVisible] = useState(false);
   const [additionalServicesState, setAdditionalServicesState] =
     useState(AdditionalServices);
@@ -262,20 +258,6 @@ export default function USAppostileAndLegalizationForm() {
   };
 
   useEffect(() => {
-    if (country) {
-      if (country.isShipping === 0) {
-        setFilteredDocuments(
-          documentTypes.filter((doc) => doc.docCategoryId !== 523)
-        );
-      } else {
-        setFilteredDocuments(documentTypes);
-      }
-    } else {
-      setFilteredDocuments(documentTypes);
-    }
-  }, [country]);
-
-  useEffect(() => {
     if (
       (country?.countryShortName === "Kuwait" ||
         country?.countryShortName === "Egypt") &&
@@ -314,107 +296,102 @@ export default function USAppostileAndLegalizationForm() {
 
         {/* Service */}
         <Grid size={{ xs: 12, sm: 6 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              border: "1px solid rgba(0,0,0,0.12)",
-              borderRadius: "4px",
-              gap: 1,
-              padding: "15px",
+          <InputField
+            label="Selected Service"
+            placeholder="Enter reference number"
+            value={"Appostile"}
+            slotProps={{
+              input: {
+                readOnly: true,
+                sx: { fontWeight: 700 },
+              },
             }}
-          >
-            <Typography sx={{ fontWeight: 500 }}>Selected Service:</Typography>
-            <Typography color="primary" sx={{ fontWeight: 600 }}>
-              {"Appostile"}
-            </Typography>
-          </Box>
+          />
         </Grid>
 
         {/* Document */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <DocumentDropdown
             label="Select Document *"
-            options={filteredDocuments}
+            country={country}
             value={document}
             onChange={handleDocumentSelect}
             open={dropdownOpen}
             onOpen={() => setDropdownOpen(true)}
             onClose={() => setDropdownOpen(false)}
-            disabled={country ? false : true}
+            disabled={!country}
           />
         </Grid>
-        {/*Additional Services */}
+
+        {/* Additional Services - single line on desktop, wraps only on mobile */}
         <Grid size={{ xs: 12, sm: 6 }}>
-          <Grid
-            container
-            alignItems="center"
+          <Box
             sx={{
               border: "1px solid rgba(0,0,0,0.12)",
-              borderRadius: "4px",
-              padding: "6px 14px",
+              borderRadius: 1,
+              px: 1.25,
+              py: 0.8,
+              overflowX: "auto",
             }}
           >
-            <Grid>{/* <Typography>Add. Services</Typography> */}</Grid>
-            <Grid>
-              <FormGroup
-                row
-                sx={{
-                  flexWrap: "nowrap",
-                  overflowX: "auto",
-                  "& .MuiFormControlLabel-label": {
-                    fontSize: { xs: "0.8rem", sm: "0.9rem" },
-                    lineHeight: "16px",
+            <FormGroup
+              row
+              sx={{
+                flexWrap: { xs: "wrap", sm: "nowrap" },
+                justifyContent: "flex-start",
+                alignItems: "center",
+                "& .MuiFormControlLabel-root": {
+                  flex: "0 0 auto",
+                  whiteSpace: "nowrap",
+                  "& .MuiTypography-root": {
+                    fontSize: "0.9rem",
                   },
-                  "& .MuiCheckbox-root": {
-                    padding: "8px",
-                  },
-                }}
-              >
-                {additionalServicesState.map((service) => (
-                  <FormControlLabel
-                    key={service}
-                    control={
-                      <Checkbox
-                        checked={additionalServices.includes(service)}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setAdditionalServices((prev) =>
-                            checked
-                              ? [...prev, service]
-                              : prev.filter((s) => s !== service)
-                          );
-                        }}
-                        disabled={disabled}
-                      />
-                    }
-                    label={service}
-                  />
-                ))}
-              </FormGroup>
-            </Grid>
-          </Grid>
+                },
+              }}
+            >
+              {additionalServicesState.map((service) => (
+                <FormControlLabel
+                  key={service}
+                  control={
+                    <Checkbox
+                      checked={additionalServices.includes(service)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setAdditionalServices((prev) =>
+                          checked
+                            ? [...prev, service]
+                            : prev.filter((s) => s !== service)
+                        );
+                      }}
+                      disabled={disabled}
+                    />
+                  }
+                  label={service}
+                />
+              ))}
+            </FormGroup>
+          </Box>
         </Grid>
 
-        {/* Document Upload */}
-        <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex" }}>
-          <Box sx={{ flex: 1 }}>
+        {/* Document Upload (takes full width on mobile, half on md+) */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Box sx={{ display: "flex", width: "100%" }}>
             <DocumentUpload country={country} />
           </Box>
         </Grid>
 
-        {/* Upload Section */}
-        <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex" }}>
+        {/* Additional Details box */}
+        <Grid size={{ xs: 12, md: 6 }}>
           <Box
             sx={{
-              flex: 1,
               bgcolor: "#fafbfc",
               borderRadius: 2,
               px: 2,
-              py: 1,
+              py: 2,
               border: "1px solid rgba(0,0,0,0.1)",
               display: "flex",
               flexDirection: "column",
+              height: "100%",
             }}
           >
             <Typography
@@ -428,13 +405,15 @@ export default function USAppostileAndLegalizationForm() {
             >
               Additional Details
             </Typography>
+
             <Button
               variant="outlined"
               color="primary"
               onClick={() => setUploadDocumentModalOpen(true)}
               disabled={uploadButtonDisabled || !preSubmissionDetailsAvailable}
               sx={{
-                width: "100%",
+                mb: 1,
+                width: { xs: "100%", sm: "auto" },
                 "&.Mui-disabled": { color: "grey.500" },
               }}
             >
@@ -473,7 +452,7 @@ export default function USAppostileAndLegalizationForm() {
           visible={infoCardVisible}
         />
 
-        {/* Customer Reference + Return Instructions (side by side) */}
+        {/* Customer Reference */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <InputField
             label="Customer Reference"
@@ -482,7 +461,7 @@ export default function USAppostileAndLegalizationForm() {
           />
         </Grid>
 
-        {/* Additional Comments (multiline) */}
+        {/* Additional Comments */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <InputField
             label="Additional Comments"
@@ -491,6 +470,7 @@ export default function USAppostileAndLegalizationForm() {
           />
         </Grid>
       </Grid>
+
       <Modal
         open={modal.open}
         onClose={() => setModal((prev) => ({ ...prev, open: false }))}

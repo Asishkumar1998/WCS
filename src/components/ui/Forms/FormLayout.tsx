@@ -17,7 +17,10 @@ const FormLayout: React.FC<FormLayoutProps> = ({ title, children }) => {
   const sharedFormData = useSelector((state: RootState) => state.formsData);
 
   useEffect(() => {
-    if (!sharedFormData.countries.length) {
+    if (
+      !sharedFormData.countries.length ||
+      !sharedFormData.documentTypes.length
+    ) {
       dispatch(fetchFormsSharedData());
     }
   }, [dispatch, sharedFormData]);

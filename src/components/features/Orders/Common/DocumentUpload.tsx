@@ -1,4 +1,3 @@
-import FileUploadField from "@/components/ui/Input/FileInput";
 import {
   Autocomplete,
   Box,
@@ -10,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
+import ValidatedFileUpload from "./ValidatedFileUpload";
 
 const couriers = ["FEDEX", "UPS", "USPS", "DHL", "OTHERS"];
 
@@ -44,7 +44,7 @@ export default function DocumentUpload({ country }: { country: any }) {
 
       {/* Upload Button */}
       <Box sx={{ mb: 1 }}>
-        <FileUploadField label="Choose file" />
+        <ValidatedFileUpload label="Choose file" />
       </Box>
 
       {/* Nested Options */}

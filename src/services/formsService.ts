@@ -6,3 +6,10 @@ export const getCountries = async (payload: any) => {
   });
   return response.data;
 };
+
+export const getDocumentTypes = async (payload: any) => {
+  const response = await axiosInstance.get("docTypes", {
+    params: payload,
+  });
+  return response.data;
+};

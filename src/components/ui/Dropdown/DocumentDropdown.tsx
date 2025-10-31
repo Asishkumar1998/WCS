@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Autocomplete,
   TextField,
@@ -10,6 +10,9 @@ import {
 } from "@mui/material";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
+import { useSelector } from "react-redux";
+import { RootState } from "@/app/store/store";
+import { Country } from "@/types";
 
 export interface DocType {
   docTypeId: number;
@@ -27,7 +30,7 @@ export interface DocType {
 
 interface BaseDropdownProps {
   label: string;
-  options: DocType[];
+  country: Country;
   multiple?: boolean;
   open?: boolean;
   onOpen?: () => void;
@@ -54,7 +57,7 @@ const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
 const DocumentDropdown: React.FC<DropdownProps> = ({
   label,
-  options,
+  country,
   value,
   onChange,
   multiple = false,
@@ -63,6 +66,9 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
   onClose,
   disabled = false, // default false
 }) => {
+  const { documentTypes } = useSelector((state: RootState) => state.formsData);
+  const [filteredDocs, setFilteredDocs] = useState<DocType[]>([]);
+
   const handleChange = (_: any, newValue: any) => {
     // Close dropdown asynchronously to prevent MUI focus conflicts
     if (open && onClose) {
@@ -76,11 +82,21 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
       : (onChange as (v: DocType | null) => void)(newValue as DocType);
   };
 
+  useEffect(() => {
+    if (!country) {
+      setFilteredDocs(documentTypes);
+    } else if (country.isShipping === 0) {
+      setFilteredDocs(documentTypes.filter((doc) => doc.docCategoryId !== 523));
+    } else {
+      setFilteredDocs(documentTypes);
+    }
+  }, [documentTypes, country]);
+
   return (
     <FormControl fullWidth>
       <Autocomplete
         multiple={multiple}
-        options={options}
+        options={filteredDocs}
         getOptionLabel={(option) => option.docTypeName}
         value={value as any}
         onChange={handleChange}

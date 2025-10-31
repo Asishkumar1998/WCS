@@ -20,3 +20,24 @@ export interface UpdateItem {
   attachment: any[];
   publishedDate: string;
 }
+
+export interface Country {
+  countryId: number;
+  countryName: string;
+  countryShortName: string;
+  genC2ACode: string;
+  genC3ACode: string;
+  countryTypeId: number;
+  isEmbassyOOS: number;
+  nusaccRequired: number;
+  processDays: number;
+  active: number;
+  SosException: number;
+  isShipping: number;
+  copies: number;
+  shippingCopies: number;
+  physicalRequired: number;
+  shippingException: number;
+  isEMBShipping: number;
+  regionId: number;
+}

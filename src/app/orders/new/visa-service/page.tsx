@@ -9,12 +9,12 @@ export default function VisaService() {
     <Container maxWidth="xl" sx={{ mt: 11 }}>
       <Grid container spacing={2}>
         {/* Left side - form */}
-        <Grid size={{ xs: 12, md: 8 }}>
+        <Grid size={{ xs: 10, md: 8 }}>
           <VisaServiceForm />
         </Grid>
 
         {/* Right side - FAQ */}
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 10, md: 4 }}>
           <VisaServiceSidebar />
         </Grid>
       </Grid>

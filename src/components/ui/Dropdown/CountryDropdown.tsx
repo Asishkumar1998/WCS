@@ -12,27 +12,7 @@ import { createFilterOptions } from "@mui/material/Autocomplete";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import { Key } from "@mui/icons-material";
-
-interface Country {
-  countryId: number;
-  countryName: string;
-  countryShortName: string;
-  genC2ACode: string;
-  genC3ACode: string;
-  countryTypeId: number;
-  isEmbassyOOS: number;
-  nusaccRequired: number;
-  processDays: number;
-  active: number;
-  SosException: number;
-  isShipping: number;
-  copies: number;
-  shippingCopies: number;
-  physicalRequired: number;
-  shippingException: number;
-  isEMBShipping: number;
-  regionId: number;
-}
+import { Country } from "@/types";
 
 interface CountrySelectProps {
   label?: string;
@@ -116,7 +96,19 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
           );
         }}
         renderInput={(params) => (
-          <TextField {...params} label={label} variant="outlined" />
+          <TextField
+            {...params}
+            label={label}
+            variant="outlined"
+            sx={{
+              "& .MuiInputBase-input": {
+                fontWeight: !multiple && value ? "bold" : "normal",
+              },
+              "& .MuiChip-label": {
+                fontWeight: "bold",
+              },
+            }}
+          />
         )}
       />
     </FormControl>

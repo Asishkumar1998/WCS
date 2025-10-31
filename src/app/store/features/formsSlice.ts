@@ -1,15 +1,16 @@
-import { getCountries } from "@/services/formsService";
+import { getCountries, getDocumentTypes } from "@/services/formsService";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
 
 interface FormsSharedState {
   countries: any[];
+  documentTypes: any[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: FormsSharedState = {
   countries: [],
+  documentTypes: [],
   loading: false,
   error: null,
 };
@@ -22,13 +23,16 @@ export const fetchFormsSharedData = createAsyncThunk(
         countries: {
           active: 1,
         },
+        docTypes: {},
       };
-      const [countriesRes] = await Promise.all([
+      const [countriesRes, docTypesRes] = await Promise.all([
         getCountries(payload.countries),
+        getDocumentTypes(payload.docTypes),
       ]);
 
       return {
         countries: countriesRes,
+        documentTypes: docTypesRes,
       };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || err.message);
