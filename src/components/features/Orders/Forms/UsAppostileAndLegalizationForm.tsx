@@ -289,7 +289,11 @@ export default function USAppostileAndLegalizationForm() {
   if (loading) return <Loader />;
 
   return (
-    <FormLayout title="U.S. Apostilles and Legalizations">
+    <FormLayout
+      title="U.S. Apostilles and Legalizations"
+      country={country}
+      document={document}
+    >
       <Grid alignItems="stretch" container spacing={2}>
         {/* Country */}
         <Grid size={{ xs: 12, sm: 6 }}>
@@ -305,7 +309,7 @@ export default function USAppostileAndLegalizationForm() {
           <InputField
             label="Selected Service"
             placeholder="Enter reference number"
-            value={"Appostile"}
+            value={"Apostille"}
             slotProps={{
               input: {
                 readOnly: true,
@@ -418,7 +422,6 @@ export default function USAppostileAndLegalizationForm() {
           </FormControl>
         </Grid>
 
-        {/* Additional Details box */}
         {/* Additional Details (with floating label) */}
         {country?.countryId === 144 && document?.docTypeId === 1 && (
           <Grid size={{ xs: 12, md: 12 }}>
@@ -511,13 +514,27 @@ export default function USAppostileAndLegalizationForm() {
         </Grid>
 
         {/* Additional Comments */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid
+          size={{ xs: 12, md: 6 }}
+          sx={{ display: "flex", flexDirection: "column" }}
+        >
           <InputField
             label="Additional Comments"
             placeholder="Enter comments..."
             disabled={disabled}
             multiline
-            rows={9}
+            minRows={9}
+            sx={{
+              height: "100%",
+              "& .MuiOutlinedInput-root": {
+                height: "100%",
+                alignItems: "flex-start",
+              },
+              "& textarea": {
+                height: "100% !important",
+                resize: "none",
+              },
+            }}
           />
         </Grid>
 

@@ -6,13 +6,23 @@ import { Paper, Typography, Divider, Grid, Button } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/app/store/store";
 import { fetchFormsSharedData } from "@/app/store/features/formsSlice";
+import FormStepper from "@/components/ui/Stepper/FormStepper";
+import { Country } from "@/types";
+import { DocType } from "../Dropdown/DocumentDropdown";
 
 interface FormLayoutProps {
   title: string;
   children: React.ReactNode;
+  country?: Country;
+  document?: DocType | null;
 }
 
-const FormLayout: React.FC<FormLayoutProps> = ({ title, children }) => {
+const FormLayout: React.FC<FormLayoutProps> = ({
+  title,
+  children,
+  country,
+  document,
+}) => {
   const dispatch = useDispatch<AppDispatch>();
   const sharedFormData = useSelector((state: RootState) => state.formsData);
 
@@ -53,6 +63,20 @@ const FormLayout: React.FC<FormLayoutProps> = ({ title, children }) => {
           </Button>
         </Grid>
       </Grid>
+
+      {country?.countryId === 144 && document ? (
+        <FormStepper
+          steps={["New", "DOS", "DC EMB", "Customer"]}
+          activeStep={0}
+          title="Order Timeline"
+        />
+      ) : country?.countryId === 2 && document ? (
+        <FormStepper
+          steps={["New", "SOS", "Customer"]}
+          activeStep={0}
+          title="Order Timeline"
+        />
+      ) : null}
     </Paper>
   );
 };

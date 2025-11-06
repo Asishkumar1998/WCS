@@ -72,6 +72,17 @@ export default function GlobalAuthenticationForm() {
           placeholder="Add Additional Comments"
           multiline
           rows={9}
+          sx={{
+            height: "100%",
+            "& .MuiOutlinedInput-root": {
+              height: "100%",
+              alignItems: "flex-start",
+            },
+            "& textarea": {
+              height: "100% !important",
+              resize: "none",
+            },
+          }}
         />
       </Grid>
     </FormLayout>

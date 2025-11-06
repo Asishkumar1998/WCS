@@ -98,7 +98,7 @@ export default function BulkOrderingFormTypeOne() {
                 color: "#333",
               }}
             >
-              Additional Services
+              Additional Services *
             </h4>
 
             <FormGroup

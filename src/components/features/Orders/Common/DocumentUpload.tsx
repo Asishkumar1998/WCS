@@ -47,10 +47,10 @@ export default function DocumentUpload({ country }: { country: any }) {
           },
         }}
       >
-        <InputLabel shrink>Upload Documents</InputLabel>
+        <InputLabel shrink>Upload Document</InputLabel>
         <OutlinedInput
           notched
-          label="Upload Documents"
+          label="Upload Document"
           inputComponent={() => (
             <Box
               sx={{

@@ -83,12 +83,17 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
   };
 
   useEffect(() => {
+    const sortByName = (docs: DocType[]) =>
+      [...docs].sort((a, b) => a.docTypeName.localeCompare(b.docTypeName));
+
     if (!country) {
-      setFilteredDocs(documentTypes);
+      setFilteredDocs(sortByName(documentTypes));
     } else if (country.isShipping === 0) {
-      setFilteredDocs(documentTypes.filter((doc) => doc.docCategoryId !== 523));
+      setFilteredDocs(
+        sortByName(documentTypes.filter((doc) => doc.docCategoryId !== 523))
+      );
     } else {
-      setFilteredDocs(documentTypes);
+      setFilteredDocs(sortByName(documentTypes));
     }
   }, [documentTypes, country]);
 
