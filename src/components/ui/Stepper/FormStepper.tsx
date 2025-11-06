@@ -6,34 +6,39 @@ import {
   StepConnector,
   Typography,
   Box,
+  stepConnectorClasses,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
+import CheckIcon from "@mui/icons-material/Check";
 
 interface StatusStepperProps {
   steps: string[];
   activeStep: number;
-  title?: string; // optional, defaults to "Timeline"
+  title?: string;
 }
 
-// Custom connector styling
+// ✅ Custom connector styling
 const CustomConnector = styled(StepConnector)(({ theme }) => ({
-  [`& .${StepConnector.line}`]: {
+  [`& .${stepConnectorClasses.line}`]: {
     height: 4,
     border: 0,
     backgroundColor: "#808080",
     borderRadius: 1,
   },
-  [`&.${StepConnector.active} .${StepConnector.line}`]: {
+  [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line}`]: {
     backgroundColor: "green",
   },
-  [`&.${StepConnector.completed} .${StepConnector.line}`]: {
+  [`&.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
     backgroundColor: "green",
   },
 }));
 
-// Custom step icon
-const CustomStepIcon = styled("div")<{ active: boolean }>(({ active }) => ({
-  backgroundColor: active ? "green" : "gray",
+// ✅ Custom Step Icon Root
+const CustomStepIconRoot = styled("div")<{
+  ownerState: { active?: boolean; completed?: boolean };
+}>(({ ownerState }) => ({
+  backgroundColor:
+    ownerState.active || ownerState.completed ? "green" : "gray",
   zIndex: 1,
   color: "#fff",
   width: 24,
@@ -42,18 +47,24 @@ const CustomStepIcon = styled("div")<{ active: boolean }>(({ active }) => ({
   borderRadius: "50%",
   justifyContent: "center",
   alignItems: "center",
+  transition: "background-color 0.3s ease",
 }));
 
-function CustomStepIconComponent({
-  active,
-}: {
-  active: boolean;
+// ✅ Custom Step Icon — no numbers
+function CustomStepIcon(props: {
+  active?: boolean;
   completed?: boolean;
-  className?: string;
 }) {
-  return <CustomStepIcon active={!!active} />;
+  const { active, completed } = props;
+
+  return (
+    <CustomStepIconRoot ownerState={{ active, completed }}>
+      {completed ? <CheckIcon fontSize="small" /> : null}
+    </CustomStepIconRoot>
+  );
 }
 
+// ✅ Stepper Component
 export default function StatusStepper({
   steps,
   activeStep,
@@ -80,9 +91,19 @@ export default function StatusStepper({
         activeStep={activeStep}
         connector={<CustomConnector />}
       >
-        {steps.map((label) => (
+        {steps.map((label, index) => (
           <Step key={label}>
-            <StepLabel StepIconComponent={CustomStepIconComponent}>
+            <StepLabel
+              slots={{
+                stepIcon: CustomStepIcon,
+              }}
+              slotProps={{
+                stepIcon: {
+                  active: activeStep === index,
+                  completed: activeStep > index,
+                },
+              }}
+            >
               <Typography sx={{ fontSize: "0.9rem", fontWeight: 500 }}>
                 {label}
               </Typography>
