@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { Grid, SelectChangeEvent } from "@mui/material";
+import { Box, Grid, SelectChangeEvent } from "@mui/material";
 import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
 import FileUploadField from "@/components/ui/Input/FileInput";
 import FormLayout from "@/components/ui/Forms/FormLayout";
+import DocumentUpload from "../Common/DocumentUpload";
 
 const languages = ["English", "Spanish", "French", "German", "Arabic"];
 const docsCount = ["1", "2", "3", "4", "5"];
@@ -61,25 +62,20 @@ export default function TranslationServiceForm() {
         />
       </Grid>
 
-      {/* Upload Docs */}
-      <Grid size={{ xs: 12, sm: 6, md: 12 }}>
-        <FileUploadField label="Upload Docs *" />
+      {/* Document Upload (takes full width on mobile, half on md+) */}
+      <Grid size={{ xs: 12, md: 6 }}>
+        <Box sx={{ display: "flex", width: "100%" }}>
+          <DocumentUpload country={""} />
+        </Box>
       </Grid>
 
-      {/* <Grid size={{ xs: 12, sm: 6 }}>
-        <InputField
-          label="Return Instructions *"
-          placeholder="Shipping Label/Return Instructions"
-        />
-      </Grid> */}
-
       {/* Comments */}
-      <Grid size={{ xs: 12 }}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <InputField
           label="Additional Comments"
           placeholder="Add Additional Comments"
           multiline
-          rows={3}
+          rows={9}
         />
       </Grid>
 

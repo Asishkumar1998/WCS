@@ -10,6 +10,11 @@ import {
   Checkbox,
   Typography,
   Box,
+  RadioGroup,
+  Radio,
+  FormControl,
+  InputLabel,
+  OutlinedInput,
 } from "@mui/material";
 import InputField from "@/components/ui/Input/Input";
 import FormLayout from "@/components/ui/Forms/FormLayout";
@@ -104,6 +109,7 @@ export default function USAppostileAndLegalizationForm() {
   const [additionalServicesState, setAdditionalServicesState] =
     useState(AdditionalServices);
   const [summaryData, setSummaryData] = useState<Record<string, any>>({});
+  const [isNotarized, setIsNotarized] = useState("");
 
   const handleValueChange = (key: string, value: any) => {
     setSummaryData((prev) => ({
@@ -325,53 +331,177 @@ export default function USAppostileAndLegalizationForm() {
 
         {/* Additional Services - single line on desktop, wraps only on mobile */}
         <Grid size={{ xs: 12, sm: 6 }}>
-          <Box
+          <FormControl
+            fullWidth
+            variant="outlined"
             sx={{
-              border: "1px solid rgba(0,0,0,0.12)",
-              borderRadius: 1,
-              px: 1.25,
-              py: 0.8,
-              overflowX: "auto",
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 1,
+                height: 56, // same as TextField default
+                display: "flex",
+                alignItems: "center",
+                px: 1.25,
+                "&:hover fieldset": {
+                  borderColor: "rgba(0,0,0,0.12)", // no hover highlight
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "rgba(0,0,0,0.12)",
+                },
+              },
             }}
           >
-            <FormGroup
-              row
+            <InputLabel shrink>Additional Services</InputLabel>
+
+            <OutlinedInput
+              notched
+              label="Additional Services"
+              inputComponent={() => (
+                <Box
+                  sx={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    overflowX: "auto",
+                    height: "100%", // aligns vertically
+                    pl: "6px",
+                  }}
+                >
+                  <FormGroup
+                    row
+                    sx={{
+                      flexWrap: { xs: "wrap", sm: "nowrap" },
+                      justifyContent: "flex-start",
+                      alignItems: "center",
+                      "& .MuiFormControlLabel-root": {
+                        flex: "0 0 auto",
+                        whiteSpace: "nowrap",
+                        "& .MuiTypography-root": {
+                          fontSize: "0.9rem",
+                        },
+                        "& .MuiCheckbox-root": {
+                          transform: "scale(0.9)",
+                          p: "2px",
+                        },
+                      },
+                    }}
+                  >
+                    {additionalServicesState.map((service) => (
+                      <FormControlLabel
+                        key={service}
+                        control={
+                          <Checkbox
+                            checked={additionalServices.includes(service)}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setAdditionalServices((prev) =>
+                                checked
+                                  ? [...prev, service]
+                                  : prev.filter((s) => s !== service)
+                              );
+                            }}
+                            disabled={disabled}
+                          />
+                        }
+                        label={service}
+                      />
+                    ))}
+                  </FormGroup>
+                </Box>
+              )}
               sx={{
-                flexWrap: { xs: "wrap", sm: "nowrap" },
-                justifyContent: "flex-start",
-                alignItems: "center",
-                "& .MuiFormControlLabel-root": {
-                  flex: "0 0 auto",
-                  whiteSpace: "nowrap",
-                  "& .MuiTypography-root": {
-                    fontSize: "0.9rem",
-                  },
+                "& .MuiOutlinedInput-input": {
+                  height: "auto",
+                  padding: 0,
                 },
               }}
-            >
-              {additionalServicesState.map((service) => (
-                <FormControlLabel
-                  key={service}
-                  control={
-                    <Checkbox
-                      checked={additionalServices.includes(service)}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setAdditionalServices((prev) =>
-                          checked
-                            ? [...prev, service]
-                            : prev.filter((s) => s !== service)
-                        );
-                      }}
-                      disabled={disabled}
-                    />
-                  }
-                  label={service}
-                />
-              ))}
-            </FormGroup>
-          </Box>
+            />
+          </FormControl>
         </Grid>
+
+        {/* Additional Details box */}
+        {/* Additional Details (with floating label) */}
+        {country?.countryId === 144 && document?.docTypeId === 1 && (
+          <Grid size={{ xs: 12, md: 12 }}>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Additional Details</InputLabel>
+              <OutlinedInput
+                notched
+                label="Additional Details"
+                inputComponent={() => (
+                  <Box
+                    sx={{
+                      px: 2,
+                      py: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      minHeight: "56px",
+                      width: "100%",
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontWeight: 600,
+                        color: "#333",
+                        fontSize: "0.95rem",
+                        flex: 1,
+                        minWidth: "240px",
+                      }}
+                    >
+                      *Have you notarized and certified the document from your
+                      in-state Secretary of State?
+                    </Typography>
+
+                    <RadioGroup
+                      row
+                      value={isNotarized}
+                      onChange={(e) => setIsNotarized(e.target.value)}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                      }}
+                    >
+                      <FormControlLabel
+                        value="yes"
+                        control={
+                          <Radio
+                            size="small"
+                            sx={{
+                              p: 0.5,
+                              "& .MuiSvgIcon-root": { fontSize: 18 },
+                            }}
+                          />
+                        }
+                        label="Yes"
+                        sx={{
+                          ".MuiFormControlLabel-label": { fontSize: "0.9rem" },
+                        }}
+                      />
+                      <FormControlLabel
+                        value="no"
+                        control={
+                          <Radio
+                            size="small"
+                            sx={{
+                              p: 0.5,
+                              "& .MuiSvgIcon-root": { fontSize: 18 },
+                            }}
+                          />
+                        }
+                        label="No"
+                        sx={{
+                          ".MuiFormControlLabel-label": { fontSize: "0.9rem" },
+                        }}
+                      />
+                    </RadioGroup>
+                  </Box>
+                )}
+              />
+            </FormControl>
+          </Grid>
+        )}
 
         {/* Document Upload (takes full width on mobile, half on md+) */}
         <Grid size={{ xs: 12, md: 6 }}>
@@ -380,71 +510,15 @@ export default function USAppostileAndLegalizationForm() {
           </Box>
         </Grid>
 
-        {/* Additional Details box */}
+        {/* Additional Comments */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Box
-            sx={{
-              bgcolor: "#fafbfc",
-              borderRadius: 2,
-              px: 2,
-              py: 2,
-              border: "1px solid rgba(0,0,0,0.1)",
-              display: "flex",
-              flexDirection: "column",
-              height: "100%",
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{
-                mb: 1,
-                fontSize: "1.05rem",
-                fontWeight: 600,
-                color: "#333",
-              }}
-            >
-              Additional Details
-            </Typography>
-
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => setUploadDocumentModalOpen(true)}
-              disabled={uploadButtonDisabled || !preSubmissionDetailsAvailable}
-              sx={{
-                mb: 1,
-                width: { xs: "100%", sm: "auto" },
-                "&.Mui-disabled": { color: "grey.500" },
-              }}
-            >
-              Select Additional Details
-            </Button>
-
-            <Box sx={{ flex: 1, overflow: "auto" }}>
-              <SummaryStep stepData={summaryData} />
-            </Box>
-
-            {/* Conditional Modals for Hague / Non-Hague */}
-            {country?.countryTypeId === 501 ? (
-              <HagueDocUpload
-                open={uploadDocumentModalOpen}
-                setOpen={setUploadDocumentModalOpen}
-                country={country}
-                documentType={document?.docCategoryId}
-                onStepsAvailableChange={setPreSubmissionDetailsAvailable}
-                onValueChange={handleValueChange}
-              />
-            ) : country?.countryTypeId === 502 ? (
-              <NonHagueDocUpload
-                open={uploadDocumentModalOpen}
-                setOpen={setUploadDocumentModalOpen}
-                country={country}
-                documentType={document?.docCategoryId}
-                onStepsAvailableChange={setPreSubmissionDetailsAvailable}
-                onValueChange={handleValueChange}
-              />
-            ) : null}
-          </Box>
+          <InputField
+            label="Additional Comments"
+            placeholder="Enter comments..."
+            disabled={disabled}
+            multiline
+            rows={9}
+          />
         </Grid>
 
         <InfoCard
@@ -453,19 +527,10 @@ export default function USAppostileAndLegalizationForm() {
         />
 
         {/* Customer Reference */}
-        <Grid size={{ xs: 12, sm: 6 }}>
+        <Grid size={{ xs: 12, sm: 12, md: 12 }}>
           <InputField
             label="Customer Reference"
             placeholder="Enter reference number"
-            disabled={disabled}
-          />
-        </Grid>
-
-        {/* Additional Comments */}
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <InputField
-            label="Additional Comments"
-            placeholder="Enter comments..."
             disabled={disabled}
           />
         </Grid>

@@ -8,6 +8,8 @@ import FileUploadField from "@/components/ui/Input/FileInput";
 import FormLayout from "@/components/ui/Forms/FormLayout";
 import DateInput from "@/components/ui/Input/DateInput";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
+import ValidatedFileUpload from "../Common/ValidatedFileUpload";
+import DocumentUpload from "../Common/DocumentUpload";
 
 const visaTypes = ["Tourist", "Business", "Work", "Student"];
 const passportTypes = ["Regular", "Diplomatic", "Official"];
@@ -125,20 +127,22 @@ export default function VisaServiceForm() {
       </Grid>
 
       {/* Upload Docs */}
-      <Grid size={{ xs: 12 }}>
-        <FileUploadField label="Upload Documents" />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <DateInput label="Expedited Service (Date Needed By)" />
-      </Grid>
-      {/* Reference */}
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <InputField label="Customer Reference" />
+      <Grid size={{ xs: 12, md: 6 }}>
+        <DocumentUpload country={""} />
       </Grid>
 
       {/* Comments */}
-      <Grid size={{ xs: 12 }}>
-        <InputField label="Additional Comments" multiline rows={3} />
+      <Grid size={{ xs: 12, md: 6 }}>
+        <InputField label="Additional Comments" multiline rows={9} />
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <DateInput label="Expedited Service (Date Needed By)" />
+      </Grid>
+
+      {/* Reference */}
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <InputField label="Customer Reference" />
       </Grid>
     </FormLayout>
   );
