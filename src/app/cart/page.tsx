@@ -28,6 +28,7 @@ import {
   AccordionDetails,
   Paper,
   Collapse,
+  Link,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -37,6 +38,8 @@ import ScheduleIcon from "@mui/icons-material/Schedule";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import Modal from "@/components/ui/Modal/Modal";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
+import StatusStepper from "@/components/ui/Stepper/FormStepper";
+import { DescriptionOutlined } from "@mui/icons-material";
 
 // ===== Custom Stepper Styles =====
 const CustomConnector = styled(StepConnector)(({ theme }) => ({
@@ -90,6 +93,8 @@ const dummyDocs = [
     id: "1",
     country: "Albania",
     authority: "General",
+    handlingOption: "Proceeding with attached documents",
+    fileName: "Albania_Certified_Documents.pdf",
     timeline: [
       { label: "Secretary of State", sub: "7 business days" },
       { label: "Estimated Completion", sub: "Oct 13, 2025" },
@@ -103,6 +108,8 @@ const dummyDocs = [
     id: "2",
     country: "Afghanistan",
     authority: "Federal Government",
+    handlingOption: "Original documents will be mailed to WCS office",
+    fileName: "Afghanistan_Embassy_Forms.pdf",
     timeline: [
       { label: "U.S. Department of State", sub: "20 business days" },
       { label: "Embassy", sub: "7 business days" },
@@ -226,6 +233,16 @@ export default function OrderMilestonePage() {
             control={<Radio size="small" />}
             label="Use WCS courier account"
           />
+          <FormControlLabel
+            value="eCopy"
+            control={<Radio size="small" />}
+            label="E-Copy"
+          />
+          <FormControlLabel
+            value="pickup"
+            control={<Radio size="small" />}
+            label="Pickup"
+          />
         </RadioGroup>
 
         {/* Collapsible Content */}
@@ -307,27 +324,62 @@ export default function OrderMilestonePage() {
                   </Tooltip>
                 </Box>
 
-                <Typography variant="body2" fontWeight={600} gutterBottom>
-                  Processing Stops & Timelines
-                </Typography>
-                <Stepper
-                  alternativeLabel
-                  activeStep={doc.timeline.length - 1}
-                  connector={<CustomConnector />}
+                {/* Document Handling Summary */}
+                <Paper
+                  elevation={0}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    p: 2,
+                    borderRadius: 2,
+                    backgroundColor: "#f9fafb",
+                    border: "1px solid #e5e7eb",
+                  }}
                 >
-                  {doc.timeline.map((step, idx) => (
-                    <Step key={idx}>
-                      <StepLabel StepIconComponent={CustomStepIcon}>
-                        <Typography variant="body2" fontWeight={600}>
-                          {step.label}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {step.sub}
-                        </Typography>
-                      </StepLabel>
-                    </Step>
-                  ))}
-                </Stepper>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      backgroundColor: "#e6f1ff",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <DescriptionOutlined
+                      sx={{ color: "#007BFF", fontSize: 24 }}
+                    />
+                  </Box>
+
+                  <Box>
+                    <Typography
+                      variant="body1"
+                      fontWeight="600"
+                      color="text.primary"
+                      sx={{ lineHeight: 1.4 }}
+                    >
+                      {doc.handlingOption}
+                    </Typography>
+                    <Link
+                      href={""}
+                      underline="hover"
+                      color="text.secondary"
+                      sx={{
+                        fontSize: "0.9rem",
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      {doc.fileName}
+                    </Link>
+                  </Box>
+                </Paper>
+
+                <StatusStepper
+                  steps={doc.timeline}
+                  activeStep={doc.timeline.length - 1}
+                />
 
                 <Divider sx={{ my: 2 }} />
                 <List dense disablePadding>

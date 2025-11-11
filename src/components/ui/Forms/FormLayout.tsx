@@ -2,7 +2,17 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { Paper, Typography, Divider, Grid, Button } from "@mui/material";
+import {
+  Paper,
+  Typography,
+  Divider,
+  Grid,
+  Button,
+  FormControl,
+  InputLabel,
+  OutlinedInput,
+  Box,
+} from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/app/store/store";
 import { fetchFormsSharedData } from "@/app/store/features/formsSlice";
@@ -53,7 +63,13 @@ const FormLayout: React.FC<FormLayoutProps> = ({
         {/* Buttons */}
         <Grid
           size={{ xs: 12 }}
-          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 2,
+            mt: 2,
+            mb: 3,
+          }}
         >
           <Button variant="outlined" color="primary">
             Add to cart
@@ -65,17 +81,98 @@ const FormLayout: React.FC<FormLayoutProps> = ({
       </Grid>
 
       {country?.countryId === 144 && document ? (
-        <FormStepper
-          steps={["New", "DOS", "DC EMB", "Customer"]}
-          activeStep={0}
-          title="Order Timeline"
-        />
+        <FormControl
+          fullWidth
+          variant="outlined"
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": {
+                border: "1px solid #C7C9CD",
+              },
+              "&:hover fieldset": {
+                border: "1px solid #C7C9CD",
+              },
+              "&.Mui-focused fieldset": {
+                border: "1px solid #C7C9CD",
+              },
+            },
+          }}
+        >
+          <InputLabel shrink>Order Timeline</InputLabel>
+          <OutlinedInput
+            notched
+            label={"Order Timeline"}
+            inputComponent={() => (
+              <Box
+                sx={{
+                  px: 2,
+                  py: 1.5,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1.5,
+                  borderRadius: "8px",
+                  width: "100%",
+                }}
+              >
+                <FormStepper
+                  steps={[
+                    { label: "New" },
+                    { label: "DOS" },
+                    { label: "DC EMB" },
+                    { label: "Customer" },
+                  ]}
+                  activeStep={0}
+                />
+              </Box>
+            )}
+          />
+        </FormControl>
       ) : country?.countryId === 2 && document ? (
-        <FormStepper
-          steps={["New", "SOS", "Customer"]}
-          activeStep={0}
-          title="Order Timeline"
-        />
+        <FormControl
+          fullWidth
+          variant="outlined"
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": {
+                border: "1px solid #C7C9CD",
+              },
+              "&:hover fieldset": {
+                border: "1px solid #C7C9CD",
+              },
+              "&.Mui-focused fieldset": {
+                border: "1px solid #C7C9CD",
+              },
+            },
+          }}
+        >
+          <InputLabel shrink>Order Timeline</InputLabel>
+          <OutlinedInput
+            notched
+            label={"Order Timeline"}
+            inputComponent={() => (
+              <Box
+                sx={{
+                  px: 2,
+                  py: 1.5,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1.5,
+                  borderRadius: "8px",
+                  width: "100%",
+                }}
+              >
+                <FormStepper
+                  steps={[
+                    { label: "New" },
+                    { label: "SOS" },
+                    { label: "Customer" },
+                  ]}
+                  activeStep={0}
+                />
+              </Box>
+            )}
+          />
+        </FormControl>
       ) : null}
     </Paper>
   );

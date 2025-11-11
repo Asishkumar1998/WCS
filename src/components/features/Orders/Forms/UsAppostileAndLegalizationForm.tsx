@@ -426,10 +426,10 @@ export default function USAppostileAndLegalizationForm() {
         {country?.countryId === 144 && document?.docTypeId === 1 && (
           <Grid size={{ xs: 12, md: 12 }}>
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Additional Details</InputLabel>
+              <InputLabel shrink>Additional Details *</InputLabel>
               <OutlinedInput
                 notched
-                label="Additional Details"
+                label="Additional Details *"
                 inputComponent={() => (
                   <Box
                     sx={{

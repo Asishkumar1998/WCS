@@ -47,7 +47,7 @@ export default function DocumentUpload({ country }: { country: any }) {
           },
         }}
       >
-        <InputLabel shrink>Upload Document</InputLabel>
+        <InputLabel shrink>Upload Document *</InputLabel>
         <OutlinedInput
           notched
           label="Upload Document"
