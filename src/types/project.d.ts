@@ -71,3 +71,8 @@ interface Notification {
   countryName: string;
   cName: string;
 }
+
+interface AdditionalQuestionsComponent {
+  country: Country;
+  setAdditionalPreferences: any;
+}

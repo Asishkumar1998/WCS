@@ -24,68 +24,17 @@ import DocumentDropdown, {
   DocType,
 } from "@/components/ui/Dropdown/DocumentDropdown";
 import Modal from "@/components/ui/Modal/Modal";
-import HagueDocUpload from "../Dialogs/HagueDocUpload";
-import NonHagueDocUpload from "../Dialogs/NonHagueDocUpload";
 import InfoCard from "../Common/InfoCard";
 import DocumentUpload from "../Common/DocumentUpload";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import Loader from "@/components/ui/Loader/Loader";
+import { AdditionalQuestions } from "../Common/AdditionalQuestions";
 
 const payments = ["Credit Card", "PayPal", "Bank Transfer"];
 
 const STOP_DOCS_HAGUE_COUNTRIES = [6, 15, 28, 29, 30, 31, 35, 36];
 const STOP_DOCS_NON_HAGUE_COUNTRIES = [6, 12, 28, 29, 30, 31, 35, 36];
-
-function SummaryStep({ stepData }: { stepData: Record<string, any> }) {
-  const relevantKeys = [
-    "Notarized & certified in your state?",
-    "Document from another state?",
-    "U.S. Dept. of State certified?",
-  ];
-
-  const filteredData = relevantKeys
-    .map((key) => [key, stepData[key]])
-    .filter(([_, v]) => v !== undefined && v !== "");
-
-  return (
-    <Box>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 1.5,
-          mt: 2,
-        }}
-      >
-        {filteredData.map(([key, value]) => (
-          <Box
-            key={key}
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              p: 1,
-              bgcolor: "white",
-              borderRadius: 1,
-              boxShadow: "0 0 3px rgba(0,0,0,0.05)",
-            }}
-          >
-            <Typography sx={{ fontWeight: 600 }}>{key}</Typography>
-            <Typography
-              sx={{
-                color: value === "yes" ? "success.main" : "error.main",
-                textTransform: "capitalize",
-              }}
-            >
-              {value || "-"}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
-    </Box>
-  );
-}
 
 export default function USAppostileAndLegalizationForm() {
   const { loading } = useSelector((state: RootState) => state.formsData);
@@ -101,8 +50,6 @@ export default function USAppostileAndLegalizationForm() {
   });
   const [disabled, setDisabled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [uploadDocumentModalOpen, setUploadDocumentModalOpen] = useState(false);
-  const [uploadButtonDisabled, setUploadButtonDisabled] = useState(true);
   const [preSubmissionDetailsAvailable, setPreSubmissionDetailsAvailable] =
     useState(false);
   const [infoCardVisible, setInfoCardVisible] = useState(false);
@@ -110,6 +57,7 @@ export default function USAppostileAndLegalizationForm() {
     useState(AdditionalServices);
   const [summaryData, setSummaryData] = useState<Record<string, any>>({});
   const [isNotarized, setIsNotarized] = useState("");
+  const [additionalQuestions, setAdditionalQuestions] = useState([]);
 
   const handleValueChange = (key: string, value: any) => {
     setSummaryData((prev) => ({
@@ -179,7 +127,6 @@ export default function USAppostileAndLegalizationForm() {
           message: warningMessage,
         });
         setDisabled(true);
-        setUploadButtonDisabled(true);
         setDocument(newValue);
         setDropdownOpen(false);
         return;
@@ -189,7 +136,6 @@ export default function USAppostileAndLegalizationForm() {
       if (!STOP_DOCS_HAGUE_COUNTRIES.includes(id)) {
         setDocument(newValue);
         setDisabled(false);
-        setUploadButtonDisabled(false);
         setModal((prev) => ({ ...prev, open: false }));
       }
     } else {
@@ -241,7 +187,6 @@ export default function USAppostileAndLegalizationForm() {
           message: warningMessage,
         });
         setDisabled(true);
-        setUploadButtonDisabled(true);
         setDocument(newValue);
         setDropdownOpen(false);
         return;
@@ -251,7 +196,6 @@ export default function USAppostileAndLegalizationForm() {
       if (!STOP_DOCS_NON_HAGUE_COUNTRIES.includes(id)) {
         setDocument(newValue);
         setDisabled(false);
-        setUploadButtonDisabled(false);
         setModal((prev) => ({ ...prev, open: false }));
       }
     }
@@ -286,6 +230,8 @@ export default function USAppostileAndLegalizationForm() {
     }
   }, [additionalServices]);
 
+  console.log(additionalQuestions, "these are the additional questions");
+
   if (loading) return <Loader />;
 
   return (
@@ -308,8 +254,8 @@ export default function USAppostileAndLegalizationForm() {
         <Grid size={{ xs: 12, sm: 6 }}>
           <InputField
             label="Selected Service"
-            placeholder="Enter reference number"
-            value={"Apostille"}
+            placeholder="Please select a country"
+            value={country?.countryTypeId == 502 ? "Legalization" : "Apostille"}
             slotProps={{
               input: {
                 readOnly: true,
@@ -423,88 +369,11 @@ export default function USAppostileAndLegalizationForm() {
         </Grid>
 
         {/* Additional Details (with floating label) */}
-        {country?.countryId === 144 && document?.docTypeId === 1 && (
-          <Grid size={{ xs: 12, md: 12 }}>
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Additional Details *</InputLabel>
-              <OutlinedInput
-                notched
-                label="Additional Details *"
-                inputComponent={() => (
-                  <Box
-                    sx={{
-                      px: 2,
-                      py: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      flexWrap: "wrap",
-                      minHeight: "56px",
-                      width: "100%",
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontWeight: 600,
-                        color: "#333",
-                        fontSize: "0.95rem",
-                        flex: 1,
-                        minWidth: "240px",
-                      }}
-                    >
-                      *Have you notarized and certified the document from your
-                      in-state Secretary of State?
-                    </Typography>
 
-                    <RadioGroup
-                      row
-                      value={isNotarized}
-                      onChange={(e) => setIsNotarized(e.target.value)}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                      }}
-                    >
-                      <FormControlLabel
-                        value="yes"
-                        control={
-                          <Radio
-                            size="small"
-                            sx={{
-                              p: 0.5,
-                              "& .MuiSvgIcon-root": { fontSize: 18 },
-                            }}
-                          />
-                        }
-                        label="Yes"
-                        sx={{
-                          ".MuiFormControlLabel-label": { fontSize: "0.9rem" },
-                        }}
-                      />
-                      <FormControlLabel
-                        value="no"
-                        control={
-                          <Radio
-                            size="small"
-                            sx={{
-                              p: 0.5,
-                              "& .MuiSvgIcon-root": { fontSize: 18 },
-                            }}
-                          />
-                        }
-                        label="No"
-                        sx={{
-                          ".MuiFormControlLabel-label": { fontSize: "0.9rem" },
-                        }}
-                      />
-                    </RadioGroup>
-                  </Box>
-                )}
-              />
-            </FormControl>
-          </Grid>
-        )}
+        <AdditionalQuestions
+          country={country}
+          setAdditionalPreferences={setAdditionalQuestions}
+        />
 
         {/* Document Upload (takes full width on mobile, half on md+) */}
         <Grid size={{ xs: 12, md: 6 }}>
