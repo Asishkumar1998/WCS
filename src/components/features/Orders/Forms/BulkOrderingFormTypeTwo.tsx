@@ -12,6 +12,10 @@ import {
   FormGroup,
   FormControlLabel,
   Checkbox,
+  FormControl,
+  InputLabel,
+  OutlinedInput,
+  Box,
 } from "@mui/material";
 import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
@@ -89,7 +93,7 @@ export default function BulkOrderingFormTypeTwo() {
         </Grid>
 
         {/* Upload Trigger */}
-        <Grid size={{ xs: 12 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Button
             variant="outlined"
             color="primary"
@@ -97,6 +101,7 @@ export default function BulkOrderingFormTypeTwo() {
             disabled={documents.length === 0}
             sx={{
               width: "100%",
+              height: 56,
               py: 1,
               "&.Mui-disabled": {
                 color: "grey.500",
@@ -127,86 +132,117 @@ export default function BulkOrderingFormTypeTwo() {
             multiple
           />
         </Grid> */}
-        <Grid size={{ xs: 12 }}>
-          <div
-            style={{
-              border: "1px solid rgba(0,0,0,0.12)",
-              borderRadius: "8px",
-              padding: "16px 20px",
-              backgroundColor: "#fafbfc",
-              width: "100%",
+        {/* Additional Services - single line on desktop, wraps only on mobile */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <FormControl
+            fullWidth
+            variant="outlined"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 1,
+                height: 56, // same as TextField default
+                display: "flex",
+                alignItems: "center",
+                px: 1.25,
+                "&:hover fieldset": {
+                  borderColor: "rgba(0,0,0,0.12)", // no hover highlight
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "rgba(0,0,0,0.12)",
+                },
+              },
             }}
           >
-            <h4
-              style={{
-                fontSize: "1.05rem",
-                fontWeight: 600,
-                marginBottom: "12px",
-                color: "#333",
-              }}
-            >
-              Additional Services
-            </h4>
+            <InputLabel shrink>Additional Services</InputLabel>
 
-            <FormGroup
-              style={{
-                paddingLeft: "4px", // keeps checkboxes visually aligned with title
-              }}
-            >
-              <Grid container spacing={1.5}>
-                {additionalServicesState.map((service) => (
-                  <Grid key={service} size={{ xs: 12, sm: 6, md: 4 }}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={additionalServices.includes(service)}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            setAdditionalServices((prev) =>
-                              checked
-                                ? [...prev, service]
-                                : prev.filter((s) => s !== service)
-                            );
-                          }}
-                          disabled={disabled}
-                          sx={{
-                            color: "#1a73e8",
-                            "&.Mui-checked": {
-                              color: "#1a73e8",
-                            },
-                          }}
-                        />
-                      }
-                      label={service}
-                      sx={{
-                        border: "1px solid rgba(0,0,0,0.12)",
-                        borderRadius: "8px",
-                        px: 1.5,
-                        py: 0.75,
-                        width: "100%",
-                        backgroundColor: "#fff",
-                        display: "flex",
-                        alignItems: "center",
-                        transition: "background-color 0.2s ease",
-                        "&:hover": {
-                          backgroundColor: "#f7f9fc",
+            <OutlinedInput
+              notched
+              label="Additional Services"
+              inputComponent={() => (
+                <Box
+                  sx={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    overflowX: "auto",
+                    height: "100%", // aligns vertically
+                    pl: "6px",
+                  }}
+                >
+                  <FormGroup
+                    row
+                    sx={{
+                      flexWrap: { xs: "wrap", sm: "nowrap" },
+                      justifyContent: "flex-start",
+                      alignItems: "center",
+                      "& .MuiFormControlLabel-root": {
+                        flex: "0 0 auto",
+                        whiteSpace: "nowrap",
+                        "& .MuiTypography-root": {
+                          fontSize: "0.9rem",
                         },
-                      }}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            </FormGroup>
-          </div>
-        </Grid>
+                        "& .MuiCheckbox-root": {
+                          transform: "scale(0.9)",
+                          p: "2px",
+                        },
+                      },
+                    }}
+                  >
+                    {additionalServicesState.map((service) => (
+                      <FormControlLabel
+                        key={service}
+                        control={
+                          <Checkbox
+                            checked={additionalServices.includes(service)}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setAdditionalServices((prev) =>
+                                checked
+                                  ? [...prev, service]
+                                  : prev.filter((s) => s !== service)
+                              );
+                            }}
+                            disabled={disabled}
+                          />
+                        }
+                        label={service}
+                      />
+                    ))}
+                  </FormGroup>
+                </Box>
+              )}
+              sx={{
+                "& .MuiOutlinedInput-input": {
+                  height: "auto",
+                  padding: 0,
+                },
+              }}
+            />
+          </FormControl>
+        </Grid> 
 
-        {/* Comments */}
-        <Grid size={{ xs: 12 }}>
+        {/* Additional Comments */}
+        <Grid
+          size={{ xs: 12 }}
+          sx={{ display: "flex", flexDirection: "column" }}
+        >
           <InputField
             label="Additional Comments"
             placeholder="Enter comments..."
+            disabled={disabled}
             multiline
-            rows={3}
+            minRows={9}
+            sx={{
+              height: "100%",
+              "& .MuiOutlinedInput-root": {
+                height: "100%",
+                alignItems: "flex-start",
+              },
+              "& textarea": {
+                height: "100% !important",
+                resize: "none",
+              },
+            }}
           />
         </Grid>
 
