@@ -24,7 +24,7 @@ import ReceiptIcon from "@mui/icons-material/Receipt";
 import ForumIcon from "@mui/icons-material/Forum";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore"; // expand all
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess"; // collapse all
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 
 import InputField from "@/components/ui/Input/Input";
 import Dropdown from "@/components/ui/Dropdown/Dropdown";
@@ -33,6 +33,8 @@ import Button from "@/components/ui/Button/Button";
 import ConversationDrawer from "@/components/features/Orders/Sidebars/ConversationDrawer";
 import TrackOrderDialog from "@/components/features/Orders/Dialogs/TrackOrderDialog";
 import AttachmentsDialog from "@/components/features/Orders/Dialogs/AttachmentsDialog";
+import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
+import { getDisplayData } from "@/services/formsService";
 
 interface Doc {
   docId: number;
@@ -103,35 +105,59 @@ const mockOrders: Order[] = [
 interface Filters {
   orderId: string;
   docId: string;
-  docType: string;
+  docTypeId: number | null;
   customerRef: string;
   po: string;
   country: string;
-  countryType: string;
-  orderStatus: string;
+  countryTypeId: number | null;
+  orderStatusId: number | null;
   fromDate: Dayjs | null;
   toDate: Dayjs | null;
+  userId: number;
+  pageNumber: number;
+  rowsPerPage: number;
 }
+
+const ORDER_STATUS_OPTIONS = [
+  { label: "Waiting", id: 601 },
+  { label: "In Process", id: 602 },
+  { label: "Completed", id: 603 },
+  { label: "OnHold", id: 607 },
+];
+const DOC_TYPE_OPTIONS = [
+  { label: "Federal Government", id: 521 },
+  { label: "General", id: 522 },
+  { label: "Shipping/Commercial", id: 523 },
+  { label: "International", id: 525 },
+  { label: "Visa", id: 526 },
+  { label: "Translation", id: 527 },
+  { label: "Notary", id: 528 },
+  { label: "Dispatch", id: 529 },
+];
 
 export default function OrdersPage() {
   const [expanded, setExpanded] = useState<number[]>([]);
   const [filters, setFilters] = useState<Filters>({
     orderId: "",
     docId: "",
-    docType: "",
+    docTypeId: null,
     customerRef: "",
     po: "",
     country: "",
-    countryType: "",
-    orderStatus: "",
-    fromDate: null,
-    toDate: null,
+    countryTypeId: null,
+    orderStatusId: null,
+    fromDate: dayjs().subtract(90, "day"), // default to today
+    toDate: dayjs(), // default to today
+    userId: 7437,
+    pageNumber: 1,
+    rowsPerPage: 10,
   });
   const [conversationDrawerOpen, setConversationDrawerOpen] = useState(false);
   const [trackOpen, setTrackOpen] = React.useState(false);
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
   const allOrderIds = mockOrders.map((o) => o.orderId);
   const allExpanded = expanded.length === allOrderIds.length;
+  const [country, setCountry] = useState<any>(null);
 
   const toggleExpand = (id: number) => {
     setExpanded((prev) =>
@@ -167,6 +193,28 @@ export default function OrdersPage() {
     e.stopPropagation();
     e.preventDefault();
     setAttachmentsOpen(true);
+  };
+
+  const handleCountrySelect = (value: any) => {
+    setCountry(value);
+  };
+
+  const displayData = async () => {
+    const payload: Partial<Filters> = Object.entries(filters).reduce(
+      (acc, [key, value]) => {
+        if (value !== null && value !== "") {
+          (acc as any)[key] = value;
+        }
+        return acc;
+      },
+      {}
+    );
+
+    if (country) {
+      (payload as any).country = country.value ?? country.label ?? country;
+    }
+
+    const response = await getDisplayData(payload);
   };
 
   return (
@@ -211,13 +259,18 @@ export default function OrdersPage() {
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <InputField
-              label="Doc Type"
-              value={filters.docType}
-              onChange={(e) =>
+            <Dropdown
+              label="Select Doc Type"
+              options={DOC_TYPE_OPTIONS.map((o) => o.label)}
+              value={
+                DOC_TYPE_OPTIONS.find((o) => o.id === filters.docTypeId)
+                  ?.label ?? ""
+              }
+              onChange={(val) =>
                 setFilters({
                   ...filters,
-                  docType: (e.target as HTMLInputElement).value,
+                  docTypeId:
+                    DOC_TYPE_OPTIONS.find((o) => o.label === val)?.id ?? 0,
                 })
               }
             />
@@ -249,11 +302,10 @@ export default function OrdersPage() {
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Dropdown
+            <CountrySelect
               label="Select Country"
-              options={["Kuwait", "Argentina", "USA", "India"]}
-              value={filters.country}
-              onChange={(val) => setFilters({ ...filters, country: val })}
+              value={country}
+              onChange={handleCountrySelect}
             />
           </Grid>
 
@@ -261,17 +313,39 @@ export default function OrdersPage() {
             <Dropdown
               label="Select Country Type"
               options={["Hague", "Non Hague"]}
-              value={filters.countryType}
-              onChange={(val) => setFilters({ ...filters, countryType: val })}
+              // display the text label in the dropdown, map it to numeric id in state
+              value={
+                filters.countryTypeId === 501
+                  ? "Hague"
+                  : filters.countryTypeId === 502
+                  ? "Non Hague"
+                  : ""
+              }
+              onChange={(val) =>
+                setFilters({
+                  ...filters,
+                  countryTypeId:
+                    val === "Hague" ? 501 : val === "Non Hague" ? 502 : 0,
+                })
+              }
             />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Dropdown
               label="Select Order Status"
-              options={["In Process", "Completed", "Cancelled"]}
-              value={filters.orderStatus}
-              onChange={(val) => setFilters({ ...filters, orderStatus: val })}
+              options={ORDER_STATUS_OPTIONS.map((o) => o.label)}
+              value={
+                ORDER_STATUS_OPTIONS.find((o) => o.id === filters.orderStatusId)
+                  ?.label ?? ""
+              }
+              onChange={(val) =>
+                setFilters({
+                  ...filters,
+                  orderStatusId:
+                    ORDER_STATUS_OPTIONS.find((o) => o.label === val)?.id ?? 0,
+                })
+              }
             />
           </Grid>
 
@@ -293,7 +367,9 @@ export default function OrdersPage() {
 
         {/* ✅ Buttons bottom right */}
         <Stack direction="row" spacing={2} justifyContent="flex-end" mt={2}>
-          <Button variant="contained">Search</Button>
+          <Button variant="contained" onClick={displayData}>
+            Search
+          </Button>
           <Button variant="outlined" color="secondary">
             Reset
           </Button>

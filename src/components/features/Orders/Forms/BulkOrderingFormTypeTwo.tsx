@@ -86,8 +86,8 @@ export default function BulkOrderingFormTypeTwo() {
           <Dropdown
             label="Select Documents"
             options={mockDocuments}
-            value={documents}
-            onChange={setDocuments}
+            value={documents as any}
+            onChange={(v: any) => setDocuments(v)}
             multiple
           />
         </Grid>

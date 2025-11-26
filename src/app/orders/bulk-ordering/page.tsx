@@ -16,16 +16,16 @@ interface TabInfo {
 
 const tabOptions: TabInfo[] = [
   {
-    label: "Type 1",
+    label: "Single Document, Multiple Countries",
     value: "type1",
     description:
-      "Type 1: Used for submitting a single document for multiple countries.",
+      "Used for submitting a single document for multiple countries.",
   },
   {
-    label: "Type 2",
+    label: "Single Country, Multiple Documents",
     value: "type2",
     description:
-      "Type 2: Used for submitting multiple documents for a single country.",
+      "Used for submitting multiple documents for a single country.",
   },
 ];
 

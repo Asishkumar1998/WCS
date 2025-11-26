@@ -13,3 +13,8 @@ export const getDocumentTypes = async (payload: any) => {
   });
   return response.data;
 };
+
+export const getDisplayData = async (payload: any) => {
+  const response = await axiosInstance.post("orders/getDisplayData", payload);
+  return response.data;
+};

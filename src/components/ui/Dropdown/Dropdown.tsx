@@ -24,7 +24,7 @@ interface SingleDropdownProps extends BaseDropdownProps {
 
 interface MultiDropdownProps extends BaseDropdownProps {
   multiple: true;
-  value: string[];
+  value: number[];
   onChange: (value: string[]) => void;
 }
 
