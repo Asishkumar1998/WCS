@@ -18,3 +18,30 @@ export const getDisplayData = async (payload: any) => {
   const response = await axiosInstance.post("orders/getDisplayData", payload);
   return response.data;
 };
+
+export const getLookup = async (payload: any) => {
+  const response = await axiosInstance.get("lookupType", {
+    params: payload,
+  });
+  return response.data;
+};
+
+export const getAttachments = async (payload: any) => {
+  const response = await axiosInstance.get("docs/attachments", {
+    params: payload,
+  });
+  return response.data;
+};
+
+export const getShippingDetails = async (payload: any) => {
+  const response = await axiosInstance.get("docs/getShippingDetails", {
+    params: payload,
+  });
+  return response.data;
+};
+export const getConversationAttachments = async (payload: any) => {
+  const response = await axiosInstance.get("docs/getConversationAttachments", {
+    params: payload,
+  });
+  return response.data;
+};

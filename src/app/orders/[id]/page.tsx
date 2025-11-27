@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Grid,
@@ -35,72 +35,91 @@ import TrackOrderDialog from "@/components/features/Orders/Dialogs/TrackOrderDia
 import AttachmentsDialog from "@/components/features/Orders/Dialogs/AttachmentsDialog";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
 import { getDisplayData } from "@/services/formsService";
+import { countries } from "@/dataset/countries";
+
+//Below are the Interfaces to handle the API response
+interface Instruction {
+  instructionId: number;
+  createdBy: string | null;
+  createdAt: string | null;
+  modifiedBy: string | null;
+  modifiedAt: string | null;
+  countryId: number;
+  docCategoryId: number;
+  personalDocType: number;
+  instruction: string;
+}
 
 interface Doc {
   docId: number;
-  country: string;
-  countryType: string;
-  docType: string;
-  customerRef: string;
-  invoice: string;
+  countryShortName: string | null;
+  countryTypeId: number;
+  docTypeId: number;
+  customerReference: string | null;
+  orderCreatedAt: string;
+  orderAmount: number;
   orderDate: string;
+  estDateOfCompletion: string;
+  docStatusId: number;
+  docCategoryId: number;
+  instructionsList: Instruction[];
+  orderId: number;
+  paidAmount: number;
+  countryName: string | null;
+  createdAt: string;
+  barcode: string;
+  isScan: boolean;
+  isPostScan: boolean;
+  isRush: boolean;
+  isGeneralSoftCopy: boolean | null;
+  isSoftCopyGiven: number;
+  sageCustomerId: string;
+  sageInvoiceReferenceNumber: string | null;
+  customerName: string;
+  name: string;
+  email: string;
+  contactNo: string;
+  invoiceReference: string;
+  internalReference: string;
+  isCopy: boolean;
+  countryId: number;
+  originCountryId: number;
+  description: string;
+  processDays: number;
+  companyName: string;
+  pageNumber: number;
+  isUSOrigin: boolean;
+  processStart: string;
   completionDate: string;
-  status: string;
+  directionId: number;
+  trackCardNumber: string;
+  directionName: string;
+  payLaterOptions: any | null;
+  labelByMail: boolean;
+  regionId: number;
+  useUserCourier: boolean;
+  regionNote: string | null;
+  custodianId: number;
+  pickupOrDropOff: boolean;
 }
 
 interface Order {
   orderId: number;
-  createdDate: string;
+  orderCreatedAt: string;
+  sageInvoiceReferenceNumber: string | null;
   docs: Doc[];
+  payLaterOptions: any | null;
+  labelByMail: boolean;
+  regionId: number;
+  useUserCourier: boolean;
+  regionNote: string | null;
+  pickupOrDropOff: boolean;
 }
 
-const mockOrders: Order[] = [
-  {
-    orderId: 97108,
-    createdDate: "Oct 1, 2024",
-    docs: [
-      {
-        docId: 93866,
-        country: "Kuwait",
-        countryType: "Non Hague",
-        docType: "Federal Govt",
-        customerRef: "PO 04092024",
-        invoice: "PO 04092024",
-        orderDate: "10/03/2024",
-        completionDate: "12/05/2024",
-        status: "In Process",
-      },
-      {
-        docId: 93928,
-        country: "Kuwait",
-        countryType: "Non Hague",
-        docType: "Federal Govt",
-        customerRef: "PO 04092024",
-        invoice: "PO 04092024",
-        orderDate: "10/03/2024",
-        completionDate: "11/13/2024",
-        status: "In Process",
-      },
-    ],
-  },
-  {
-    orderId: 97098,
-    createdDate: "Aug 16, 2024",
-    docs: [
-      {
-        docId: 93851,
-        country: "Argentina",
-        countryType: "Hague",
-        docType: "Visa",
-        customerRef: "PO 04092024",
-        invoice: "PO 04092024",
-        orderDate: "08/28/2024",
-        completionDate: "09/30/2024",
-        status: "In Process",
-      },
-    ],
-  },
-];
+export interface OrdersResponse {
+  orders: Order[];
+  totalRows: number;
+}
 
 interface Filters {
   orderId: string;
@@ -108,7 +127,7 @@ interface Filters {
   docTypeId: number | null;
   customerRef: string;
   po: string;
-  country: string;
+  countryId: number | null;
   countryTypeId: number | null;
   orderStatusId: number | null;
   fromDate: Dayjs | null;
@@ -124,6 +143,7 @@ const ORDER_STATUS_OPTIONS = [
   { label: "Completed", id: 603 },
   { label: "OnHold", id: 607 },
 ];
+
 const DOC_TYPE_OPTIONS = [
   { label: "Federal Government", id: 521 },
   { label: "General", id: 522 },
@@ -135,7 +155,29 @@ const DOC_TYPE_OPTIONS = [
   { label: "Dispatch", id: 529 },
 ];
 
+const DOCUMENT_CATEGORIES: Record<number, string> = {
+  521: "Federal Government",
+  522: "General",
+  523: "Shipping/Commercial",
+  525: "International",
+  526: "Visa",
+  527: "Translation",
+  528: "Notary",
+  529: "Dispatch",
+};
+
+export const DOC_STATES: Record<number, string> = {
+  601: "Waiting",
+  602: "In Process",
+  603: "Completed",
+  604: "Closed",
+  605: "Archived",
+  606: "Cancelled",
+  607: "OnHold",
+};
+
 export default function OrdersPage() {
+  const [data, setData] = useState<OrdersResponse | null>(null);
   const [expanded, setExpanded] = useState<number[]>([]);
   const [filters, setFilters] = useState<Filters>({
     orderId: "",
@@ -143,11 +185,11 @@ export default function OrdersPage() {
     docTypeId: null,
     customerRef: "",
     po: "",
-    country: "",
+    countryId: null,
     countryTypeId: null,
     orderStatusId: null,
-    fromDate: dayjs().subtract(90, "day"), // default to today
-    toDate: dayjs(), // default to today
+    fromDate: dayjs().subtract(90, "day"),
+    toDate: dayjs(),
     userId: 7437,
     pageNumber: 1,
     rowsPerPage: 10,
@@ -155,9 +197,11 @@ export default function OrdersPage() {
   const [conversationDrawerOpen, setConversationDrawerOpen] = useState(false);
   const [trackOpen, setTrackOpen] = React.useState(false);
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
-  const allOrderIds = mockOrders.map((o) => o.orderId);
-  const allExpanded = expanded.length === allOrderIds.length;
   const [country, setCountry] = useState<any>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [selectedDocIds, setSelectedDocIds] = useState<number[]>([]);
+  const allOrderIds = data?.orders?.map((o) => o.orderId) ?? [];
+  const allExpanded = expanded.length === allOrderIds.length && allOrderIds.length > 0;
 
   const toggleExpand = (id: number) => {
     setExpanded((prev) =>
@@ -189,9 +233,11 @@ export default function OrdersPage() {
 
   const printCover = () => {};
 
-  const viewAttachments = (e: any) => {
+  const viewAttachments = (e: any, orderId: number, docIds: number[]) => {
     e.stopPropagation();
     e.preventDefault();
+    setSelectedOrderId(orderId);
+    setSelectedDocIds(docIds ?? []);
     setAttachmentsOpen(true);
   };
 
@@ -211,12 +257,14 @@ export default function OrdersPage() {
     );
 
     if (country) {
-      (payload as any).country = country.value ?? country.label ?? country;
+      (payload as any).countryId =
+        country.value ?? country.countryId ?? country;
     }
 
     const response = await getDisplayData(payload);
+    setData(response);
   };
-
+  
   return (
     <Box sx={{ p: 3, mt: "64px" }}>
       {/* Search & Reports */}
@@ -370,9 +418,30 @@ export default function OrdersPage() {
           <Button variant="contained" onClick={displayData}>
             Search
           </Button>
-          <Button variant="outlined" color="secondary">
+            <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => {
+              setFilters({
+              orderId: "",
+              docId: "",
+              docTypeId: null,
+              customerRef: "",
+              po: "",
+              countryId: null,
+              countryTypeId: null,
+              orderStatusId: null,
+              fromDate: dayjs().subtract(90, "day"),
+              toDate: dayjs(),
+              userId: 7437,
+              pageNumber: 1,
+              rowsPerPage: 10,
+              });
+              setCountry(null);
+            }}
+            >
             Reset
-          </Button>
+            </Button>
           <Button variant="outlined" color="success">
             Export Report to Excel
           </Button>
@@ -391,8 +460,8 @@ export default function OrdersPage() {
           {allExpanded ? "Collapse All" : "Expand All"}
         </Button>
       </Grid>
-      {/* Orders List */}
-      {mockOrders.map((order) => (
+
+      {data?.orders.map((order) => (
         <Accordion
           key={order.orderId}
           expanded={expanded.includes(order.orderId)}
@@ -411,7 +480,7 @@ export default function OrdersPage() {
               width="100%"
             >
               <Typography fontWeight="bold">
-                Created: {order.createdDate} | Order ID: {order.orderId}
+                Created: {dayjs(order.orderCreatedAt).format("MMM D, YYYY")} | Order ID: {order.orderId}
               </Typography>
 
               <Stack direction="row" spacing={1} flexWrap="wrap">
@@ -430,7 +499,15 @@ export default function OrdersPage() {
                   Track Order
                 </Button>
                 <Button
-                  onClick={viewAttachments}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    viewAttachments(
+                      e,
+                      order.orderId,
+                      order.docs.map((d) => d.docId)
+                    );
+                  }}
                   size="small"
                   startIcon={<AttachFileIcon />}
                 >
@@ -491,14 +568,33 @@ export default function OrdersPage() {
                 {order.docs.map((doc) => (
                   <TableRow key={doc.docId}>
                     <TableCell>{doc.docId}</TableCell>
-                    <TableCell>{doc.country}</TableCell>
-                    <TableCell>{doc.countryType}</TableCell>
-                    <TableCell>{doc.docType}</TableCell>
-                    <TableCell>{doc.customerRef}</TableCell>
-                    <TableCell>{doc.invoice}</TableCell>
+                    <TableCell>
+                      {countries.find(
+                        (c: any) =>
+                          c.countryId === doc.countryId ||
+                          c.id === doc.countryId ||
+                          c.value === doc.countryId
+                      )?.countryShortName ??
+                        doc.countryShortName ??
+                        ""}
+                    </TableCell>
+                    <TableCell>
+                      {countries.find((c: any) => c.countryId === doc.countryId)
+                        ?.countryTypeId === 501
+                        ? "Hague"
+                        : "Non Hague"}
+                    </TableCell>
+                    <TableCell>
+                      {DOCUMENT_CATEGORIES[doc.docCategoryId] ||
+                        doc.docCategoryId}
+                    </TableCell>
+                    <TableCell>{doc.internalReference}</TableCell>
+                    <TableCell>{doc.invoiceReference}</TableCell>
                     <TableCell>{doc.orderDate}</TableCell>
-                    <TableCell>{doc.completionDate}</TableCell>
-                    <TableCell>{doc.status}</TableCell>
+                    <TableCell>{doc.estDateOfCompletion}</TableCell>
+                    <TableCell>
+                      {DOC_STATES[doc.docStatusId] || doc.docStatusId}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -531,7 +627,13 @@ export default function OrdersPage() {
       />
       <AttachmentsDialog
         open={attachmentsOpen}
-        onClose={() => setAttachmentsOpen(false)}
+        onClose={() => {
+          setAttachmentsOpen(false);
+          setSelectedOrderId(null);
+          setSelectedDocIds([]);
+        }}
+        orderId={attachmentsOpen ? selectedOrderId : null}
+        docIds={attachmentsOpen ? selectedDocIds : []}
       />
     </Box>
   );
