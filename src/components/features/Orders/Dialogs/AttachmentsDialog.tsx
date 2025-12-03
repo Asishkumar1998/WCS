@@ -16,7 +16,11 @@ import {
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import CloseIcon from "@mui/icons-material/Close";
-import { getAttachments, getShippingDetails } from "@/services/formsService";
+import {
+  getAttachments,
+  getConversationAttachments,
+  getShippingDetails,
+} from "@/services/formsService";
 import React from "react";
 import axios from "axios";
 
@@ -37,6 +41,7 @@ export default function AttachmentsDialog({
   const [shippingDetailsByDoc, setShippingDetailsByDoc] = useState<
     Record<number, any[]>
   >({});
+  const [conversationAttachments, setConversationAttachments] = useState<any[]>([]);
   const [attachments, setAttachments] = useState<any[]>([]);
 
   useEffect(() => {
@@ -133,16 +138,8 @@ export default function AttachmentsDialog({
         });
 
         setShippingDetailsByDoc(map);
-        // flattened list (optionally include docId on each file)
-        // setAttachments(
-        //   results.flatMap((r) =>
-        //     r.files.map((f: any) => ({ ...(f || {}), docId: r.id }))
-        //   )
-        // );
       } catch {
         if (!cancelled) {
-          // setAttachmentsByDoc({});
-          // setAttachments([]);
           setShippingDetailsByDoc({});
         }
       }
@@ -153,12 +150,13 @@ export default function AttachmentsDialog({
     };
   }, [orderId, JSON.stringify(docIds)]);
 
-  console.log("shippingDetailsByDoc1 ------> ", shippingDetailsByDoc);
-
-  const returnLabel = null;
-  const conversationFiles = [
-    { name: "Sample Document 1.txt", date: "Oct 1, 2025" },
-  ];
+  const fetchConversationAttachments = async () => {
+    const response = await getConversationAttachments({ orderId: orderId });
+    setConversationAttachments(response);
+  };
+  useEffect(() => {
+    fetchConversationAttachments();
+  }, [orderId]);
 
   const downloadAttachments = async (attachment: {
     attachmentId: string;
@@ -185,6 +183,7 @@ export default function AttachmentsDialog({
       console.log("Download error: ", error);
     }
   };
+
   const downloadShippingLabel = async (shippingLabel: {
     shippingLabelId: string;
     fileName: string;
@@ -210,8 +209,6 @@ export default function AttachmentsDialog({
       console.log("Download error: ", error);
     }
   };
-
-  console.log("attachmentsByDoc -------> ", attachmentsByDoc);
 
   return (
     <Dialog
@@ -266,47 +263,71 @@ export default function AttachmentsDialog({
         ) : (
           <Table size="small" sx={{ mb: 3 }}>
             <TableBody>
-              {Object.entries(attachmentsByDoc).map(([docId, files]) => (
-                <React.Fragment key={docId}>
-                  <TableRow>
-                    <TableCell colSpan={3}>
-                      <Typography variant="caption" color="text.secondary">
-                        Doc ID: {docId}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                  {files.map((file: any, idx: any) => (
-                    <TableRow key={`file-${docId}-${idx}`}>
-                      <TableCell>{file.fileName}</TableCell>
-                      <TableCell>
-                        {new Date(file.createdAt).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </TableCell>
-                      <TableCell align="right">
-                        <Tooltip title="Download">
-                          <IconButton
-                            color="primary"
-                            onClick={() =>
-                              downloadAttachments({
-                                attachmentId:
-                                  file.attachmentId ?? file.id ?? "",
-                                fileName:
-                                  file.fileName ?? file.name ?? "download",
-                              })
-                            }
-                            disabled={!file?.attachmentId && !file?.id}
-                          >
-                            <DownloadIcon />
-                          </IconButton>
-                        </Tooltip>
+              {Object.entries(attachmentsByDoc).map(([docId, files]) => {
+                const filteredFiles = (files || []).filter(
+                  (f: any) => Number(f?.referenceId) === 0
+                );
+                if (filteredFiles.length === 0)
+                  return (
+                    <>
+                      {" "}
+                      <Paper sx={{ p: 2, mb: 3, bgcolor: "grey.50" }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          fontStyle="italic"
+                        >
+                          No Attachments found.
+                        </Typography>
+                      </Paper>{" "}
+                    </>
+                  );
+
+                return (
+                  <React.Fragment key={docId}>
+                    <TableRow>
+                      <TableCell colSpan={3}>
+                        <Typography variant="caption" color="text.secondary">
+                          Doc ID: {docId}
+                        </Typography>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </React.Fragment>
-              ))}
+                    {filteredFiles.map((file: any, idx: any) => (
+                      <TableRow key={`file-${docId}-${idx}`}>
+                        <TableCell>{file.fileName}</TableCell>
+                        <TableCell>
+                          {new Date(file.createdAt).toLocaleDateString(
+                            "en-US",
+                            {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            }
+                          )}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Tooltip title="Download">
+                            <IconButton
+                              color="primary"
+                              onClick={() =>
+                                downloadAttachments({
+                                  attachmentId:
+                                    file.attachmentId ?? file.id ?? "",
+                                  fileName:
+                                    file.fileName ?? file.name ?? "download",
+                                })
+                              }
+                              disabled={!file?.attachmentId && !file?.id}
+                            >
+                              <DownloadIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </React.Fragment>
+                );
+              })}
             </TableBody>
           </Table>
         )}
@@ -317,14 +338,17 @@ export default function AttachmentsDialog({
         <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
           Return Shipping Label
         </Typography>
-        {Object.keys(shippingDetailsByDoc).length === 0 ? (
+        {Object.keys(shippingDetailsByDoc).length === 0 ||
+        Object.values(shippingDetailsByDoc).every(
+          (files) => files.length === 0
+        ) ? (
           <Paper sx={{ p: 2, mb: 3, bgcolor: "grey.50" }}>
             <Typography
               variant="body2"
               color="text.secondary"
               fontStyle="italic"
             >
-              No attachments found
+              No Shipping Label found.
             </Typography>
           </Paper>
         ) : (
@@ -343,7 +367,9 @@ export default function AttachmentsDialog({
                     const file = details.shippingLabel;
                     return (
                       <TableRow key={`file-${docId}-${idx}`}>
-                        <TableCell>{(file.blobName || "").split("_").pop()}</TableCell>
+                        <TableCell>
+                          {(file.blobName || "").split("_").pop()}
+                        </TableCell>
                         <TableCell>
                           {new Date(file.createdAt).toLocaleDateString(
                             "en-US",
@@ -363,7 +389,9 @@ export default function AttachmentsDialog({
                                   shippingLabelId:
                                     file.shippingLabelId ?? file.id ?? "",
                                   fileName:
-                                    (file.blobName || "").split("_").pop() ?? file.name ?? "download",
+                                    (file.blobName || "").split("_").pop() ??
+                                    file.name ??
+                                    "download",
                                 })
                               }
                             >
@@ -386,30 +414,57 @@ export default function AttachmentsDialog({
         <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
           Conversation Tab
         </Typography>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>File Name</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell align="right">Action</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {conversationFiles.map((file, idx) => (
-              <TableRow key={idx}>
-                <TableCell>{file.name}</TableCell>
-                <TableCell>{file.date}</TableCell>
-                <TableCell align="right">
-                  <Tooltip title="Download">
-                    <IconButton color="primary">
-                      <DownloadIcon />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
+        {conversationAttachments.length === 0 ? (
+          <Paper sx={{ p: 2, mb: 3, bgcolor: "grey.50" }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              fontStyle="italic"
+            >
+              No attachments found
+            </Typography>
+          </Paper>
+        ) : (
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>File Name</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell align="right">Action</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {conversationAttachments.map((file, idx) => (
+                <TableRow key={idx}>
+                  <TableCell>{file.fileName}</TableCell>
+                  <TableCell>
+                    {new Date(file.modifiedAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </TableCell>
+                  <TableCell align="right">
+                    <Tooltip title="Download">
+                      <IconButton
+                        color="primary"
+                        onClick={() =>
+                          downloadAttachments({
+                            attachmentId: file.attachmentId ?? file.id ?? "",
+                            fileName: file.fileName ?? file.name ?? "download",
+                          })
+                        }
+                        disabled={!file?.attachmentId && !file?.id}
+                      >
+                        <DownloadIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </DialogContent>
     </Dialog>
   );

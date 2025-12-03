@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Box,
   Typography,
@@ -36,10 +36,23 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import HomeIcon from "@mui/icons-material/Home";
+import PhoneIcon from "@mui/icons-material/Phone";
+import EmailIcon from "@mui/icons-material/Email";
 import Modal from "@/components/ui/Modal/Modal";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
 import StatusStepper from "@/components/ui/Stepper/FormStepper";
 import { DescriptionOutlined } from "@mui/icons-material";
+import Image from "next/image";
+import { savePayment } from "./savePayment";
+import { processPayLater, updateOrder } from "@/services/paymentService";
+import {
+  addRegionAddress,
+  getRegionAddresses,
+  updateRegionAddress,
+  updateShippingDetails,
+} from "@/services/cartServices";
+import { shippingOptionMap } from "@/constants/shippingOptionMap";
 
 // ===== Custom Stepper Styles =====
 const CustomConnector = styled(StepConnector)(({ theme }) => ({
@@ -124,31 +137,134 @@ const dummyDocs = [
   },
 ];
 
+interface CardDetails {
+  amount: number | null;
+  billingAddressId: number | null;
+  cardCode: string;
+  cardHolderName: string;
+  cardNumber: string;
+  cardTypeName: string;
+  customerId: number | null;
+  discountAmount: number | undefined;
+  expirationDate: string;
+  invoiceReference: string | undefined;
+  orderId: number;
+  paymentType: string;
+  promocodeId: number | undefined;
+  requestId: number | null;
+  shippingAddressId: number | null;
+}
+
+export const cardTypes = [
+  { id: 0, name: "No Card", img: "/cardIcons/NoCard.png" },
+  { id: 1, name: "Visa", img: "/cardIcons/Visa.png", expr: "^4" },
+  {
+    id: 2,
+    name: "Mastercard",
+    img: "/cardIcons/MasterCard.png",
+    expr: "^(5[1-5][0-9]{14}|2(22[1-9][0-9]{12}|2[3-9][0-9]{13}|[3-6][0-9]{14}|7[0-1][0-9]{13}|720[0-9]{12}))$",
+  },
+  { id: 3, name: "Amex", img: "/cardIcons/Amex.png", expr: "^3[47]" },
+  {
+    id: 4,
+    name: "Discover",
+    img: "/cardIcons/Discover.png",
+    expr: "^(6011|622(12[6-9]|1[3-9][0-9]|[2-8][0-9]{2}|9[0-1][0-9]|92[0-5]|64[4-9])|65)",
+  },
+  { id: 5, name: "Diners", img: "/cardIcons/Diners.png", expr: "^36" },
+  {
+    id: 6,
+    name: "Diners - Carte Blanche",
+    img: "/cardIcons/Diners.png",
+    expr: "^30[0-5]",
+  },
+  {
+    id: 7,
+    name: "JCB",
+    img: "/cardIcons/JCB.png",
+    expr: "^35(2[89]|[3-8][0-9])",
+  },
+  {
+    id: 8,
+    name: "Visa Electron",
+    img: "/cardIcons/Visa.png",
+    expr: "^(4026|417500|4508|4844|491(3|7))",
+  },
+];
+
+const initialForm = {
+  regionId: "",
+  country: "",
+  company: "",
+  contactName: "",
+  address: "",
+  city: "",
+  state: "",
+  postalCode: "",
+  phoneNumber: "",
+  customerId: "",
+  emailId: "",
+};
+
 export default function OrderMilestonePage() {
   const [docs, setDocs] = useState(dummyDocs);
   const [paymentType, setPaymentType] = useState("payNow");
-  const [checked, setChecked] = useState<{ option: string | null }>({
-    option: null,
-  });
   const [openDialog, setOpenDialog] = useState(false);
-  const [form, setForm] = useState<Record<string, string>>({
-    region: "",
-    contactName: "",
-    company: "",
-    address: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    phone: "",
-    email: "",
-  });
+  const [form, setForm] = useState<Record<string, string>>(initialForm);
   const [country, setCountry] = useState<any>(null);
+  const [showExistingAddress, setShowExistingAddress] = useState<boolean>(false);
+  const [addresses, setAddresses] = useState<any>([]);
+  const [invoiceReference, setInvoiceReference] = useState<string>("");
+  const isFirstRender = useRef(true);
+  const [checked, setChecked] = useState<{
+    option: string | null;
+    regionAddressId: number | null;
+  }>({
+    option: null,
+    regionAddressId: null,
+  });
+  const [card, setCard] = useState<CardDetails>({
+    amount: null,
+    billingAddressId: null,
+    cardCode: "",
+    cardHolderName: "",
+    cardNumber: "",
+    cardTypeName: "",
+    customerId: null,
+    discountAmount: undefined,
+    expirationDate: "",
+    invoiceReference: "",
+    orderId: 0,
+    paymentType: "",
+    promocodeId: undefined,
+    requestId: null,
+    shippingAddressId: null,
+  });
+  const [shippingDetails, setShippingDetails] = useState<{
+    invoiceReference: string | null;
+    useUserCourier: boolean;
+    labelByMail: boolean;
+    pickupOrDropOff: boolean;
+    regionId: number;
+    regionNote: string;
+  }>({
+    invoiceReference: null,
+    useUserCourier: false,
+    labelByMail: false,
+    pickupOrDropOff: false,
+    regionId: 0,
+    regionNote: "",
+  });
 
   const handleChange = (key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleAdd = () => {};
+  const handleAdd = async () => {
+    console.log(form);
+    await addRegionAddress(form);
+    setShowExistingAddress(false);
+  };
 
   const handleDelete = (id: string) => setDocs(docs.filter((d) => d.id !== id));
 
@@ -159,6 +275,108 @@ export default function OrderMilestonePage() {
   useEffect(() => {
     if (checked.option === "courier") setOpenDialog(true);
   }, [checked]);
+
+  const getCardTypeForCardNumber = (number: any) => {
+    if (!number) return cardTypes[0];
+
+    const type = cardTypes.find((card) => {
+      if (!card.expr) return false;
+      const re = new RegExp(card.expr);
+      return re.test(number);
+    });
+
+    return type || cardTypes[0];
+  };
+
+  card.cardTypeName = getCardTypeForCardNumber(card?.cardNumber).name;
+  const cardTypeImg = getCardTypeForCardNumber(card?.cardNumber).img;
+
+  const handlePayNow = async () => {
+    if (paymentType == "card") {
+      const options = card;
+      const res = await savePayment(options);
+      console.log(res);
+    } else {
+      // await processPayLater({orderId: "12345"});
+      await updateOrder(card.orderId, {
+        billingAddressId: card.billingAddressId,
+        confirmOrderDate: true,
+        orderId: card.orderId,
+        orderStatusId: 534,
+        payLaterOptions: paymentType,
+        shippingAddressId: card.shippingAddressId,
+      });
+    }
+  };
+
+  //Show Exisiting Addresses for Shipping Label Options
+  const showExistingAddresses = async () => {
+    const response = await getRegionAddresses({ customerId: 9682 });
+    setAddresses(response);
+    setShowExistingAddress(true);
+    console.log(response);
+  };
+
+  const updateRegion = async () => {
+    const selectedAddressDetails = addresses.find(
+      (a: any) => a.regionAddressId === checked.regionAddressId
+    );
+
+    if (!selectedAddressDetails) return;
+
+    const payload = {
+      regionId: selectedAddressDetails.regionId,
+      country: selectedAddressDetails.country,
+      company: selectedAddressDetails.company,
+      contactName: selectedAddressDetails.contactName,
+      address: selectedAddressDetails.address,
+      city: selectedAddressDetails.city,
+      state: selectedAddressDetails.state,
+      postalCode: selectedAddressDetails.postalCode,
+      phoneNumber: selectedAddressDetails.phoneNumber,
+    };
+
+    await updateRegionAddress(selectedAddressDetails.regionAddressId, payload);
+  };
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (checked.regionAddressId) {
+      updateRegion();
+    }
+  }, [checked.regionAddressId]);
+
+  const handleShippingOptionChange = (value: any) => {
+    setShippingDetails((prev) => ({
+      ...prev,
+      ...shippingOptionMap[value as keyof typeof shippingOptionMap],
+    }));
+  };
+
+  const submitShippingDetails = async () => {
+    const payload = {
+      useUserCourier: shippingDetails.useUserCourier,
+      labelByMail: shippingDetails.labelByMail,
+      pickupOrDropOff: shippingDetails.pickupOrDropOff,
+      regionId:
+        checked.option === "courier"
+          ? addresses.find(
+              (a: any) => a.regionAddressId === checked.regionAddressId
+            )?.regionId ?? shippingDetails.regionId
+          : shippingDetails.regionId,
+      regionNote:
+        checked.option === "courier"
+          ? addresses.find(
+              (a: any) => a.regionAddressId === checked.regionAddressId
+            )?.regionAddressId ?? shippingDetails.regionNote
+          : shippingDetails.regionNote,
+      ...(invoiceReference ? { invoiceReference } : {}),
+    };
+    await updateShippingDetails(250359, payload);
+  };
 
   return (
     <Box sx={{ p: 3, bgcolor: "background.default", mt: "64px" }}>
@@ -194,6 +412,7 @@ export default function OrderMilestonePage() {
             variant="outlined"
             size="small"
             fullWidth
+            onChange={(e) => setInvoiceReference(e.target.value)}
             sx={{
               maxWidth: 320,
               "& .MuiOutlinedInput-root": {
@@ -216,7 +435,13 @@ export default function OrderMilestonePage() {
         <RadioGroup
           row
           value={checked.option}
-          onChange={(e) => setChecked({ option: e.target.value })}
+          onChange={(e) => {
+            setChecked((prev) => ({
+              ...prev,
+              option: e.target.value,
+            }));
+            handleShippingOptionChange(e.target.value);
+          }}
         >
           <FormControlLabel
             value="upload"
@@ -285,6 +510,20 @@ export default function OrderMilestonePage() {
             )}
           </Box>
         </Collapse>
+        <Box display="flex" justifyContent="flex-end">
+          <Button
+            variant="contained"
+            sx={{
+              backgroundColor: "#c30010",
+              "&:hover": {
+                backgroundColor: "#a0000d",
+              },
+            }}
+            onClick={submitShippingDetails}
+          >
+            Save Shipping Details
+          </Button>
+        </Box>
       </Paper>
 
       <Grid container spacing={3}>
@@ -481,17 +720,17 @@ export default function OrderMilestonePage() {
                   label="Card"
                 />
                 <FormControlLabel
-                  value="check"
+                  value="Cheque"
                   control={<Radio />}
-                  label="Check"
+                  label="Cheque"
                 />
                 <FormControlLabel
-                  value="wire"
+                  value="Wire/ACH Transfer"
                   control={<Radio />}
                   label="Wire/ACH Transfer"
                 />
                 <FormControlLabel
-                  value="purchase-order"
+                  value="Pay On PO"
                   control={<Radio />}
                   label="Pay with Purchase Order (PO)"
                 />
@@ -505,27 +744,72 @@ export default function OrderMilestonePage() {
 
                   <TextField
                     label="Cardholder's Name"
+                    value={card?.cardHolderName ?? ""}
+                    onChange={(e) =>
+                      setCard({
+                        ...card,
+                        cardHolderName: (e.target as HTMLInputElement).value,
+                      })
+                    }
                     fullWidth
                     size="small"
                     sx={{ mb: 2 }}
                   />
+
                   <TextField
                     label="Card Number"
                     fullWidth
                     size="small"
                     sx={{ mb: 2 }}
+                    value={card?.cardNumber ?? ""}
+                    onChange={(e) =>
+                      setCard({
+                        ...card,
+                        cardNumber: (e.target as HTMLInputElement).value,
+                      })
+                    }
+                    slotProps={{
+                      input: {
+                        endAdornment: cardTypeImg ? (
+                          <Image
+                            src={cardTypeImg}
+                            alt="card type"
+                            className="card-type-image"
+                            width={38}
+                            height={28}
+                          />
+                        ) : null,
+                      },
+                    }}
                   />
 
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 6 }}>
                       <TextField
                         label="Expiry (MM/YY)"
+                        onChange={(e) =>
+                          setCard({
+                            ...card,
+                            expirationDate: (e.target as HTMLInputElement)
+                              .value,
+                          })
+                        }
                         fullWidth
                         size="small"
                       />
                     </Grid>
                     <Grid size={{ xs: 6 }}>
-                      <TextField label="CVV" fullWidth size="small" />
+                      <TextField
+                        label="CVV"
+                        onChange={(e) =>
+                          setCard({
+                            ...card,
+                            cardCode: (e.target as HTMLInputElement).value,
+                          })
+                        }
+                        fullWidth
+                        size="small"
+                      />
                     </Grid>
                   </Grid>
                 </>
@@ -551,6 +835,7 @@ export default function OrderMilestonePage() {
                   variant="contained"
                   fullWidth
                   size="large"
+                  onClick={handlePayNow}
                   sx={{
                     backgroundColor:
                       paymentType === "payLater" ? "#1976d2" : "#c30010",
@@ -571,119 +856,211 @@ export default function OrderMilestonePage() {
       </Grid>
       <Modal
         open={openDialog}
-        onClose={() => setOpenDialog(false)}
+        onClose={() => {
+          setOpenDialog(false);
+          setForm(initialForm);
+        }}
         title="Add New WCS Courier Address"
         type="custom"
         showActions={false} // we handle buttons inside children
       >
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 6 }}>
-            {/* <TextField
-              label="Country"
-              fullWidth
-              size="small"
-              value={form.country}
-              onChange={(e) => handleChange("country", e.target.value)}
-            /> */}
-            <CountrySelect
-              label="Select Country *"
-              value={country}
-              onChange={setCountry}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              label="Region"
-              fullWidth
-              size="medium"
-              value={form.region}
-              onChange={(e) => handleChange("region", e.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              label="Contact Name"
-              fullWidth
-              size="medium"
-              value={form.contactName}
-              onChange={(e) => handleChange("contactName", e.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              label="Company"
-              fullWidth
-              size="medium"
-              value={form.company}
-              onChange={(e) => handleChange("company", e.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              label="Address"
-              fullWidth
-              size="medium"
-              multiline
-              rows={2}
-              value={form.address}
-              onChange={(e) => handleChange("address", e.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              label="City"
-              fullWidth
-              size="medium"
-              value={form.city}
-              onChange={(e) => handleChange("city", e.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              label="State"
-              fullWidth
-              size="medium"
-              value={form.state}
-              onChange={(e) => handleChange("state", e.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              label="Postal Code"
-              fullWidth
-              size="medium"
-              value={form.postalCode}
-              onChange={(e) => handleChange("postalCode", e.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              label="Phone Number"
-              fullWidth
-              size="medium"
-              value={form.phone}
-              onChange={(e) => handleChange("phone", e.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              label="Email Address"
-              fullWidth
-              size="medium"
-              value={form.email}
-              onChange={(e) => handleChange("email", e.target.value)}
-            />
-          </Grid>
-        </Grid>
+        <RadioGroup
+          row
+          value={showExistingAddress ? "true" : "false"}
+          onChange={(e) => {
+            const val = e.target.value === "true";
+            setShowExistingAddress(val);
+            if (val) showExistingAddresses();
+          }}
+        >
+          <FormControlLabel
+            value="false"
+            control={<Radio />}
+            label="Add a new address"
+          />
+          <FormControlLabel
+            value="true"
+            control={<Radio />}
+            label="Use a saved address"
+          />
+        </RadioGroup>
+        {showExistingAddress ? (
+          <RadioGroup
+            row
+            value={checked.regionAddressId}
+            onChange={(e) =>
+              setChecked((prev) => ({
+                ...prev,
+                regionAddressId: Number(e.target.value),
+              }))
+            }
+          >
+            {addresses.map((addr: any) => (
+              <FormControlLabel
+                key={addr.regionAddressId}
+                value={addr.regionAddressId}
+                control={<Radio size="small" />}
+                label={
+                  <div style={{ width: "100%" }}>
+                    {/* Contact name */}
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                      {addr.contactName}
+                    </div>
 
-        <Box display="flex" gap={2} mt={3} flexWrap="wrap">
-          <Button variant="contained" color="primary" onClick={handleAdd}>
-            Add Address
-          </Button>
-          <Button variant="outlined" onClick={() => {}}>
-            Use Existing Address
-          </Button>
-        </Box>
+                    {/* Address line */}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        marginBottom: 4,
+                      }}
+                    >
+                      <HomeIcon sx={{ fontSize: 18, marginRight: 4 }} />
+                      <span>
+                        {addr.address}, {addr.city}, {addr.state},{" "}
+                        {addr.postalCode}, {addr.country}
+                      </span>
+                    </div>
+
+                    {/* Phone */}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        marginBottom: 4,
+                      }}
+                    >
+                      <PhoneIcon sx={{ fontSize: 18, marginRight: 4 }} />
+                      <span>{addr.phoneNumber}</span>
+                    </div>
+
+                    {/* Email */}
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <EmailIcon sx={{ fontSize: 18, marginRight: 4 }} />
+                      <span>{addr.emailId}</span>
+                    </div>
+                  </div>
+                }
+                sx={{
+                  alignItems: "flex-start",
+                  padding: "12px 8px",
+                  marginBottom: "10px",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  width: "100%",
+                }}
+              />
+            ))}
+          </RadioGroup>
+        ) : (
+          <Grid container spacing={2} mt={2}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <CountrySelect
+                label="Select Country *"
+                value={country}
+                onChange={() => {
+                  setCountry(country);
+                  form.country = country.countryName;
+                }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                label="Region"
+                fullWidth
+                size="medium"
+                value={form.region}
+                onChange={(e) => handleChange("region", e.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                label="Contact Name"
+                fullWidth
+                size="medium"
+                value={form.contactName}
+                onChange={(e) => handleChange("contactName", e.target.value)}
+                required
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                label="Company"
+                fullWidth
+                size="medium"
+                value={form.company}
+                onChange={(e) => handleChange("company", e.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                label="Address"
+                fullWidth
+                size="medium"
+                multiline
+                rows={2}
+                value={form.address}
+                onChange={(e) => handleChange("address", e.target.value)}
+                required
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                label="City"
+                fullWidth
+                size="medium"
+                value={form.city}
+                onChange={(e) => handleChange("city", e.target.value)}
+                required
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                label="State"
+                fullWidth
+                size="medium"
+                value={form.state}
+                onChange={(e) => handleChange("state", e.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                label="Postal Code"
+                fullWidth
+                size="medium"
+                value={form.postalCode}
+                onChange={(e) => handleChange("postalCode", e.target.value)}
+                required
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                label="Phone Number"
+                fullWidth
+                size="medium"
+                value={form.phoneNumber}
+                onChange={(e) => handleChange("phoneNumber", e.target.value)}
+                required
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                label="Email Address"
+                fullWidth
+                size="medium"
+                value={form.emailId}
+                onChange={(e) => handleChange("emailId", e.target.value)}
+              />
+            </Grid>
+            <Grid>
+              <Box display="flex" flexWrap="wrap">
+                <Button variant="contained" color="primary" onClick={handleAdd}>
+                  Add Address
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+        )}
       </Modal>
     </Box>
   );

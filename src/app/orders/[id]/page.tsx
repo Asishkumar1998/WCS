@@ -15,6 +15,7 @@ import {
   TableBody,
   Stack,
   Paper,
+  TablePagination,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PrintIcon from "@mui/icons-material/Print";
@@ -201,7 +202,8 @@ export default function OrdersPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [selectedDocIds, setSelectedDocIds] = useState<number[]>([]);
   const allOrderIds = data?.orders?.map((o) => o.orderId) ?? [];
-  const allExpanded = expanded.length === allOrderIds.length && allOrderIds.length > 0;
+  const allExpanded =
+    expanded.length === allOrderIds.length && allOrderIds.length > 0;
 
   const toggleExpand = (id: number) => {
     setExpanded((prev) =>
@@ -245,6 +247,10 @@ export default function OrdersPage() {
     setCountry(value);
   };
 
+  useEffect(() => {
+    displayData();
+  }, [filters.pageNumber || filters.rowsPerPage]);
+
   const displayData = async () => {
     const payload: Partial<Filters> = Object.entries(filters).reduce(
       (acc, [key, value]) => {
@@ -264,7 +270,24 @@ export default function OrdersPage() {
     const response = await getDisplayData(payload);
     setData(response);
   };
-  
+
+  const handlePageChange = (event: unknown, newPage: number) => {
+    setFilters((prev) => ({
+      ...prev,
+      pageNumber: newPage + 1,
+    }));
+  };
+
+  const handleRowsPerPageChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFilters((prev) => ({
+      ...prev,
+      rowsPerPage: parseInt(event.target.value, 10),
+      pageNumber: 1,
+    }));
+  };
+
   return (
     <Box sx={{ p: 3, mt: "64px" }}>
       {/* Search & Reports */}
@@ -415,33 +438,40 @@ export default function OrdersPage() {
 
         {/* ✅ Buttons bottom right */}
         <Stack direction="row" spacing={2} justifyContent="flex-end" mt={2}>
-          <Button variant="contained" onClick={displayData}>
+          <Button
+            variant="contained"
+            onClick={() => {
+              filters.pageNumber = 1;
+              filters.rowsPerPage = 10;
+              displayData();
+            }}
+          >
             Search
           </Button>
-            <Button
+          <Button
             variant="outlined"
             color="secondary"
             onClick={() => {
               setFilters({
-              orderId: "",
-              docId: "",
-              docTypeId: null,
-              customerRef: "",
-              po: "",
-              countryId: null,
-              countryTypeId: null,
-              orderStatusId: null,
-              fromDate: dayjs().subtract(90, "day"),
-              toDate: dayjs(),
-              userId: 7437,
-              pageNumber: 1,
-              rowsPerPage: 10,
+                orderId: "",
+                docId: "",
+                docTypeId: null,
+                customerRef: "",
+                po: "",
+                countryId: null,
+                countryTypeId: null,
+                orderStatusId: null,
+                fromDate: dayjs().subtract(90, "day"),
+                toDate: dayjs(),
+                userId: 7437,
+                pageNumber: 1,
+                rowsPerPage: 10,
               });
               setCountry(null);
             }}
-            >
+          >
             Reset
-            </Button>
+          </Button>
           <Button variant="outlined" color="success">
             Export Report to Excel
           </Button>
@@ -480,7 +510,8 @@ export default function OrdersPage() {
               width="100%"
             >
               <Typography fontWeight="bold">
-                Created: {dayjs(order.orderCreatedAt).format("MMM D, YYYY")} | Order ID: {order.orderId}
+                Created: {dayjs(order.orderCreatedAt).format("MMM D, YYYY")} |
+                Order ID: {order.orderId}
               </Typography>
 
               <Stack direction="row" spacing={1} flexWrap="wrap">
@@ -602,6 +633,16 @@ export default function OrdersPage() {
           </AccordionDetails>
         </Accordion>
       ))}
+      {data && (
+        <TablePagination
+          component="div"
+          count={data?.totalRows || 0}
+          page={filters.pageNumber - 1} // MUI is 0-based
+          onPageChange={handlePageChange}
+          rowsPerPage={filters.rowsPerPage}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
+      )}
       <ConversationDrawer
         open={conversationDrawerOpen}
         setOpen={setConversationDrawerOpen}
