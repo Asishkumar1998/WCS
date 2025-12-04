@@ -19,6 +19,13 @@ export const getDisplayData = async (payload: any) => {
   return response.data;
 };
 
+export const exportDataToExcel = async (payload: any) => {
+  const response = await axiosInstance.post("orders/exportSearchOrders", payload, {
+    responseType: "arraybuffer",
+  });
+  return response.data;
+};
+
 export const getLookup = async (payload: any) => {
   const response = await axiosInstance.get("lookupType", {
     params: payload,
@@ -41,6 +48,13 @@ export const getShippingDetails = async (payload: any) => {
 };
 export const getConversationAttachments = async (payload: any) => {
   const response = await axiosInstance.get("docs/getConversationAttachments", {
+    params: payload,
+  });
+  return response.data;
+};
+
+export const getBill = async (payload: any) => {
+  const response = await axiosInstance.get("bills/getBill", {
     params: payload,
   });
   return response.data;

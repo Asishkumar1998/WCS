@@ -35,7 +35,11 @@ import ConversationDrawer from "@/components/features/Orders/Sidebars/Conversati
 import TrackOrderDialog from "@/components/features/Orders/Dialogs/TrackOrderDialog";
 import AttachmentsDialog from "@/components/features/Orders/Dialogs/AttachmentsDialog";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
-import { getDisplayData } from "@/services/formsService";
+import {
+  exportDataToExcel,
+  getBill,
+  getDisplayData,
+} from "@/services/formsService";
 import { countries } from "@/dataset/countries";
 
 //Below are the Interfaces to handle the API response
@@ -231,7 +235,35 @@ export default function OrdersPage() {
     setTrackOpen(true);
   };
 
-  const viewInvoice = () => {};
+  const viewInvoice = async (orderId: number) => {
+    const newTab = window.open("", "_blank");
+
+    if (!newTab) {
+      alert("Popup blocked! Please allow popups for this site.");
+      return;
+    }
+
+    try {
+      const base64Data = await getBill({ orderId });
+
+      // Decode base64 string to binary
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      newTab.location.href = url;
+    } catch (err) {
+      console.error("Failed to fetch invoice PDF:", err);
+      newTab.close();
+    }
+  };
 
   const printCover = () => {};
 
@@ -241,6 +273,14 @@ export default function OrdersPage() {
     setSelectedOrderId(orderId);
     setSelectedDocIds(docIds ?? []);
     setAttachmentsOpen(true);
+  };
+
+  const viewTrackDetails = (e: any, orderId: number, docIds: number[]) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setSelectedOrderId(orderId);
+    setSelectedDocIds(docIds ?? []);
+    setTrackOpen(true);
   };
 
   const handleCountrySelect = (value: any) => {
@@ -286,6 +326,56 @@ export default function OrdersPage() {
       rowsPerPage: parseInt(event.target.value, 10),
       pageNumber: 1,
     }));
+  };
+
+  //Export to Excel
+  const exportToExcel = async () => {
+    const payload: Partial<Filters> = Object.entries(filters).reduce(
+      (acc, [key, value]) => {
+        if (value !== null && value !== "") {
+          (acc as any)[key] = value;
+        }
+        return acc;
+      },
+      {}
+    );
+
+    if (country) {
+      (payload as any).countryId =
+        country.value ?? country.countryId ?? country;
+    }
+    (payload as any).reportType = 1;
+
+    const excelPayload = { ...payload };
+    delete excelPayload.pageNumber;
+    delete excelPayload.rowsPerPage;
+
+    try {
+      const response = await exportDataToExcel(excelPayload);
+
+      const blob = new Blob([response], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+
+      const dt = new Date();
+      const fileName = `Report_${dt.getDate()}_${
+        dt.getMonth() + 1
+      }_${dt.getFullYear()}.xlsx`;
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to export Excel:", err);
+    }
   };
 
   return (
@@ -472,7 +562,7 @@ export default function OrdersPage() {
           >
             Reset
           </Button>
-          <Button variant="outlined" color="success">
+          <Button variant="outlined" color="success" onClick={exportToExcel}>
             Export Report to Excel
           </Button>
         </Stack>
@@ -523,7 +613,15 @@ export default function OrdersPage() {
                   Print Cover
                 </Button>
                 <Button
-                  onClick={trackOrder}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    viewTrackDetails(
+                      e,
+                      order.orderId,
+                      order.docs.map((d) => d.docId)
+                    );
+                  }}
                   size="small"
                   startIcon={<LocalShippingIcon />}
                 >
@@ -545,7 +643,7 @@ export default function OrdersPage() {
                   View Attachments
                 </Button>
                 <Button
-                  onClick={viewInvoice}
+                  onClick={() => viewInvoice(order.orderId)}
                   size="small"
                   startIcon={<ReceiptIcon />}
                 >
@@ -650,20 +748,8 @@ export default function OrdersPage() {
       <TrackOrderDialog
         open={trackOpen}
         onClose={() => setTrackOpen(false)}
-        orderId={250249}
-        docId={94473}
-        steps={[
-          { label: "Order Placed", date: "09/29/2025", completed: true },
-          {
-            label: "Process Started",
-            description: "Est. Processing time 7 days",
-          },
-          { label: "Secretary of State" },
-          {
-            label: "Shipped / Completed",
-            description: "Est. Completion 10/10/2025",
-          },
-        ]}
+        orderId={trackOpen ? selectedOrderId : null}
+        docIds={trackOpen ? selectedDocIds : []}
         returnInstructions="Enclose Return Shipping Label by mail with documents"
       />
       <AttachmentsDialog
