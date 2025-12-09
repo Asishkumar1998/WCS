@@ -27,7 +27,7 @@ export const exportDataToExcel = async (payload: any) => {
 };
 
 export const getLookup = async (payload: any) => {
-  const response = await axiosInstance.get("lookupType", {
+  const response = await axiosInstance.get("lookups", {
     params: payload,
   });
   return response.data;

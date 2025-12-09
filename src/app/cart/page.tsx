@@ -48,11 +48,19 @@ import { savePayment } from "./savePayment";
 import { processPayLater, updateOrder } from "@/services/paymentService";
 import {
   addRegionAddress,
+  getFeeTypes,
+  getOrderDetails,
+  getOrderIdOfCart,
   getRegionAddresses,
   updateRegionAddress,
   updateShippingDetails,
 } from "@/services/cartServices";
 import { shippingOptionMap } from "@/constants/shippingOptionMap";
+import { getAllStops } from "@/services/TrackOrderService";
+import { getLookup } from "@/services/formsService";
+import { countries } from "@/dataset/countries";
+import axios from "axios";
+import dayjs from "dayjs";
 
 // ===== Custom Stepper Styles =====
 const CustomConnector = styled(StepConnector)(({ theme }) => ({
@@ -206,15 +214,23 @@ const initialForm = {
   emailId: "",
 };
 
+const CustomerID = 9682;
+
 export default function OrderMilestonePage() {
   const [docs, setDocs] = useState(dummyDocs);
+  const [allDocs, setAllDocs] = useState<any>([]);
   const [paymentType, setPaymentType] = useState("payNow");
   const [openDialog, setOpenDialog] = useState(false);
   const [form, setForm] = useState<Record<string, string>>(initialForm);
   const [country, setCountry] = useState<any>(null);
-  const [showExistingAddress, setShowExistingAddress] = useState<boolean>(false);
+  const [showExistingAddress, setShowExistingAddress] =
+    useState<boolean>(false);
   const [addresses, setAddresses] = useState<any>([]);
+  const [orderDetails, setOrderDetails] = useState<any>();
   const [invoiceReference, setInvoiceReference] = useState<string>("");
+  const [allStops, setAllStops] = useState<any>();
+  const [feeTypes, setFeeTypes] = useState<any>();
+  const [docTypes, setDocTypes] = useState<any>();
   const isFirstRender = useRef(true);
   const [checked, setChecked] = useState<{
     option: string | null;
@@ -268,14 +284,125 @@ export default function OrderMilestonePage() {
 
   const handleDelete = (id: string) => setDocs(docs.filter((d) => d.id !== id));
 
-  const totalAmount = docs
-    .reduce((sum, d) => sum + d.fees.reduce((fSum, f) => fSum + f.amount, 0), 0)
+  const totalAmount = allDocs
+    .reduce((sum: any, d: any) => sum + d.docFees.reduce((fSum: any, f: any) => fSum + f.feeAmount, 0), 0)
     .toFixed(2);
 
   useEffect(() => {
     if (checked.option === "courier") setOpenDialog(true);
   }, [checked]);
 
+  const getCartOrder = async () => {
+    try {
+      const payload = {
+        customerId: CustomerID,
+        isUSOrigin: 1,
+        orderType: 1101,
+      };
+      const orderId = await getOrderIdOfCart(payload);
+
+      if (!orderId) {
+        console.error("No orderId returned");
+        setAllDocs([]);
+        return;
+      }
+
+      const payload1 = {
+        orderId: orderId,
+      };
+      const response = await getOrderDetails(payload1);
+      const orderData = response[0];
+      setOrderDetails(orderData);
+
+      const flattenedDocs = orderData.dockets.flatMap((docket: any) => {
+        if (!docket.docs || !Array.isArray(docket.docs)) {
+          return [];
+        }
+        return docket.docs.map((doc: any) => ({
+          ...doc,
+          docketId: docket.docketId,
+        }));
+      });
+      setAllDocs(flattenedDocs);
+
+      if (!response) {
+        console.error("No order detail returned");
+        setAllDocs([]);
+        return;
+      }
+
+      setFeeTypes(await getFeeTypes());
+      setAllStops(await getAllStops());
+      setDocTypes(await getLookup({ lookupType: "DocumentCategories" }));
+
+      // setCountries(
+      //   await getCountries({
+      //     active: 1,
+      //   })
+      // );
+    } catch (error) {
+      console.error("Error in getCartOrder:", error);
+      setAllDocs([]);
+    }
+  };
+
+  console.log("orderDetails ---------> ", orderDetails)
+
+  useEffect(() => {
+    getCartOrder();
+  }, []);
+
+  const downloadAttachments = async (attachment: {
+    attachmentId: string;
+    fileName: string;
+  }) => {
+    try {
+      const url = `https://wcsstestserver.azurewebsites.net/api/v1/documentattachments/${attachment.attachmentId}`;
+      // Comment out the below code once the backend change are deployed.
+      // const response = await axiosInstance.get(url, { responseType: "blob" });
+
+      //Comment in the below code once the backend changes are deployed.
+      //The API is directly called within this function because Blob does not allow access to files via a localhost URL.
+      const response = await axios.get(url, { responseType: "blob" });
+
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const downloadUrl = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = attachment.fileName;
+      a.click();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.log("Download error: ", error);
+    }
+  };
+
+  const convertStopsToTimeline = (stops: any[]) => {
+    return stops.map((s) => ({
+      label: `${
+        allStops?.find((a: any) => s.stopId === a.stopId)?.description || ""
+      }`, // or replace with stopName if available
+      subLabel: `${
+        allStops?.find((a: any) => s.stopId === a.stopId)?.processDays || ""
+      } business days`, // or a formatted date
+    }));
+  };
+
+  const getTimelineWithCompletion = (
+    stops: any[],
+    estCompletionDate: string
+  ) => {
+    return [
+      ...convertStopsToTimeline(stops),
+      {
+        label: "Estimated Completion",
+        subLabel: dayjs(estCompletionDate).format("MMM D, YYYY"),
+      },
+    ];
+  };
+
+  // Payments Section
   const getCardTypeForCardNumber = (number: any) => {
     if (!number) return cardTypes[0];
 
@@ -314,7 +441,6 @@ export default function OrderMilestonePage() {
     const response = await getRegionAddresses({ customerId: 9682 });
     setAddresses(response);
     setShowExistingAddress(true);
-    console.log(response);
   };
 
   const updateRegion = async () => {
@@ -529,9 +655,9 @@ export default function OrderMilestonePage() {
       <Grid container spacing={3}>
         {/* ===== LEFT COLUMN - Documents ===== */}
         <Grid size={{ xs: 12, md: 7 }}>
-          {docs.map((doc) => (
+          {allDocs.map((doc: any) => (
             <Card
-              key={doc.id}
+              key={doc.docId}
               sx={{
                 mb: 3,
                 border: "1px solid #e0e0e0",
@@ -551,7 +677,12 @@ export default function OrderMilestonePage() {
                   mb={2}
                 >
                   <Typography variant="subtitle1" fontWeight={600}>
-                    {doc.country} — {doc.authority}
+                    {countries?.find((c: any) => c.countryId === doc.countryId)
+                      ?.countryShortName || doc.countryId}{" "}
+                    —{" "}
+                    {docTypes?.find(
+                      (d: any) => d.lookupId === doc.docCategoryId
+                    )?.lookupName || ""}
                   </Typography>
                   <Tooltip title="Remove document">
                     <IconButton
@@ -599,40 +730,93 @@ export default function OrderMilestonePage() {
                       color="text.primary"
                       sx={{ lineHeight: 1.4 }}
                     >
-                      {doc.handlingOption}
+                      {doc.isSoftCopyGiven === 651
+                        ? "Proceeding with attached documents"
+                        : "Original documents will be mailed to WCS office"}
                     </Typography>
-                    <Link
-                      href={""}
-                      underline="hover"
-                      color="text.secondary"
-                      sx={{
-                        fontSize: "0.9rem",
-                        wordBreak: "break-word",
-                      }}
-                    >
-                      {doc.fileName}
-                    </Link>
+                    {doc.isSoftCopyGiven == 651 ? (
+                      <Link
+                        onClick={() =>
+                          downloadAttachments({
+                            attachmentId: doc.attachments[0].attachmentId,
+                            fileName: doc.attachments[0].fileName,
+                          })
+                        }
+                        underline="hover"
+                        color="text.secondary"
+                        sx={{
+                          fontSize: "0.9rem",
+                          wordBreak: "break-word",
+                          pointer: "cursor",
+                        }}
+                      >
+                        {doc.attachments[0].fileName}
+                      </Link>
+                    ) : (
+                      ""
+                    )}
                   </Box>
                 </Paper>
 
                 <StatusStepper
-                  steps={doc.timeline}
-                  activeStep={doc.timeline.length - 1}
+                  steps={getTimelineWithCompletion(
+                    doc.docStops,
+                    doc.estCompletionDate
+                  )}
+                  activeStep={doc.docStops.length - 1}
                 />
 
+                <List dense disablePadding>
+                  {doc.instructionsList.map((i: any, index: number) => (
+                    <ListItem key={index} disablePadding sx={{ py: 0.5 }}>
+                      <ListItemText
+                        primaryTypographyProps={{
+                          variant: "body2",
+                          fontSize: 13,
+                          lineHeight: 1,
+                        }}
+                        primary={`${index + 1}. ${i.instruction}`}
+                      />
+                    </ListItem>
+                  ))}
+                  {/* Extra instruction if feeTypeId === 17 */}
+                  {doc.docFees?.some((f: any) => f.feeTypeId === 17) && (
+                    <ListItem disablePadding sx={{ py: 0.5 }}>
+                      <ListItemText
+                        primaryTypographyProps={{
+                          variant: "body2",
+                          fontSize: 13,
+                          lineHeight: 1.3,
+                        }}
+                        primary={`${
+                          doc.instructionsList.length + 1
+                        }. Based on the state of origin of a document, additional shipping fees may be applied to ship the document to a consulate outside of Washington, DC.`}
+                      />
+                    </ListItem>
+                  )}
+                </List>
                 <Divider sx={{ my: 2 }} />
                 <List dense disablePadding>
-                  {doc.fees.map((f, idx) => (
+                  {doc.docFees.map((f: any, idx: any) => (
                     <ListItem key={idx} sx={{ py: 0.5 }}>
-                      <ListItemText primary={f.label} />
-                      <Typography>${f.amount.toFixed(2)}</Typography>
+                      <ListItemText
+                        primary={
+                          feeTypes?.find(
+                            (a: any) => f.feeTypeId === a.feeTypeId
+                          )?.feeTypeName
+                        }
+                      />
+                      <Typography>${f.feeAmount}</Typography>
                     </ListItem>
                   ))}
                   <Divider />
                   <ListItem>
                     <ListItemText primary="Total" />
                     <Typography fontWeight={700}>
-                      ${doc.fees.reduce((a, b) => a + b.amount, 0).toFixed(2)}
+                      $
+                      {doc.docFees
+                        .reduce((a: any, b: any) => a + b.feeAmount, 0)
+                        .toFixed(2)}
                     </Typography>
                   </ListItem>
                 </List>
