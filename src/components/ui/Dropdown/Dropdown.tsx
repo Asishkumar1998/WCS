@@ -53,9 +53,10 @@ const Dropdown: React.FC<DropdownProps> = ({
             : (onChange as (v: string) => void)(newValue as string)
         }
         disabled={disabled} // disable the input
-        renderOption={(props, option, { selected }) =>
-          multiple ? (
-            <li {...props}>
+        renderOption={(props, option, { selected }) => {
+          const { key, ...rest } = props;
+          return multiple ? (
+            <li key={key} {...rest}>
               <Checkbox
                 icon={icon}
                 checkedIcon={checkedIcon}
@@ -66,9 +67,9 @@ const Dropdown: React.FC<DropdownProps> = ({
               <ListItemText primary={option} />
             </li>
           ) : (
-            <li {...props}>{option}</li>
-          )
-        }
+            <li key={key} {...rest}>{option}</li>
+          );
+        }}
         renderInput={(params) => (
           <TextField
             {...params}

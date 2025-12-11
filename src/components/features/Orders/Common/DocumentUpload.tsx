@@ -12,21 +12,42 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ValidatedFileUpload from "./ValidatedFileUpload";
 
 const couriers = ["FEDEX", "UPS", "USPS", "DHL", "OTHERS"];
 
-export default function DocumentUpload({ country }: { country: any }) {
+export default function DocumentUpload({
+  country,
+  onChange,
+}: {
+  country: any;
+  onChange?: (data: any) => void;
+}) {
   const [nestedSelection, setNestedSelection] = useState<
     "proceedWithAttached" | "originalMailedNested" | null
   >(null);
 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [numPages, setNumPages] = useState("");
-
   const [trackingNumberNested, setTrackingNumberNested] = useState("");
   const [courierNested, setCourierNested] = useState<string | null>(null);
+
+  useEffect(() => {
+    onChange?.({
+      uploadedFile,
+      nestedSelection,
+      numPages,
+      trackingNumberNested,
+      courierNested,
+    });
+  }, [
+    uploadedFile,
+    nestedSelection,
+    numPages,
+    trackingNumberNested,
+    courierNested,
+  ]);
 
   return (
     <Grid size={{ xs: 12, md: 12 }}>
@@ -35,19 +56,14 @@ export default function DocumentUpload({ country }: { country: any }) {
         variant="outlined"
         sx={{
           "& .MuiOutlinedInput-root": {
-            "& fieldset": {
-              border: "1px solid #C7C9CD", // static border
-            },
-            "&:hover fieldset": {
-              border: "1px solid #C7C9CD", // prevent hover highlight
-            },
-            "&.Mui-focused fieldset": {
-              border: "1px solid #C7C9CD", // prevent focus border color change
-            },
+            "& fieldset": { border: "1px solid #C7C9CD" },
+            "&:hover fieldset": { border: "1px solid #C7C9CD" },
+            "&.Mui-focused fieldset": { border: "1px solid #C7C9CD" },
           },
         }}
       >
         <InputLabel shrink>Upload Document *</InputLabel>
+
         <OutlinedInput
           notched
           label="Upload Document"
@@ -59,44 +75,35 @@ export default function DocumentUpload({ country }: { country: any }) {
                 display: "flex",
                 flexDirection: "column",
                 gap: 1.5,
-                borderRadius: "8px",
                 width: "100%",
               }}
             >
-              {/* Upload Button */}
+              {/* File Upload */}
               <Box sx={{ mb: 1 }}>
-                <ValidatedFileUpload label="Choose file" />
+                <ValidatedFileUpload
+                  label="Choose file"
+                  onChange={(file) => setUploadedFile(file)}
+                />
               </Box>
 
               {/* Nested Options */}
               <RadioGroup
                 value={nestedSelection}
                 onChange={(e) => setNestedSelection(e.target.value as any)}
-                sx={{
-                  "& .MuiFormControlLabel-label": {
-                    fontSize: { xs: "0.85rem", sm: "0.9rem" },
-                    // whiteSpace: "nowrap",
-                  },
-                  "& .MuiFormControlLabel-root": {
-                    marginLeft: "0.2px",
-                  },
-                }}
               >
-                {/* Proceed with Attached Documents */}
+                {/* Attached Documents */}
                 <Box sx={{ display: "flex", flexDirection: "column" }}>
                   <FormControlLabel
                     value="proceedWithAttached"
                     control={
                       <Radio
                         size="small"
-                        sx={{
-                          p: 0.5,
-                          "& .MuiSvgIcon-root": { fontSize: 18 },
-                        }}
+                        sx={{ p: 0.5, "& .MuiSvgIcon-root": { fontSize: 18 } }}
                       />
                     }
                     label="Proceed with attached documents"
                   />
+
                   {nestedSelection === "proceedWithAttached" && (
                     <TextField
                       label="Number of pages"
@@ -116,10 +123,7 @@ export default function DocumentUpload({ country }: { country: any }) {
                     control={
                       <Radio
                         size="small"
-                        sx={{
-                          p: 0.5,
-                          "& .MuiSvgIcon-root": { fontSize: 18 },
-                        }}
+                        sx={{ p: 0.5, "& .MuiSvgIcon-root": { fontSize: 18 } }}
                       />
                     }
                     label={
@@ -128,6 +132,7 @@ export default function DocumentUpload({ country }: { country: any }) {
                         : "Original document will be mailed to WCS office"
                     }
                   />
+
                   {nestedSelection === "originalMailedNested" && (
                     <Box
                       sx={{
@@ -147,10 +152,11 @@ export default function DocumentUpload({ country }: { country: any }) {
                         size="small"
                         sx={{ flex: 1 }}
                       />
+
                       <Autocomplete
                         options={couriers}
                         value={courierNested}
-                        onChange={(_, newValue) => setCourierNested(newValue)}
+                        onChange={(_, value) => setCourierNested(value)}
                         renderInput={(params) => (
                           <TextField {...params} label="Courier" size="small" />
                         )}

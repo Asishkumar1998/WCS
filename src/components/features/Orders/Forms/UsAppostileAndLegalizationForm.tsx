@@ -30,6 +30,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import Loader from "@/components/ui/Loader/Loader";
 import { AdditionalQuestions } from "../Common/AdditionalQuestions";
+import { uploadFile } from "@/services/formsService";
 
 const payments = ["Credit Card", "PayPal", "Bank Transfer"];
 
@@ -230,7 +231,20 @@ export default function USAppostileAndLegalizationForm() {
     }
   }, [additionalServices]);
 
-  console.log(additionalQuestions, "these are the additional questions");
+  const handleDocumentUpload = async (data: any) => {
+    const file = data?.uploadedFile;
+    console.log("file ----------> ", file);
+    if (file) {
+      try {
+        const formData = new FormData();
+        formData.append("file_0", file);
+        const data = await uploadFile(formData);
+        console.log(data);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  };
 
   if (loading) return <Loader />;
 
@@ -369,16 +383,17 @@ export default function USAppostileAndLegalizationForm() {
         </Grid>
 
         {/* Additional Details (with floating label) */}
-
-        <AdditionalQuestions
-          country={country}
-          setAdditionalPreferences={setAdditionalQuestions}
-        />
+        <Grid size={{ xs: 12, md: 12, sm: 6 }}>
+          <AdditionalQuestions
+            country={country}
+            setAdditionalPreferences={setAdditionalQuestions}
+          />
+        </Grid>
 
         {/* Document Upload (takes full width on mobile, half on md+) */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Box sx={{ display: "flex", width: "100%" }}>
-            <DocumentUpload country={country} />
+            <DocumentUpload onChange={handleDocumentUpload} country={country} />
           </Box>
         </Grid>
 

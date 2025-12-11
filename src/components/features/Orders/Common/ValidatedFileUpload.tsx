@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useId, useState } from "react";
 import {
   TextField,
   Button,
@@ -19,6 +19,8 @@ interface FileUploadFieldProps {
   disabled?: boolean;
   allowedTypes?: string[];
   maxSizeMB?: number;
+
+  fileNameProp?: string;
 }
 
 export default function ValidatedFileUpload({
@@ -27,14 +29,22 @@ export default function ValidatedFileUpload({
   disabled = false,
   allowedTypes = ["pdf", "doc", "docx"],
   maxSizeMB = 5,
+  fileNameProp = "",
 }: FileUploadFieldProps) {
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
   const [infoMsg, setInfoMsg] = useState("");
+  const inputId = useId();
+
+  useEffect(() => {
+    if (fileNameProp !== undefined) {
+      setFileName(fileNameProp);
+    }
+  }, [fileNameProp]);
 
   const validateFile = (file: File): boolean => {
-    const fileExt = file.name.split(".").pop()?.toLowerCase() || "";
-    const isValidType = allowedTypes.includes(fileExt);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    const isValidType = allowedTypes.includes(ext);
     const isValidSize = file.size / 1024 / 1024 <= maxSizeMB;
 
     if (!isValidType) {
@@ -90,6 +100,8 @@ export default function ValidatedFileUpload({
     }
   };
 
+  const openFilePicker = () => document.getElementById(inputId)?.click();
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (disabled) return;
@@ -122,38 +134,41 @@ export default function ValidatedFileUpload({
         pointerEvents: disabled ? "none" : "auto",
       }}
     >
+      {/* Hidden file input */}
+      <input
+        id={inputId}
+        type="file"
+        hidden
+        onChange={handleInputChange}
+        accept={allowedTypes.map((t) => `.${t}`).join(",")}
+      />
+
       <Stack spacing={1.2}>
         <TextField
           label={label}
           fullWidth
           variant="outlined"
-          value={fileName}
           placeholder="Drag & drop your file here or choose manually"
+          value={fileNameProp ?? fileName}
           InputProps={{
             readOnly: true,
             sx: { cursor: "default", fontWeight: fileName ? 600 : 400 },
             endAdornment: (
-              <InputAdornment position="end" sx={{ ml: 1, flexShrink: 0 }}>
+              <InputAdornment position="end" sx={{ ml: 1 }}>
                 <Button
                   variant="contained"
-                  component="label"
                   size="small"
                   sx={{
                     textTransform: "none",
-                    whiteSpace: "nowrap", // ✅ keeps button text on one line
-                    fontSize: "0.75rem", // ✅ smaller font for mobile
+                    whiteSpace: "nowrap",
+                    fontSize: "0.75rem",
                     px: { xs: 1, sm: 1.5 },
                     py: { xs: 0.5, sm: 0.6 },
                   }}
+                  onClick={openFilePicker}
                   disabled={disabled}
                 >
                   Choose File
-                  <input
-                    type="file"
-                    hidden
-                    onChange={handleInputChange}
-                    accept={allowedTypes.map((t) => `.${t}`).join(",")}
-                  />
                 </Button>
               </InputAdornment>
             ),
@@ -161,7 +176,6 @@ export default function ValidatedFileUpload({
           error={!!error}
         />
 
-        {/* Alerts */}
         {error && (
           <Alert
             severity="error"
@@ -177,7 +191,6 @@ export default function ValidatedFileUpload({
           </Alert>
         )}
 
-        {/* ✅ Persistent Info Section */}
         {!error && (
           <Box textAlign="center">
             <Typography
@@ -187,23 +200,27 @@ export default function ValidatedFileUpload({
               Allowed: {allowedTypes.map((t) => t.toUpperCase()).join(", ")} |
               Max size: {maxSizeMB} MB
             </Typography>
-            <Typography
-              variant="caption"
-              sx={{ color: "primary.main", display: "block" }}
-            >
-              Have more than one file?{" "}
-              <Link
+            {label !== "Upload File" ? (
+              <Typography
                 variant="caption"
-                href="/orders/bulk-ordering"
-                sx={{
-                  fontWeight: 600,
-                  textDecoration: "underline",
-                  color: "primary.main",
-                }}
+                sx={{ color: "primary.main", display: "block" }}
               >
-                Use Bulk Ordering
-              </Link>
-            </Typography>
+                Have more than one file?{" "}
+                <Link
+                  variant="caption"
+                  href="/orders/bulk-ordering"
+                  sx={{
+                    fontWeight: 600,
+                    textDecoration: "underline",
+                    color: "primary.main",
+                  }}
+                >
+                  Use Bulk Ordering
+                </Link>
+              </Typography>
+            ) : (
+              ""
+            )}
           </Box>
         )}
       </Stack>

@@ -25,6 +25,7 @@ interface FormLayoutProps {
   children: React.ReactNode;
   country?: Country;
   document?: DocType | null;
+  onProceed?: () => void;
 }
 
 const FormLayout: React.FC<FormLayoutProps> = ({
@@ -32,6 +33,7 @@ const FormLayout: React.FC<FormLayoutProps> = ({
   children,
   country,
   document,
+  onProceed,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const sharedFormData = useSelector((state: RootState) => state.formsData);
@@ -74,7 +76,7 @@ const FormLayout: React.FC<FormLayoutProps> = ({
           <Button variant="outlined" color="primary">
             Add to cart
           </Button>
-          <Button variant="contained" color="primary">
+          <Button variant="contained" onClick={onProceed} color="primary">
             Proceed to cart
           </Button>
         </Grid>

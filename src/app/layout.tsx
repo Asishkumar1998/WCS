@@ -10,6 +10,7 @@ import { ThemeProvider } from "@mui/material";
 import { theme } from "@/theme/theme";
 import Navbar from "@/components/layout/NavBar/NavBar";
 import { usePathname } from "next/navigation";
+import { SnackbarProvider } from "@/components/ui/Snakebar/SnackbarProvider";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -31,11 +32,13 @@ export default function RootLayout({
         <AppRouterCacheProvider>
           <Provider store={store}>
             <ThemeProvider theme={theme}>
-              <div style={{ display: "flex" }}>
-                {!hideLayout && <SideDrawer />}
-                {!hideLayout && <Navbar />}
-                <main style={{ flexGrow: 1 }}>{children}</main>
-              </div>
+              <SnackbarProvider>
+                <div style={{ display: "flex" }}>
+                  {!hideLayout && <SideDrawer />}
+                  {!hideLayout && <Navbar />}
+                  <main style={{ flexGrow: 1 }}>{children}</main>
+                </div>
+              </SnackbarProvider>
             </ThemeProvider>
           </Provider>
         </AppRouterCacheProvider>

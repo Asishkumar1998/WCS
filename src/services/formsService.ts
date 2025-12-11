@@ -59,3 +59,18 @@ export const getBill = async (payload: any) => {
   });
   return response.data;
 };
+
+export const postTranslationOrder = async (payload: any) => {
+  const response = await axiosInstance.post("orders/", payload);
+  return response.data;
+}
+
+export const uploadFile = async (payload: any) => {
+  const response = await axiosInstance.post("documents/UploadFile", payload, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+};

@@ -61,6 +61,7 @@ import { getLookup } from "@/services/formsService";
 import { countries } from "@/dataset/countries";
 import axios from "axios";
 import dayjs from "dayjs";
+import { useSearchParams } from "next/navigation";
 
 // ===== Custom Stepper Styles =====
 const CustomConnector = styled(StepConnector)(({ theme }) => ({
@@ -214,6 +215,25 @@ const initialForm = {
   emailId: "",
 };
 
+export const CART_SERVICE_MAP: any = {
+  "us-authentication": {
+    isUSOrigin: 1,
+    orderType: 1101,
+  },
+  "global-authentication": {
+    isUSOrigin: 0,
+    orderType: 1101,
+  },
+  "visa-service": {
+    isUSOrigin: 1,
+    orderType: 1102,
+  },
+  "translation-service": {
+    isUSOrigin: 1,
+    orderType: 1103,
+  },
+};
+
 const CustomerID = 9682;
 
 export default function OrderMilestonePage() {
@@ -272,6 +292,9 @@ export default function OrderMilestonePage() {
     regionNote: "",
   });
 
+  const searchParams = useSearchParams();
+  const service = searchParams.get("service") as string;
+
   const handleChange = (key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -285,7 +308,11 @@ export default function OrderMilestonePage() {
   const handleDelete = (id: string) => setDocs(docs.filter((d) => d.id !== id));
 
   const totalAmount = allDocs
-    .reduce((sum: any, d: any) => sum + d.docFees.reduce((fSum: any, f: any) => fSum + f.feeAmount, 0), 0)
+    .reduce(
+      (sum: any, d: any) =>
+        sum + d.docFees.reduce((fSum: any, f: any) => fSum + f.feeAmount, 0),
+      0
+    )
     .toFixed(2);
 
   useEffect(() => {
@@ -294,10 +321,13 @@ export default function OrderMilestonePage() {
 
   const getCartOrder = async () => {
     try {
+      const basePayload = CART_SERVICE_MAP[service];
+      if (!basePayload) {
+        return <div>Invalid service selected.</div>;
+      }
       const payload = {
         customerId: CustomerID,
-        isUSOrigin: 1,
-        orderType: 1101,
+        ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);
 
@@ -345,8 +375,6 @@ export default function OrderMilestonePage() {
       setAllDocs([]);
     }
   };
-
-  console.log("orderDetails ---------> ", orderDetails)
 
   useEffect(() => {
     getCartOrder();
@@ -419,16 +447,22 @@ export default function OrderMilestonePage() {
   const cardTypeImg = getCardTypeForCardNumber(card?.cardNumber).img;
 
   const handlePayNow = async () => {
+    setCard((prev) => ({
+      ...prev,
+      orderId: orderDetails?.orderId,
+      amount: totalAmount,
+    }))
     if (paymentType == "card") {
+      console.log("Card before payment ---------> ", card);
       const options = card;
       const res = await savePayment(options);
       console.log(res);
     } else {
       // await processPayLater({orderId: "12345"});
-      await updateOrder(card.orderId, {
+      await updateOrder(orderDetails?.orderId, {
         billingAddressId: card.billingAddressId,
         confirmOrderDate: true,
-        orderId: card.orderId,
+        orderId: orderDetails?.orderId,
         orderStatusId: 534,
         payLaterOptions: paymentType,
         shippingAddressId: card.shippingAddressId,
@@ -501,7 +535,7 @@ export default function OrderMilestonePage() {
           : shippingDetails.regionNote,
       ...(invoiceReference ? { invoiceReference } : {}),
     };
-    await updateShippingDetails(250359, payload);
+    await updateShippingDetails(orderDetails?.orderId, payload);
   };
 
   return (
@@ -538,6 +572,7 @@ export default function OrderMilestonePage() {
             variant="outlined"
             size="small"
             fullWidth
+            value={orderDetails?.invoiceReference ? orderDetails?.invoiceReference : ''}
             onChange={(e) => setInvoiceReference(e.target.value)}
             sx={{
               maxWidth: 320,

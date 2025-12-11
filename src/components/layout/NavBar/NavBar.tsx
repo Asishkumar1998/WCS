@@ -13,7 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import { ShoppingCart, Person, Search, Info } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import NotificationPopup from "@/components/features/NotificationPopup/NotificationPopup";
@@ -27,6 +27,9 @@ export default function Navbar() {
   const router = useRouter();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [query, setQuery] = useState("");
+
+  const pathName = usePathname();
+  const service = pathName.split("/")[3];
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -101,7 +104,10 @@ export default function Navbar() {
             <IconButton color="inherit">
               <Info />
             </IconButton>
-            <IconButton onClick={() => router.replace("/cart")} color="inherit">
+            <IconButton
+              onClick={() => router.replace(`/cart?service=${service}`)}
+              color="inherit"
+            >
               <Badge badgeContent={0} color="error">
                 <ShoppingCart />
               </Badge>
