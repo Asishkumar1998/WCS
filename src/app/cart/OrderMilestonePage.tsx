@@ -251,6 +251,7 @@ export default function OrderMilestonePage() {
   const [allStops, setAllStops] = useState<any>();
   const [feeTypes, setFeeTypes] = useState<any>();
   const [docTypes, setDocTypes] = useState<any>();
+  const [translationAttachment, setTranslationAttachment] = useState<any>();
   const isFirstRender = useRef(true);
   const [checked, setChecked] = useState<{
     option: string | null;
@@ -343,6 +344,9 @@ export default function OrderMilestonePage() {
       const response = await getOrderDetails(payload1);
       const orderData = response[0];
       setOrderDetails(orderData);
+      if (service == "translation-service") {
+        setTranslationAttachment(orderData?.dockets[0]?.docs[0]?.attachments);
+      }
 
       const flattenedDocs = orderData.dockets.flatMap((docket: any) => {
         if (!docket.docs || !Array.isArray(docket.docs)) {
@@ -451,7 +455,7 @@ export default function OrderMilestonePage() {
       ...prev,
       orderId: orderDetails?.orderId,
       amount: totalAmount,
-    }))
+    }));
     if (paymentType == "card") {
       console.log("Card before payment ---------> ", card);
       const options = card;
@@ -572,7 +576,11 @@ export default function OrderMilestonePage() {
             variant="outlined"
             size="small"
             fullWidth
-            value={orderDetails?.invoiceReference ? orderDetails?.invoiceReference : ''}
+            value={
+              orderDetails?.invoiceReference
+                ? orderDetails?.invoiceReference
+                : ""
+            }
             onChange={(e) => setInvoiceReference(e.target.value)}
             sx={{
               maxWidth: 320,
@@ -769,7 +777,8 @@ export default function OrderMilestonePage() {
                         ? "Proceeding with attached documents"
                         : "Original documents will be mailed to WCS office"}
                     </Typography>
-                    {doc.isSoftCopyGiven == 651 ? (
+                    {doc.isSoftCopyGiven == 651 &&
+                    service == "us-authentication" ? (
                       <Link
                         onClick={() =>
                           downloadAttachments({
@@ -790,6 +799,29 @@ export default function OrderMilestonePage() {
                     ) : (
                       ""
                     )}
+                    {service === "translation-service"
+                      ? translationAttachment.map((a: any) => (
+                          <div key={a.attachmentId}>
+                            <Link
+                              onClick={() =>
+                                downloadAttachments({
+                                  attachmentId: a.attachmentId,
+                                  fileName: a.fileName,
+                                })
+                              }
+                              underline="hover"
+                              color="text.secondary"
+                              sx={{
+                                fontSize: "0.9rem",
+                                wordBreak: "break-word",
+                                pointer: "cursor",
+                              }}
+                            >
+                              {a.fileName}
+                            </Link>
+                          </div>
+                        ))
+                      : ""}
                   </Box>
                 </Paper>
 

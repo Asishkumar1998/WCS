@@ -581,6 +581,17 @@ export default function OrdersPage() {
         </Button>
       </Grid>
 
+      {data && (
+        <TablePagination
+          component="div"
+          count={data?.totalRows || 0}
+          page={filters.pageNumber - 1} // MUI is 0-based
+          onPageChange={handlePageChange}
+          rowsPerPage={filters.rowsPerPage}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
+      )}
+
       {data?.orders.map((order) => (
         <Accordion
           key={order.orderId}
@@ -731,16 +742,6 @@ export default function OrdersPage() {
           </AccordionDetails>
         </Accordion>
       ))}
-      {data && (
-        <TablePagination
-          component="div"
-          count={data?.totalRows || 0}
-          page={filters.pageNumber - 1} // MUI is 0-based
-          onPageChange={handlePageChange}
-          rowsPerPage={filters.rowsPerPage}
-          onRowsPerPageChange={handleRowsPerPageChange}
-        />
-      )}
       <ConversationDrawer
         open={conversationDrawerOpen}
         setOpen={setConversationDrawerOpen}
