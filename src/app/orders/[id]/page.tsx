@@ -41,6 +41,7 @@ import {
   getDisplayData,
 } from "@/services/formsService";
 import { countries } from "@/dataset/countries";
+import { useParams } from "next/navigation";
 
 //Below are the Interfaces to handle the API response
 interface Instruction {
@@ -208,6 +209,26 @@ export default function OrdersPage() {
   const allOrderIds = data?.orders?.map((o) => o.orderId) ?? [];
   const allExpanded =
     expanded.length === allOrderIds.length && allOrderIds.length > 0;
+  const { id } = useParams();
+
+  console.log("ORDER ID FROM URL:", id);
+
+  useEffect(() => {
+    if (id && id !== "all") {
+      setFilters((prev) => ({
+        ...prev,
+        orderId: id as string,
+        pageNumber: 1,
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
+    // Only fetch automatically if orderId came from URL
+    if (filters.orderId && id !== "all") {
+      displayData();
+    }
+  }, [filters.orderId, id]);
 
   const toggleExpand = (id: number) => {
     setExpanded((prev) =>
@@ -289,7 +310,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     displayData();
-  }, [filters.pageNumber || filters.rowsPerPage]);
+  }, [filters.pageNumber, filters.rowsPerPage]);
 
   const displayData = async () => {
     const payload: Partial<Filters> = Object.entries(filters).reduce(

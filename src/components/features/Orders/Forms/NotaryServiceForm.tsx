@@ -11,6 +11,7 @@ import {
   InputLabel,
   OutlinedInput,
   Box,
+  Button,
 } from "@mui/material";
 import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
@@ -20,6 +21,7 @@ import { AdditionalServices } from "@/dataset/constants/constants";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
 import ValidatedFileUpload from "../Common/ValidatedFileUpload";
 import DocumentUpload from "../Common/DocumentUpload";
+import { uploadFile } from "@/services/formsService";
 
 const documents = ["Passport", "Certificate", "License"];
 const payments = ["Credit Card", "PayPal", "Bank Transfer"];
@@ -28,6 +30,9 @@ export default function NotaryServiceForm() {
   const [country, setCountry] = useState<any>(null);
   const [document, setDocument] = useState("");
   const [additionalServices, setAdditionalServices] = useState<string[]>([]);
+  const [attachment, setAttachment] = useState<any>();
+  const [customerReference, setCustomerReference] = useState<any>();
+  const [additionalComments, setAdditionalComments] = useState<any>();
   const [payment, setPayment] = useState("");
   const [additionalServicesState, setAdditionalServicesState] =
     useState(AdditionalServices);
@@ -38,6 +43,77 @@ export default function NotaryServiceForm() {
     (event: SelectChangeEvent<string>) => {
       setter(event.target.value);
     };
+
+  const handleDocumentUpload = async (data: any) => {
+    const file = data?.uploadedFile;
+    if (file) {
+      try {
+        const formData = new FormData();
+        formData.append("file_0", file);
+        const data = await uploadFile(formData);
+        console.log(data);
+        setAttachment(data);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  };
+
+  const YES = 651;
+  const NO = 652;
+  const buildNotaryPayload = () => {
+    return {
+      customerId: "9682",
+      orderOriginId: 611,
+      orderType: 1101,
+      initiatedBy: "7437",
+
+      dockets: [
+        {
+          docs: [
+            {
+              countryId: country?.countryId,
+              originCountryId: 190,
+              docCategoryId: 522,
+              docTypeId: 0,
+
+              isRush: additionalServices.includes("Rush") ? YES : NO,
+              isScan: additionalServices.includes("Pre Scan") ? YES : NO,
+              isPostScan: additionalServices.includes("Post Scan") ? YES : NO,
+
+              isDispatch: false,
+              isNotarized: YES,
+
+              isSoSDone: NO,
+              isDoSDone: NO,
+
+              isSoftCopyGiven: attachment ? YES : NO,
+              isGeneralSoftCopy: attachment ? YES : NO,
+
+              noOfProducts: null,
+              instructions: additionalComments || "",
+              internalReference: customerReference || "",
+
+              CIAmount: "0",
+              additionalDOX: "",
+              COCount: 0,
+              CICount: 1,
+
+              attachments: attachment,
+            },
+          ],
+        },
+      ],
+    };
+  };
+
+  const handleSubmit = () => {
+    const payload = buildNotaryPayload();
+    console.log("FINAL PAYLOAD:", payload);
+  };
+  if(setAdditionalComments){
+    handleSubmit();
+  }
 
   return (
     <FormLayout title="Notary Service">
@@ -66,6 +142,7 @@ export default function NotaryServiceForm() {
           <InputField
             label="Customer Reference"
             placeholder="Enter reference number"
+            onChange={(e) => setCustomerReference(e.target.value)}
           />
         </Grid>
 
@@ -160,7 +237,9 @@ export default function NotaryServiceForm() {
 
         {/* Upload */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <DocumentUpload country="" />
+          <Box sx={{ display: "flex", width: "100%" }}>
+            <DocumentUpload onChange={handleDocumentUpload} country={country} />
+          </Box>
         </Grid>
 
         {/* Additional Comments (multiline) */}
@@ -170,6 +249,7 @@ export default function NotaryServiceForm() {
             placeholder="Enter comments..."
             multiline
             rows={9}
+            onChange={(e) => setAdditionalComments(e.target.value)}
             sx={{
               height: "100%",
               "& .MuiOutlinedInput-root": {
