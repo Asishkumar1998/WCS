@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   SelectChangeEvent,
   Grid,
@@ -19,18 +19,52 @@ import FormLayout from "@/components/ui/Forms/FormLayout";
 import { AdditionalServices } from "@/dataset/constants/constants";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
 import DocumentUpload from "../Common/DocumentUpload";
+import { CART_SERVICE_MAP } from "@/constants/serviceMap";
+import { getOrderDetails, getOrderIdOfCart } from "@/services/cartServices";
+import {
+  buildNotaryDispatchPayloadFromExistingOrder,
+  buildNotaryPayload,
+} from "../Common/NotaryDispatchPayload";
+import {
+  postTranslationOrder,
+  uploadFile,
+} from "@/services/formsService";
+import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
+import { updateOrder } from "@/services/paymentService";
+import DocumentDropdown from "@/components/ui/Dropdown/DocumentDropdown";
 
 const documents = ["Passport", "Certificate", "License"];
 const payments = ["Credit Card", "PayPal", "Bank Transfer"];
+const CustomerID = 9682;
+export interface DocType {
+  docTypeId: number;
+  docTypeName: string;
+  docCategoryId: number;
+  personalDoc: number;
+  physicalRequired: number;
+  createdBy: any;
+  createdAt: number;
+  modifiedBy: any;
+  modifiedAt: number;
+  ordSequence: any;
+  attachmentRequired: any;
+}
 
 export default function DispatchServiceForm() {
   const [country, setCountry] = useState<any>(null);
-  const [document, setDocument] = useState("");
+  const [document, setDocument] = useState<DocType | null>(null);
   const [additionalServices, setAdditionalServices] = useState<string[]>([]);
+  const [attachment, setAttachment] = useState<any>();
+  const [basePayload, setBasePayload] = useState<any>(null);
+  const [customerReference, setCustomerReference] = useState<any>();
+  const [additionalComments, setAdditionalComments] = useState<any>();
+  const [numberOfPages, setNumberOfPages] = useState();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [payment, setPayment] = useState("");
   const [additionalServicesState, setAdditionalServicesState] =
     useState(AdditionalServices);
   const [disabled, setDisabled] = useState(false);
+  const { showSnackbar } = useSnackbar();
 
   const handleDropdownChange =
     (setter: React.Dispatch<React.SetStateAction<string>>) =>
@@ -38,8 +72,94 @@ export default function DispatchServiceForm() {
       setter(event.target.value);
     };
 
+  const handleDocumentUpload = async (data: any) => {
+    setNumberOfPages(data?.numberOfPages);
+    const file = data?.uploadedFile;
+    if (file) {
+      try {
+        const formData = new FormData();
+        formData.append("file_0", file);
+        const data = await uploadFile(formData);
+        console.log(data);
+        setAttachment(data);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  };
+
+  const submitOrder = async () => {
+    let payload;
+    try {
+      if (basePayload == null) {
+        payload = buildNotaryPayload({
+          country,
+          additionalComments,
+          customerReference,
+          additionalServices,
+          attachment,
+          numberOfPages,
+          isNotary: false,
+        });
+        const response = await postTranslationOrder(payload);
+        console.log("response ----------> ", response);
+      } else {
+        payload = buildNotaryDispatchPayloadFromExistingOrder({
+          basePayload,
+          country,
+          additionalServices,
+          additionalComments,
+          attachment,
+          customerReference,
+          numberOfPages,
+          isNotary: false,
+        });
+        const response = await updateOrder(payload.orderId, payload);
+        console.log("response ----------> ", response);
+      }
+      window.location.href = "/cart?service=dispatch-service";
+    } catch (error) {
+      showSnackbar("Failed to submit order", "error");
+      console.error(error);
+    }
+  };
+
+  // Get the previous cart order details.
+  const getCartOrder = async () => {
+    try {
+      const basePayload = CART_SERVICE_MAP["us-authentication"];
+      if (!basePayload) {
+        return <div>Invalid service selected.</div>;
+      }
+      const payload = {
+        customerId: CustomerID,
+        docCategoryId: 529,
+        ...basePayload,
+      };
+      const orderId = await getOrderIdOfCart(payload);
+      if (orderId != null) {
+        const response = await getOrderDetails({ orderId: orderId });
+        const orderData = response[0];
+        setBasePayload(orderData);
+        console.log("orderData ---------> ", orderData);
+      }
+    } catch (error) {
+      console.error("Error in getCartOrder:", error);
+    }
+  };
+
+  useEffect(() => {
+    getCartOrder();
+  }, []);
+
+  const handleDocumentSelect = (newValue: DocType | null) => {
+    if (!newValue) return;
+    setDocument(newValue);
+    setDisabled(false);
+  };
+
   return (
-    <FormLayout title="Dispatch Service">
+    <FormLayout title="Dispatch Service" onProceed={submitOrder}>
       <Grid container spacing={2}>
         {/* Country */}
         <Grid size={{ xs: 12, sm: 6 }}>
@@ -52,11 +172,15 @@ export default function DispatchServiceForm() {
 
         {/* Document */}
         <Grid size={{ xs: 12, sm: 6 }}>
-          <Dropdown
+          <DocumentDropdown
             label="Select Document *"
-            options={documents}
+            country={country}
             value={document}
-            onChange={() => handleDropdownChange(setDocument)}
+            onChange={handleDocumentSelect}
+            open={dropdownOpen}
+            onOpen={() => setDropdownOpen(true)}
+            onClose={() => setDropdownOpen(false)}
+            disabled={!country}
           />
         </Grid>
 
@@ -65,6 +189,7 @@ export default function DispatchServiceForm() {
           <InputField
             label="Customer Reference"
             placeholder="Enter reference number"
+            onChange={(e) => setCustomerReference(e.target.value)}
           />
         </Grid>
 
@@ -159,7 +284,9 @@ export default function DispatchServiceForm() {
 
         {/* Upload */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <DocumentUpload country="" />
+          <Box sx={{ display: "flex", width: "100%" }}>
+            <DocumentUpload onChange={handleDocumentUpload} country={country} />
+          </Box>
         </Grid>
 
         {/* Additional Comments (multiline) */}
@@ -169,6 +296,7 @@ export default function DispatchServiceForm() {
             placeholder="Enter comments..."
             multiline
             rows={9}
+            onChange={(e) => setAdditionalComments(e.target.value)}
             sx={{
               height: "100%",
               "& .MuiOutlinedInput-root": {

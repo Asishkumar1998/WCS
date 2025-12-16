@@ -62,6 +62,7 @@ import { countries } from "@/dataset/countries";
 import axios from "axios";
 import dayjs from "dayjs";
 import { useSearchParams } from "next/navigation";
+import { CART_SERVICE_MAP } from "@/constants/serviceMap";
 
 // ===== Custom Stepper Styles =====
 const CustomConnector = styled(StepConnector)(({ theme }) => ({
@@ -213,25 +214,6 @@ const initialForm = {
   phoneNumber: "",
   customerId: "",
   emailId: "",
-};
-
-export const CART_SERVICE_MAP: any = {
-  "us-authentication": {
-    isUSOrigin: 1,
-    orderType: 1101,
-  },
-  "global-authentication": {
-    isUSOrigin: 0,
-    orderType: 1101,
-  },
-  "visa-service": {
-    isUSOrigin: 1,
-    orderType: 1102,
-  },
-  "translation-service": {
-    isUSOrigin: 1,
-    orderType: 1103,
-  },
 };
 
 const CustomerID = 9682;
@@ -1078,7 +1060,7 @@ export default function OrderMilestonePage() {
                 <Button
                   variant="outlined"
                   fullWidth
-                  onClick={() => alert("Add more documents")}
+                  onClick={() => window.location.href = `/orders/new/${service}`}
                 >
                   Add More Documents
                 </Button>

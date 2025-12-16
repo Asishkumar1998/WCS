@@ -269,7 +269,7 @@ export default function USAppostileAndLegalizationForm() {
           <InputField
             label="Selected Service"
             placeholder="Please select a country"
-            value={country?.countryTypeId == 502 ? "Legalization" : "Apostille"}
+            value={country?.countryTypeId == 502 ? "Legalization" : country?.countryTypeId == 501 ? "Apostille" : ""}
             slotProps={{
               input: {
                 readOnly: true,
