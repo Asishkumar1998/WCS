@@ -6,3 +6,13 @@ export const getUserNotifications = async (payload: any) => {
   });
   return response.data;
 };
+
+export const getCustomer = async (customerId: string) => {
+  const response = await axios.get(`customers/${customerId}`);
+  return response.data;
+}
+
+export const getUser = async (userId: string) => {
+  const response = await axios.get(`users/${userId}`);
+  return response.data;
+}

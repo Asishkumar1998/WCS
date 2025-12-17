@@ -52,17 +52,23 @@ import {
   getOrderDetails,
   getOrderIdOfCart,
   getRegionAddresses,
+  shippingDetailsUpload,
+  shippingLabelUpload,
   updateRegionAddress,
   updateShippingDetails,
 } from "@/services/cartServices";
 import { shippingOptionMap } from "@/constants/shippingOptionMap";
 import { getAllStops } from "@/services/TrackOrderService";
-import { getLookup } from "@/services/formsService";
+import { getLookup, uploadFile } from "@/services/formsService";
 import { countries } from "@/dataset/countries";
 import axios from "axios";
 import dayjs from "dayjs";
 import { useSearchParams } from "next/navigation";
 import { CART_SERVICE_MAP } from "@/constants/serviceMap";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import { getCustomer, getUser } from "@/services/userService";
+import ValidatedFileUpload from "@/components/features/Orders/Common/ValidatedFileUpload";
+import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 
 // ===== Custom Stepper Styles =====
 const CustomConnector = styled(StepConnector)(({ theme }) => ({
@@ -221,7 +227,7 @@ const CustomerID = 9682;
 export default function OrderMilestonePage() {
   const [docs, setDocs] = useState(dummyDocs);
   const [allDocs, setAllDocs] = useState<any>([]);
-  const [paymentType, setPaymentType] = useState("payNow");
+  const [paymentType, setPaymentType] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
   const [form, setForm] = useState<Record<string, string>>(initialForm);
   const [country, setCountry] = useState<any>(null);
@@ -234,7 +240,12 @@ export default function OrderMilestonePage() {
   const [feeTypes, setFeeTypes] = useState<any>();
   const [docTypes, setDocTypes] = useState<any>();
   const [translationAttachment, setTranslationAttachment] = useState<any>();
+  const [orderInCart, setOrderInCart] = useState<boolean>(false);
+  const [customer, setCustomer] = useState<any>();
+  const [user, setUser] = useState<any>();
   const isFirstRender = useRef(true);
+  const [fileName, setFileName] = useState("");
+  const [uploadFileData, setUploadFileData] = useState<any>();
   const [checked, setChecked] = useState<{
     option: string | null;
     regionAddressId: number | null;
@@ -274,6 +285,7 @@ export default function OrderMilestonePage() {
     regionId: 0,
     regionNote: "",
   });
+  const { showSnackbar } = useSnackbar();
 
   const searchParams = useSearchParams();
   const service = searchParams.get("service") as string;
@@ -316,9 +328,11 @@ export default function OrderMilestonePage() {
 
       if (!orderId) {
         console.error("No orderId returned");
+        setOrderInCart(false);
         setAllDocs([]);
         return;
       }
+      setOrderInCart(true);
 
       const payload1 = {
         orderId: orderId,
@@ -362,9 +376,25 @@ export default function OrderMilestonePage() {
     }
   };
 
+  const getCustomerDetails = async () => {
+    const customerDetails = await getCustomer("9682");
+    const userDetails = await getUser("7437");
+    setCustomer(customerDetails[0]);
+    setUser(userDetails[0]);
+  };
+
   useEffect(() => {
     getCartOrder();
+    getCustomerDetails();
   }, []);
+  useEffect(() => {
+    setInvoiceReference(orderDetails?.invoiceReference);
+    const option = getShippingOptionFromOrder(orderDetails);
+    setChecked((prev) => ({
+      ...prev,
+      option: option,
+    }));
+  }, [orderDetails]);
 
   const downloadAttachments = async (attachment: {
     attachmentId: string;
@@ -433,27 +463,38 @@ export default function OrderMilestonePage() {
   const cardTypeImg = getCardTypeForCardNumber(card?.cardNumber).img;
 
   const handlePayNow = async () => {
+    if (
+      orderDetails.labelByMail === false &&
+      orderDetails.useUserCourier === false &&
+      orderDetails.pickupOrDropOff === false
+    ) {
+      showSnackbar("Please submit shipping details first.", "error");
+      return;
+    }
+    if (paymentType == "") {
+      showSnackbar("Please select payment type", "error");
+      return;
+    }
     setCard((prev) => ({
       ...prev,
       orderId: orderDetails?.orderId,
       amount: totalAmount,
     }));
     if (paymentType == "card") {
-      console.log("Card before payment ---------> ", card);
       const options = card;
       const res = await savePayment(options);
-      console.log(res);
     } else {
-      // await processPayLater({orderId: "12345"});
+      // await processPayLater({orderId: orderDetails?.orderId});
       await updateOrder(orderDetails?.orderId, {
-        billingAddressId: card.billingAddressId,
+        billingAddressId: customer.billingAddressId,
         confirmOrderDate: true,
         orderId: orderDetails?.orderId,
         orderStatusId: 534,
         payLaterOptions: paymentType,
-        shippingAddressId: card.shippingAddressId,
+        shippingAddressId: customer.shippingAddressId,
       });
     }
+    window.location.href = `/confirmation?orderId=${orderDetails.orderId}`;
   };
 
   //Show Exisiting Addresses for Shipping Label Options
@@ -503,798 +544,922 @@ export default function OrderMilestonePage() {
   };
 
   const submitShippingDetails = async () => {
-    const payload = {
-      useUserCourier: shippingDetails.useUserCourier,
-      labelByMail: shippingDetails.labelByMail,
-      pickupOrDropOff: shippingDetails.pickupOrDropOff,
-      regionId:
-        checked.option === "courier"
-          ? addresses.find(
-              (a: any) => a.regionAddressId === checked.regionAddressId
-            )?.regionId ?? shippingDetails.regionId
-          : shippingDetails.regionId,
-      regionNote:
-        checked.option === "courier"
-          ? addresses.find(
-              (a: any) => a.regionAddressId === checked.regionAddressId
-            )?.regionAddressId ?? shippingDetails.regionNote
-          : shippingDetails.regionNote,
-      ...(invoiceReference ? { invoiceReference } : {}),
-    };
-    await updateShippingDetails(orderDetails?.orderId, payload);
+    try {
+      const payload = {
+        useUserCourier: shippingDetails.useUserCourier,
+        labelByMail: shippingDetails.labelByMail,
+        pickupOrDropOff: shippingDetails.pickupOrDropOff,
+        regionId:
+          checked.option === "courier"
+            ? addresses.find(
+                (a: any) => a.regionAddressId === checked.regionAddressId
+              )?.regionId ?? shippingDetails.regionId
+            : shippingDetails.regionId,
+        regionNote:
+          checked.option === "courier"
+            ? addresses.find(
+                (a: any) => a.regionAddressId === checked.regionAddressId
+              )?.regionAddressId ?? shippingDetails.regionNote
+            : shippingDetails.regionNote,
+        ...(invoiceReference ? { invoiceReference } : {}),
+      };
+      await updateShippingDetails(orderDetails?.orderId, payload);
+
+      if (checked.option === "upload") {
+        const UserCourierPayload = {
+          shippingLabelURL: uploadFileData?.sourceUrl,
+          blobName: uploadFileData?.blobName,
+          orderId: orderDetails?.orderId,
+          destinationId: 547,
+        };
+        const response = await shippingLabelUpload(UserCourierPayload);
+
+        const requests = allDocs.map((doc: any) => {
+          const payload = {
+            docId: doc.docId,
+            orderId: doc.orderId,
+            shippingLabelId: response[0].shippingLabelId,
+            destType: doc.destinationId,
+            destRefId: doc.oosAddressId ?? 0,
+            shippingType: 0,
+            isUsed: 0,
+          };
+          return shippingDetailsUpload(payload);
+        });
+        await Promise.all(requests);
+      }
+      showSnackbar("Successfully saved shipping details", "success");
+    } catch (e) {
+      showSnackbar("Failed to save shipping details", "error");
+      console.log(e);
+    }
+  };
+
+  const handleSelectFile = async (file: File | null) => {
+    if (!file) return;
+    setFileName(file?.name || "");
+    if (file) {
+      try {
+        const formData = new FormData();
+        formData.append("file_0", file);
+        const data = await uploadFile(formData);
+        setUploadFileData(data[0]);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  };
+
+  const getShippingOptionFromOrder = (orderDetails: any) => {
+    if (!orderDetails) return "";
+
+    if (orderDetails.useUserCourier === true) return "upload";
+    if (orderDetails.labelByMail === true) return "mail";
+    if (orderDetails.pickupOrDropOff === true) return "pickup";
+    if (orderDetails.regionId && orderDetails.regionId !== 0) return "courier";
+
+    return ""; // ← nothing selected
   };
 
   return (
     <Box sx={{ p: 3, bgcolor: "background.default", mt: "64px" }}>
       {/* ===== Shipping Section ===== */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: 3,
-          mb: 3,
-          borderRadius: 3,
-          border: "1px solid",
-          borderColor: "divider",
-          backgroundColor: "background.paper",
-        }}
-      >
-        {/* Header Row */}
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          flexWrap="wrap"
-          gap={2}
-        >
-          {/* Left title */}
-          <Typography variant="subtitle1" fontWeight={600} color="text.primary">
-            Shipping Label / Return Instructions
-          </Typography>
-
-          {/* Right-aligned Invoice Reference / PO Number */}
-          <TextField
-            label="Invoice Reference / PO Number"
-            placeholder="Enter invoice reference or PO number"
-            variant="outlined"
-            size="small"
-            fullWidth
-            value={
-              orderDetails?.invoiceReference
-                ? orderDetails?.invoiceReference
-                : ""
-            }
-            onChange={(e) => setInvoiceReference(e.target.value)}
+      {orderInCart ? (
+        <Box>
+          <Paper
+            elevation={0}
             sx={{
-              maxWidth: 320,
-              "& .MuiOutlinedInput-root": {
-                height: 40,
-                "& fieldset": {
-                  borderColor: "#1976d2",
-                },
-                "&:hover fieldset": {
-                  borderColor: "#1565c0",
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: "#1976d2",
-                },
-              },
+              p: 3,
+              mb: 3,
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              backgroundColor: "background.paper",
             }}
-          />
-        </Box>
-
-        {/* Radio Buttons */}
-        <RadioGroup
-          row
-          value={checked.option}
-          onChange={(e) => {
-            setChecked((prev) => ({
-              ...prev,
-              option: e.target.value,
-            }));
-            handleShippingOptionChange(e.target.value);
-          }}
-        >
-          <FormControlLabel
-            value="upload"
-            control={<Radio size="small" />}
-            label="Upload return shipping label"
-          />
-          <FormControlLabel
-            value="mail"
-            control={<Radio size="small" />}
-            label="Enclose return shipping label by mail"
-          />
-          <FormControlLabel
-            value="courier"
-            control={<Radio size="small" />}
-            label="Use WCS courier account"
-          />
-          <FormControlLabel
-            value="eCopy"
-            control={<Radio size="small" />}
-            label="E-Copy"
-          />
-          <FormControlLabel
-            value="pickup"
-            control={<Radio size="small" />}
-            label="Pickup"
-          />
-        </RadioGroup>
-
-        {/* Collapsible Content */}
-        <Collapse in={!!checked.option} timeout="auto">
-          <Box mt={2} pl={4}>
-            {checked.option === "upload" && (
-              <Box mb={2}>
-                <Typography variant="body2" color="text.secondary">
-                  * When creating a prepaid return label, please use your
-                  company information (name, address, phone) as the
-                  shipper/sender. Do Not use WCS information (name, address,
-                  phone) as the shipper/sender.
-                </Typography>
-                <Box
-                  mt={1}
-                  p={2}
-                  sx={{
-                    border: "1px dashed",
-                    borderColor: "divider",
-                    borderRadius: 2,
-                    textAlign: "center",
-                    cursor: "pointer",
-                    "&:hover": { borderColor: "primary.main" },
-                  }}
-                >
-                  <Typography variant="body2" color="primary.main">
-                    Click to upload
-                  </Typography>
-                </Box>
-              </Box>
-            )}
-
-            {checked.option === "mail" && (
-              <Typography variant="body2" color="text.secondary" mb={2}>
-                * When creating a prepaid return label, please use your company
-                information (name, address, phone) as the shipper/sender. Do Not
-                use WCS information (name, address, phone) as the
-                shipper/sender.
-              </Typography>
-            )}
-          </Box>
-        </Collapse>
-        <Box display="flex" justifyContent="flex-end">
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: "#c30010",
-              "&:hover": {
-                backgroundColor: "#a0000d",
-              },
-            }}
-            onClick={submitShippingDetails}
           >
-            Save Shipping Details
-          </Button>
-        </Box>
-      </Paper>
+            {/* Header Row */}
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              flexWrap="wrap"
+              gap={2}
+            >
+              {/* Left title */}
+              <Typography
+                variant="subtitle1"
+                fontWeight={600}
+                color="text.primary"
+              >
+                Shipping Label / Return Instructions
+              </Typography>
 
-      <Grid container spacing={3}>
-        {/* ===== LEFT COLUMN - Documents ===== */}
-        <Grid size={{ xs: 12, md: 7 }}>
-          {allDocs.map((doc: any) => (
-            <Card
-              key={doc.docId}
-              sx={{
-                mb: 3,
-                border: "1px solid #e0e0e0",
-                transition: "0.3s",
-                "&:hover": {
-                  transform: "translateY(-3px)",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
-                  borderColor: "#1976d2",
-                },
+              {/* Right-aligned Invoice Reference / PO Number */}
+              <TextField
+                label="Invoice Reference / PO Number"
+                placeholder="Enter invoice reference or PO number"
+                variant="outlined"
+                size="small"
+                fullWidth
+                value={invoiceReference}
+                onChange={(e) => setInvoiceReference(e.target.value)}
+                InputLabelProps={{
+                  shrink: Boolean(invoiceReference),
+                }}
+                sx={{
+                  maxWidth: 320,
+                  "& .MuiOutlinedInput-root": {
+                    height: 40,
+                    "& fieldset": {
+                      borderColor: "#1976d2",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#1565c0",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#1976d2",
+                    },
+                  },
+                }}
+              />
+            </Box>
+
+            {/* Radio Buttons */}
+            <RadioGroup
+              row
+              value={checked.option}
+              onChange={(e) => {
+                setChecked((prev) => ({
+                  ...prev,
+                  option: e.target.value,
+                }));
+                handleShippingOptionChange(e.target.value);
               }}
             >
-              <CardContent>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  mb={2}
-                >
-                  <Typography variant="subtitle1" fontWeight={600}>
-                    {countries?.find((c: any) => c.countryId === doc.countryId)
-                      ?.countryShortName || doc.countryId}{" "}
-                    —{" "}
-                    {docTypes?.find(
-                      (d: any) => d.lookupId === doc.docCategoryId
-                    )?.lookupName || ""}
-                  </Typography>
-                  <Tooltip title="Remove document">
-                    <IconButton
-                      onClick={() => handleDelete(doc.id)}
-                      size="small"
-                    >
-                      <DeleteIcon color="error" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
+              <FormControlLabel
+                value="upload"
+                control={<Radio size="small" />}
+                label="Upload return shipping label"
+              />
+              <FormControlLabel
+                value="mail"
+                control={<Radio size="small" />}
+                label="Enclose return shipping label by mail"
+              />
+              <FormControlLabel
+                value="courier"
+                control={<Radio size="small" />}
+                label="Use WCS courier account"
+              />
+              <FormControlLabel
+                value="eCopy"
+                control={<Radio size="small" />}
+                label="E-Copy"
+              />
+              <FormControlLabel
+                value="pickup"
+                control={<Radio size="small" />}
+                label="Pickup"
+              />
+            </RadioGroup>
 
-                {/* Document Handling Summary */}
-                <Paper
-                  elevation={0}
+            {/* Collapsible Content */}
+            <Collapse in={!!checked.option} timeout="auto">
+              <Box mt={2} pl={4}>
+                {checked.option === "upload" && (
+                  <Box mb={2}>
+                    <Typography variant="body2" color="text.secondary">
+                      * When creating a prepaid return label, please use your
+                      company information (name, address, phone) as the
+                      shipper/sender. Do Not use WCS information (name, address,
+                      phone) as the shipper/sender.
+                    </Typography>
+                    <Box
+                      mt={1}
+                      p={2}
+                      sx={{
+                        width: 700,
+                        // mx: "auto",
+                        border: "1px dashed",
+                        borderColor: "divider",
+                        borderRadius: 2,
+                        textAlign: "center",
+                        cursor: "pointer",
+                        "&:hover": { borderColor: "primary.main" },
+                      }}
+                    >
+                      <Typography variant="body2" color="primary.main">
+                        <Box sx={{ mb: 1 }}>
+                          <ValidatedFileUpload
+                            label="Upload File"
+                            fileNameProp={fileName}
+                            onChange={handleSelectFile}
+                          />
+                        </Box>
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+                {checked.option === "mail" && (
+                  <Typography variant="body2" color="text.secondary" mb={2}>
+                    * When creating a prepaid return label, please use your
+                    company information (name, address, phone) as the
+                    shipper/sender. Do Not use WCS information (name, address,
+                    phone) as the shipper/sender.
+                  </Typography>
+                )}
+              </Box>
+            </Collapse>
+            <Box display="flex" justifyContent="flex-end">
+              <Button
+                variant="contained"
+                sx={{
+                  backgroundColor: "#c30010",
+                  "&:hover": {
+                    backgroundColor: "#a0000d",
+                  },
+                }}
+                onClick={submitShippingDetails}
+              >
+                Save Shipping Details
+              </Button>
+            </Box>
+          </Paper>
+
+          <Grid container spacing={3}>
+            {/* ===== LEFT COLUMN - Documents ===== */}
+            <Grid size={{ xs: 12, md: 7 }}>
+              {allDocs.map((doc: any) => (
+                <Card
+                  key={doc.docId}
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                    p: 2,
-                    borderRadius: 2,
-                    backgroundColor: "#f9fafb",
-                    border: "1px solid #e5e7eb",
+                    mb: 3,
+                    border: "1px solid #e0e0e0",
+                    transition: "0.3s",
+                    "&:hover": {
+                      transform: "translateY(-3px)",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+                      borderColor: "#1976d2",
+                    },
                   }}
                 >
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      backgroundColor: "#e6f1ff",
-                      borderRadius: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <DescriptionOutlined
-                      sx={{ color: "#007BFF", fontSize: 24 }}
-                    />
-                  </Box>
-
-                  <Box>
-                    <Typography
-                      variant="body1"
-                      fontWeight="600"
-                      color="text.primary"
-                      sx={{ lineHeight: 1.4 }}
+                  <CardContent>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      mb={2}
                     >
-                      {doc.isSoftCopyGiven === 651
-                        ? "Proceeding with attached documents"
-                        : "Original documents will be mailed to WCS office"}
-                    </Typography>
-                    {doc.isSoftCopyGiven == 651 &&
-                    service == "us-authentication" ? (
-                      <Link
-                        onClick={() =>
-                          downloadAttachments({
-                            attachmentId: doc.attachments[0].attachmentId,
-                            fileName: doc.attachments[0].fileName,
-                          })
-                        }
-                        underline="hover"
-                        color="text.secondary"
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        {countries?.find(
+                          (c: any) => c.countryId === doc.countryId
+                        )?.countryShortName || doc.countryId}{" "}
+                        —{" "}
+                        {docTypes?.find(
+                          (d: any) => d.lookupId === doc.docCategoryId
+                        )?.lookupName || ""}
+                      </Typography>
+                      <Tooltip title="Remove document">
+                        <IconButton
+                          onClick={() => handleDelete(doc.id)}
+                          size="small"
+                        >
+                          <DeleteIcon color="error" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+
+                    {/* Document Handling Summary */}
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        p: 2,
+                        borderRadius: 2,
+                        backgroundColor: "#f9fafb",
+                        border: "1px solid #e5e7eb",
+                      }}
+                    >
+                      <Box
                         sx={{
-                          fontSize: "0.9rem",
-                          wordBreak: "break-word",
-                          pointer: "cursor",
+                          width: 40,
+                          height: 40,
+                          backgroundColor: "#e6f1ff",
+                          borderRadius: 2,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                       >
-                        {doc.attachments[0].fileName}
-                      </Link>
-                    ) : (
-                      ""
-                    )}
-                    {service === "translation-service"
-                      ? translationAttachment.map((a: any) => (
-                          <div key={a.attachmentId}>
-                            <Link
-                              onClick={() =>
-                                downloadAttachments({
-                                  attachmentId: a.attachmentId,
-                                  fileName: a.fileName,
-                                })
-                              }
-                              underline="hover"
-                              color="text.secondary"
-                              sx={{
-                                fontSize: "0.9rem",
-                                wordBreak: "break-word",
-                                pointer: "cursor",
-                              }}
-                            >
-                              {a.fileName}
-                            </Link>
-                          </div>
-                        ))
-                      : ""}
-                  </Box>
-                </Paper>
+                        <DescriptionOutlined
+                          sx={{ color: "#007BFF", fontSize: 24 }}
+                        />
+                      </Box>
 
-                <StatusStepper
-                  steps={getTimelineWithCompletion(
-                    doc.docStops,
-                    doc.estCompletionDate
-                  )}
-                  activeStep={doc.docStops.length - 1}
-                />
+                      <Box>
+                        <Typography
+                          variant="body1"
+                          fontWeight="600"
+                          color="text.primary"
+                          sx={{ lineHeight: 1.4 }}
+                        >
+                          {doc.isSoftCopyGiven === 651
+                            ? "Proceeding with attached documents"
+                            : "Original documents will be mailed to WCS office"}
+                        </Typography>
+                        {doc.isSoftCopyGiven == 651 &&
+                        service == "us-authentication" ? (
+                          <Link
+                            onClick={() =>
+                              downloadAttachments({
+                                attachmentId: doc.attachments[0].attachmentId,
+                                fileName: doc.attachments[0].fileName,
+                              })
+                            }
+                            underline="hover"
+                            color="text.secondary"
+                            sx={{
+                              fontSize: "0.9rem",
+                              wordBreak: "break-word",
+                              pointer: "cursor",
+                            }}
+                          >
+                            {doc.attachments[0].fileName}
+                          </Link>
+                        ) : (
+                          ""
+                        )}
+                        {service === "translation-service"
+                          ? translationAttachment.map((a: any) => (
+                              <div key={a.attachmentId}>
+                                <Link
+                                  onClick={() =>
+                                    downloadAttachments({
+                                      attachmentId: a.attachmentId,
+                                      fileName: a.fileName,
+                                    })
+                                  }
+                                  underline="hover"
+                                  color="text.secondary"
+                                  sx={{
+                                    fontSize: "0.9rem",
+                                    wordBreak: "break-word",
+                                    pointer: "cursor",
+                                  }}
+                                >
+                                  {a.fileName}
+                                </Link>
+                              </div>
+                            ))
+                          : ""}
+                      </Box>
+                    </Paper>
 
-                <List dense disablePadding>
-                  {doc.instructionsList.map((i: any, index: number) => (
-                    <ListItem key={index} disablePadding sx={{ py: 0.5 }}>
-                      <ListItemText
-                        primaryTypographyProps={{
-                          variant: "body2",
-                          fontSize: 13,
-                          lineHeight: 1,
-                        }}
-                        primary={`${index + 1}. ${i.instruction}`}
-                      />
-                    </ListItem>
-                  ))}
-                  {/* Extra instruction if feeTypeId === 17 */}
-                  {doc.docFees?.some((f: any) => f.feeTypeId === 17) && (
-                    <ListItem disablePadding sx={{ py: 0.5 }}>
-                      <ListItemText
-                        primaryTypographyProps={{
-                          variant: "body2",
-                          fontSize: 13,
-                          lineHeight: 1.3,
-                        }}
-                        primary={`${
-                          doc.instructionsList.length + 1
-                        }. Based on the state of origin of a document, additional shipping fees may be applied to ship the document to a consulate outside of Washington, DC.`}
-                      />
-                    </ListItem>
-                  )}
-                </List>
-                <Divider sx={{ my: 2 }} />
-                <List dense disablePadding>
-                  {doc.docFees.map((f: any, idx: any) => (
-                    <ListItem key={idx} sx={{ py: 0.5 }}>
-                      <ListItemText
-                        primary={
-                          feeTypes?.find(
-                            (a: any) => f.feeTypeId === a.feeTypeId
-                          )?.feeTypeName
-                        }
-                      />
-                      <Typography>${f.feeAmount}</Typography>
-                    </ListItem>
-                  ))}
-                  <Divider />
-                  <ListItem>
-                    <ListItemText primary="Total" />
-                    <Typography fontWeight={700}>
-                      $
-                      {doc.docFees
-                        .reduce((a: any, b: any) => a + b.feeAmount, 0)
-                        .toFixed(2)}
-                    </Typography>
-                  </ListItem>
-                </List>
-              </CardContent>
-            </Card>
-          ))}
-        </Grid>
+                    <StatusStepper
+                      steps={getTimelineWithCompletion(
+                        doc.docStops,
+                        doc.estCompletionDate
+                      )}
+                      activeStep={doc.docStops.length - 1}
+                    />
 
-        {/* ===== RIGHT COLUMN - Sticky Sidebar ===== */}
-        <Grid size={{ xs: 12, md: 5 }}>
-          <Box
-            sx={{
-              position: { md: "sticky" },
-              top: "80px",
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-            }}
-          >
-            {/* Order Summary Accordion */}
-            <Accordion defaultExpanded sx={{ borderRadius: 2 }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography fontWeight={600}>Order Summary</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <TextField
-                  label="Customer Name"
-                  fullWidth
-                  size="small"
-                  sx={{ mb: 3 }}
-                  defaultValue="Raghvendra Roy"
-                  InputProps={{
-                    readOnly: true, // 🔹 makes the input read-only
-                  }}
-                />
-                <TextField
-                  label="Email Address"
-                  fullWidth
-                  size="small"
-                  sx={{ mb: 3 }}
-                  defaultValue="raghvendra@redintegro.com"
-                  InputProps={{
-                    readOnly: true, // 🔹 makes the input read-only
-                  }}
-                />
-                <TextField
-                  label="Phone Number"
-                  fullWidth
-                  size="small"
-                  sx={{ mb: 3 }}
-                  defaultValue="7987076459"
-                  InputProps={{
-                    readOnly: true, // 🔹 makes the input read-only
-                  }}
-                />
-                <TextField
-                  label="Billing Address"
-                  fullWidth
-                  size="small"
-                  multiline
-                  rows={2}
-                  sx={{ mb: 3 }}
-                  defaultValue="146, 5-B, 3, TB, Aditya Nagar, Indore, MP-452010"
-                  InputProps={{
-                    readOnly: true, // 🔹 makes the input read-only
-                  }}
-                />
-              </AccordionDetails>
-            </Accordion>
+                    <List dense disablePadding>
+                      {doc.instructionsList.map((i: any, index: number) => (
+                        <ListItem key={index} disablePadding sx={{ py: 0.5 }}>
+                          <ListItemText
+                            primaryTypographyProps={{
+                              variant: "body2",
+                              fontSize: 13,
+                              lineHeight: 1,
+                            }}
+                            primary={`${index + 1}. ${i.instruction}`}
+                          />
+                        </ListItem>
+                      ))}
+                      {/* Extra instruction if feeTypeId === 17 */}
+                      {doc.docFees?.some((f: any) => f.feeTypeId === 17) && (
+                        <ListItem disablePadding sx={{ py: 0.5 }}>
+                          <ListItemText
+                            primaryTypographyProps={{
+                              variant: "body2",
+                              fontSize: 13,
+                              lineHeight: 1.3,
+                            }}
+                            primary={`${
+                              doc.instructionsList.length + 1
+                            }. Based on the state of origin of a document, additional shipping fees may be applied to ship the document to a consulate outside of Washington, DC.`}
+                          />
+                        </ListItem>
+                      )}
+                    </List>
+                    <Divider sx={{ my: 2 }} />
+                    <List dense disablePadding>
+                      {doc.docFees.map((f: any, idx: any) => (
+                        <ListItem key={idx} sx={{ py: 0.5 }}>
+                          <ListItemText
+                            primary={
+                              feeTypes?.find(
+                                (a: any) => f.feeTypeId === a.feeTypeId
+                              )?.feeTypeName
+                            }
+                          />
+                          <Typography>${f.feeAmount}</Typography>
+                        </ListItem>
+                      ))}
+                      <Divider />
+                      <ListItem>
+                        <ListItemText primary="Total" />
+                        <Typography fontWeight={700}>
+                          $
+                          {doc.docFees
+                            .reduce((a: any, b: any) => a + b.feeAmount, 0)
+                            .toFixed(2)}
+                        </Typography>
+                      </ListItem>
+                    </List>
+                  </CardContent>
+                </Card>
+              ))}
+            </Grid>
 
-            {/* Payment Card */}
-            <Card sx={{ borderRadius: 2, p: 3 }}>
-              <Typography fontWeight={600} mb={2}>
-                Payment Options
-              </Typography>
-
-              <RadioGroup
-                row
-                value={paymentType}
-                onChange={(e) => setPaymentType(e.target.value)}
+            {/* ===== RIGHT COLUMN - Sticky Sidebar ===== */}
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Box
+                sx={{
+                  position: { md: "sticky" },
+                  top: "80px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                }}
               >
-                <FormControlLabel
-                  value="card"
-                  control={<Radio />}
-                  label="Card"
-                />
-                <FormControlLabel
-                  value="Cheque"
-                  control={<Radio />}
-                  label="Cheque"
-                />
-                <FormControlLabel
-                  value="Wire/ACH Transfer"
-                  control={<Radio />}
-                  label="Wire/ACH Transfer"
-                />
-                <FormControlLabel
-                  value="Pay On PO"
-                  control={<Radio />}
-                  label="Pay with Purchase Order (PO)"
-                />
-              </RadioGroup>
+                {/* Order Summary Accordion */}
+                <Accordion defaultExpanded sx={{ borderRadius: 2 }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography fontWeight={600}>Order Summary</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <TextField
+                      label="Customer Name"
+                      fullWidth
+                      size="small"
+                      sx={{ mb: 3 }}
+                      value={user ? `${user.name} ${user.lastName}` : ""}
+                      InputProps={{
+                        readOnly: true, // 🔹 makes the input read-only
+                      }}
+                    />
+                    <TextField
+                      label="Email Address"
+                      fullWidth
+                      size="small"
+                      sx={{ mb: 3 }}
+                      // defaultValue="raghvendra@redintegro.com"
+                      value={user ? user.email : ""}
+                      InputProps={{
+                        readOnly: true, // 🔹 makes the input read-only
+                      }}
+                    />
+                    <TextField
+                      label="Phone Number"
+                      fullWidth
+                      size="small"
+                      sx={{ mb: 3 }}
+                      // defaultValue="7987076459"
+                      value={user ? user.contactNo : ""}
+                      InputProps={{
+                        readOnly: true, // 🔹 makes the input read-only
+                      }}
+                    />
+                    <TextField
+                      label="Billing Address"
+                      fullWidth
+                      size="small"
+                      multiline
+                      rows={2}
+                      sx={{ mb: 3 }}
+                      // defaultValue="146, 5-B, 3, TB, Aditya Nagar, Indore, MP-452010"
+                      value={customer ? customer.billAddress : ""}
+                      InputProps={{
+                        readOnly: true, // 🔹 makes the input read-only
+                      }}
+                    />
+                  </AccordionDetails>
+                </Accordion>
 
-              {paymentType === "card" && (
-                <>
-                  <Typography variant="body2" mt={1} mb={2}>
-                    * 3.5% service charge applies to all card transactions.
+                {/* Payment Card */}
+                <Card sx={{ borderRadius: 2, p: 3 }}>
+                  <Typography fontWeight={600} mb={2}>
+                    Payment Options
                   </Typography>
 
-                  <TextField
-                    label="Cardholder's Name"
-                    value={card?.cardHolderName ?? ""}
-                    onChange={(e) =>
-                      setCard({
-                        ...card,
-                        cardHolderName: (e.target as HTMLInputElement).value,
-                      })
-                    }
-                    fullWidth
-                    size="small"
-                    sx={{ mb: 2 }}
-                  />
+                  <RadioGroup
+                    row
+                    value={paymentType}
+                    onChange={(e) => setPaymentType(e.target.value)}
+                  >
+                    <FormControlLabel
+                      value="card"
+                      control={<Radio />}
+                      label="Card"
+                    />
+                    <FormControlLabel
+                      value="Cheque"
+                      control={<Radio />}
+                      label="Cheque"
+                    />
+                    <FormControlLabel
+                      value="Wire/ACH Transfer"
+                      control={<Radio />}
+                      label="Wire/ACH Transfer"
+                    />
+                    <FormControlLabel
+                      value="Pay On PO"
+                      control={<Radio />}
+                      label="Pay with Purchase Order (PO)"
+                    />
+                  </RadioGroup>
 
-                  <TextField
-                    label="Card Number"
-                    fullWidth
-                    size="small"
-                    sx={{ mb: 2 }}
-                    value={card?.cardNumber ?? ""}
-                    onChange={(e) =>
-                      setCard({
-                        ...card,
-                        cardNumber: (e.target as HTMLInputElement).value,
-                      })
-                    }
-                    slotProps={{
-                      input: {
-                        endAdornment: cardTypeImg ? (
-                          <Image
-                            src={cardTypeImg}
-                            alt="card type"
-                            className="card-type-image"
-                            width={38}
-                            height={28}
-                          />
-                        ) : null,
-                      },
-                    }}
-                  />
+                  {paymentType === "card" && (
+                    <>
+                      <Typography variant="body2" mt={1} mb={2}>
+                        * 3.5% service charge applies to all card transactions.
+                      </Typography>
 
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 6 }}>
                       <TextField
-                        label="Expiry (MM/YY)"
+                        label="Cardholder's Name"
+                        value={card?.cardHolderName ?? ""}
                         onChange={(e) =>
                           setCard({
                             ...card,
-                            expirationDate: (e.target as HTMLInputElement)
+                            cardHolderName: (e.target as HTMLInputElement)
                               .value,
                           })
                         }
                         fullWidth
                         size="small"
+                        sx={{ mb: 2 }}
                       />
-                    </Grid>
-                    <Grid size={{ xs: 6 }}>
+
                       <TextField
-                        label="CVV"
+                        label="Card Number"
+                        fullWidth
+                        size="small"
+                        sx={{ mb: 2 }}
+                        value={card?.cardNumber ?? ""}
                         onChange={(e) =>
                           setCard({
                             ...card,
-                            cardCode: (e.target as HTMLInputElement).value,
+                            cardNumber: (e.target as HTMLInputElement).value,
                           })
                         }
-                        fullWidth
-                        size="small"
+                        slotProps={{
+                          input: {
+                            endAdornment: cardTypeImg ? (
+                              <Image
+                                src={cardTypeImg}
+                                alt="card type"
+                                className="card-type-image"
+                                width={38}
+                                height={28}
+                              />
+                            ) : null,
+                          },
+                        }}
                       />
-                    </Grid>
-                  </Grid>
-                </>
-              )}
 
-              <FormControlLabel
-                control={<Checkbox />}
-                label="I accept the terms of use"
-                sx={{ mt: 1 }}
-              />
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 6 }}>
+                          <TextField
+                            label="Expiry (MM/YY)"
+                            onChange={(e) =>
+                              setCard({
+                                ...card,
+                                expirationDate: (e.target as HTMLInputElement)
+                                  .value,
+                              })
+                            }
+                            fullWidth
+                            size="small"
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 6 }}>
+                          <TextField
+                            label="CVV"
+                            onChange={(e) =>
+                              setCard({
+                                ...card,
+                                cardCode: (e.target as HTMLInputElement).value,
+                              })
+                            }
+                            fullWidth
+                            size="small"
+                          />
+                        </Grid>
+                      </Grid>
+                    </>
+                  )}
 
-              <Divider sx={{ my: 2 }} />
+                  <FormControlLabel
+                    control={<Checkbox />}
+                    label="I accept the terms of use"
+                    sx={{ mt: 1 }}
+                  />
 
-              <Box display="flex" gap={1.5} flexWrap="wrap">
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  onClick={() => window.location.href = `/orders/new/${service}`}
-                >
-                  Add More Documents
-                </Button>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  size="large"
-                  onClick={handlePayNow}
-                  sx={{
-                    backgroundColor:
-                      paymentType === "payLater" ? "#1976d2" : "#c30010",
-                    "&:hover": {
-                      backgroundColor:
-                        paymentType === "payLater" ? "#115293" : "#a0000d",
-                    },
-                  }}
-                >
-                  {paymentType === "payLater"
-                    ? "Confirm Pay Later"
-                    : `Pay $${totalAmount}`}
-                </Button>
-              </Box>
-            </Card>
-          </Box>
-        </Grid>
-      </Grid>
-      <Modal
-        open={openDialog}
-        onClose={() => {
-          setOpenDialog(false);
-          setForm(initialForm);
-        }}
-        title="Add New WCS Courier Address"
-        type="custom"
-        showActions={false} // we handle buttons inside children
-      >
-        <RadioGroup
-          row
-          value={showExistingAddress ? "true" : "false"}
-          onChange={(e) => {
-            const val = e.target.value === "true";
-            setShowExistingAddress(val);
-            if (val) showExistingAddresses();
-          }}
-        >
-          <FormControlLabel
-            value="false"
-            control={<Radio />}
-            label="Add a new address"
-          />
-          <FormControlLabel
-            value="true"
-            control={<Radio />}
-            label="Use a saved address"
-          />
-        </RadioGroup>
-        {showExistingAddress ? (
-          <RadioGroup
-            row
-            value={checked.regionAddressId}
-            onChange={(e) =>
-              setChecked((prev) => ({
-                ...prev,
-                regionAddressId: Number(e.target.value),
-              }))
-            }
-          >
-            {addresses.map((addr: any) => (
-              <FormControlLabel
-                key={addr.regionAddressId}
-                value={addr.regionAddressId}
-                control={<Radio size="small" />}
-                label={
-                  <div style={{ width: "100%" }}>
-                    {/* Contact name */}
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                      {addr.contactName}
-                    </div>
+                  <Divider sx={{ my: 2 }} />
 
-                    {/* Address line */}
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        marginBottom: 4,
+                  <Box display="flex" gap={1.5} flexWrap="wrap">
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      onClick={() =>
+                        (window.location.href = `/orders/new/${service}`)
+                      }
+                    >
+                      Add More Documents
+                    </Button>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      size="large"
+                      onClick={handlePayNow}
+                      sx={{
+                        backgroundColor:
+                          paymentType === "payLater" ? "#1976d2" : "#c30010",
+                        "&:hover": {
+                          backgroundColor:
+                            paymentType === "payLater" ? "#115293" : "#a0000d",
+                        },
                       }}
                     >
-                      <HomeIcon sx={{ fontSize: 18, marginRight: 4 }} />
-                      <span>
-                        {addr.address}, {addr.city}, {addr.state},{" "}
-                        {addr.postalCode}, {addr.country}
-                      </span>
-                    </div>
-
-                    {/* Phone */}
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        marginBottom: 4,
-                      }}
-                    >
-                      <PhoneIcon sx={{ fontSize: 18, marginRight: 4 }} />
-                      <span>{addr.phoneNumber}</span>
-                    </div>
-
-                    {/* Email */}
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <EmailIcon sx={{ fontSize: 18, marginRight: 4 }} />
-                      <span>{addr.emailId}</span>
-                    </div>
-                  </div>
-                }
-                sx={{
-                  alignItems: "flex-start",
-                  padding: "12px 8px",
-                  marginBottom: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "6px",
-                  width: "100%",
-                }}
-              />
-            ))}
-          </RadioGroup>
-        ) : (
-          <Grid container spacing={2} mt={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <CountrySelect
-                label="Select Country *"
-                value={country}
-                onChange={() => {
-                  setCountry(country);
-                  form.country = country.countryName;
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="Region"
-                fullWidth
-                size="medium"
-                value={form.region}
-                onChange={(e) => handleChange("region", e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="Contact Name"
-                fullWidth
-                size="medium"
-                value={form.contactName}
-                onChange={(e) => handleChange("contactName", e.target.value)}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="Company"
-                fullWidth
-                size="medium"
-                value={form.company}
-                onChange={(e) => handleChange("company", e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                label="Address"
-                fullWidth
-                size="medium"
-                multiline
-                rows={2}
-                value={form.address}
-                onChange={(e) => handleChange("address", e.target.value)}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="City"
-                fullWidth
-                size="medium"
-                value={form.city}
-                onChange={(e) => handleChange("city", e.target.value)}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="State"
-                fullWidth
-                size="medium"
-                value={form.state}
-                onChange={(e) => handleChange("state", e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="Postal Code"
-                fullWidth
-                size="medium"
-                value={form.postalCode}
-                onChange={(e) => handleChange("postalCode", e.target.value)}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="Phone Number"
-                fullWidth
-                size="medium"
-                value={form.phoneNumber}
-                onChange={(e) => handleChange("phoneNumber", e.target.value)}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                label="Email Address"
-                fullWidth
-                size="medium"
-                value={form.emailId}
-                onChange={(e) => handleChange("emailId", e.target.value)}
-              />
-            </Grid>
-            <Grid>
-              <Box display="flex" flexWrap="wrap">
-                <Button variant="contained" color="primary" onClick={handleAdd}>
-                  Add Address
-                </Button>
+                      {paymentType === "card"
+                        ? `Checkout & Pay $${totalAmount}`
+                        : `Checkout & Confirm to Pay Later $${totalAmount}`}
+                    </Button>
+                  </Box>
+                </Card>
               </Box>
             </Grid>
           </Grid>
-        )}
-      </Modal>
+          <Modal
+            open={openDialog}
+            onClose={() => {
+              setOpenDialog(false);
+              setForm(initialForm);
+            }}
+            title="Add New WCS Courier Address"
+            type="custom"
+            showActions={false} // we handle buttons inside children
+          >
+            <RadioGroup
+              row
+              value={showExistingAddress ? "true" : "false"}
+              onChange={(e) => {
+                const val = e.target.value === "true";
+                setShowExistingAddress(val);
+                if (val) showExistingAddresses();
+              }}
+            >
+              <FormControlLabel
+                value="false"
+                control={<Radio />}
+                label="Add a new address"
+              />
+              <FormControlLabel
+                value="true"
+                control={<Radio />}
+                label="Use a saved address"
+              />
+            </RadioGroup>
+            {showExistingAddress ? (
+              <RadioGroup
+                row
+                value={checked.regionAddressId}
+                onChange={(e) =>
+                  setChecked((prev) => ({
+                    ...prev,
+                    regionAddressId: Number(e.target.value),
+                  }))
+                }
+              >
+                {addresses.map((addr: any) => (
+                  <FormControlLabel
+                    key={addr.regionAddressId}
+                    value={addr.regionAddressId}
+                    control={<Radio size="small" />}
+                    label={
+                      <div style={{ width: "100%" }}>
+                        {/* Contact name */}
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                          {addr.contactName}
+                        </div>
+
+                        {/* Address line */}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            marginBottom: 4,
+                          }}
+                        >
+                          <HomeIcon sx={{ fontSize: 18, marginRight: 4 }} />
+                          <span>
+                            {addr.address}, {addr.city}, {addr.state},{" "}
+                            {addr.postalCode}, {addr.country}
+                          </span>
+                        </div>
+
+                        {/* Phone */}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            marginBottom: 4,
+                          }}
+                        >
+                          <PhoneIcon sx={{ fontSize: 18, marginRight: 4 }} />
+                          <span>{addr.phoneNumber}</span>
+                        </div>
+
+                        {/* Email */}
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          <EmailIcon sx={{ fontSize: 18, marginRight: 4 }} />
+                          <span>{addr.emailId}</span>
+                        </div>
+                      </div>
+                    }
+                    sx={{
+                      alignItems: "flex-start",
+                      padding: "12px 8px",
+                      marginBottom: "10px",
+                      border: "1px solid #ddd",
+                      borderRadius: "6px",
+                      width: "100%",
+                    }}
+                  />
+                ))}
+              </RadioGroup>
+            ) : (
+              <Grid container spacing={2} mt={2}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <CountrySelect
+                    label="Select Country *"
+                    value={country}
+                    onChange={() => {
+                      setCountry(country);
+                      form.country = country.countryName;
+                    }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="Region"
+                    fullWidth
+                    size="medium"
+                    value={form.region}
+                    onChange={(e) => handleChange("region", e.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="Contact Name"
+                    fullWidth
+                    size="medium"
+                    value={form.contactName}
+                    onChange={(e) =>
+                      handleChange("contactName", e.target.value)
+                    }
+                    required
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="Company"
+                    fullWidth
+                    size="medium"
+                    value={form.company}
+                    onChange={(e) => handleChange("company", e.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <TextField
+                    label="Address"
+                    fullWidth
+                    size="medium"
+                    multiline
+                    rows={2}
+                    value={form.address}
+                    onChange={(e) => handleChange("address", e.target.value)}
+                    required
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="City"
+                    fullWidth
+                    size="medium"
+                    value={form.city}
+                    onChange={(e) => handleChange("city", e.target.value)}
+                    required
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="State"
+                    fullWidth
+                    size="medium"
+                    value={form.state}
+                    onChange={(e) => handleChange("state", e.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="Postal Code"
+                    fullWidth
+                    size="medium"
+                    value={form.postalCode}
+                    onChange={(e) => handleChange("postalCode", e.target.value)}
+                    required
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label="Phone Number"
+                    fullWidth
+                    size="medium"
+                    value={form.phoneNumber}
+                    onChange={(e) =>
+                      handleChange("phoneNumber", e.target.value)
+                    }
+                    required
+                  />
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <TextField
+                    label="Email Address"
+                    fullWidth
+                    size="medium"
+                    value={form.emailId}
+                    onChange={(e) => handleChange("emailId", e.target.value)}
+                  />
+                </Grid>
+                <Grid>
+                  <Box display="flex" flexWrap="wrap">
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleAdd}
+                    >
+                      Add Address
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            )}
+          </Modal>
+        </Box>
+      ) : (
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          minHeight="300px"
+          textAlign="center"
+          px={2}
+        >
+          {/* Heading */}
+          <Typography variant="h6" fontWeight={600} gutterBottom>
+            Your cart is empty
+          </Typography>
+
+          {/* Description */}
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            mb={3}
+            maxWidth={420}
+          >
+            You haven’t added any documents yet. Start by adding documents to
+            proceed with your order.
+          </Typography>
+
+          <Divider sx={{ width: "100%", maxWidth: 480, mb: 3 }} />
+
+          {/* Action Button */}
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<AddCircleOutlineIcon />}
+            onClick={() => (window.location.href = `/orders/new/${service}`)}
+          >
+            Add Documents
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 }

@@ -40,3 +40,28 @@ export const getFeeTypes = async () => {
   const response = await axiosInstance.get("feeTypes");
   return response.data;
 }
+
+export const shippingLabelUpload = async (payload: any) => {
+  const response = await axiosInstance.post("shippingLabel", payload);
+  return response.data;
+}
+
+export const shippingDetailsUpload = async (payload: any) => {
+  const response = await axiosInstance.post("shippingDetails", payload);
+  return response.data;
+}
+
+export const SplitOrder = async (orderId: string) => {
+  const response = await axiosInstance.get(`orders/splitOrder?orderId=${orderId}`);
+  return response.data;
+}
+
+export const getOrder = async (orderId: number) => {
+  const response = await axiosInstance.get(`orders/${orderId}`);
+  return response.data;
+}
+
+export const getBarcode = async (docId: number) => {
+  const response = await axiosInstance.get(`docsBarcode/fromDocId?docId=${docId}`);
+  return response.data;
+}
