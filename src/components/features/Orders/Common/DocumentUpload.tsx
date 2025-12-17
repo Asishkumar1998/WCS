@@ -32,6 +32,7 @@ export default function DocumentUpload({
   const [numPages, setNumPages] = useState("");
   const [trackingNumberNested, setTrackingNumberNested] = useState("");
   const [courierNested, setCourierNested] = useState<string | null>(null);
+  const [fileName, setFileName] = useState("");
 
   useEffect(() => {
     onChange?.({
@@ -48,6 +49,11 @@ export default function DocumentUpload({
     trackingNumberNested,
     courierNested,
   ]);
+
+  const handleFileChange = (file: File | null) => {
+    setUploadedFile(file);
+    setFileName(file?.name || "");
+  };
 
   return (
     <Grid size={{ xs: 12, md: 12 }}>
@@ -82,7 +88,8 @@ export default function DocumentUpload({
               <Box sx={{ mb: 1 }}>
                 <ValidatedFileUpload
                   label="Choose file"
-                  onChange={(file) => setUploadedFile(file)}
+                  fileNameProp={fileName}
+                  onChange={handleFileChange}
                 />
               </Box>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   SelectChangeEvent,
   Grid,
@@ -11,6 +11,7 @@ import {
   InputLabel,
   OutlinedInput,
   Box,
+  Button,
 } from "@mui/material";
 import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
@@ -20,18 +21,51 @@ import { AdditionalServices } from "@/dataset/constants/constants";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
 import ValidatedFileUpload from "../Common/ValidatedFileUpload";
 import DocumentUpload from "../Common/DocumentUpload";
+import { postTranslationOrder, uploadFile } from "@/services/formsService";
+import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
+import {
+  buildNotaryDispatchPayloadFromExistingOrder,
+  buildNotaryPayload,
+} from "../Common/NotaryDispatchPayload";
+import { CART_SERVICE_MAP } from "@/constants/serviceMap";
+import { getOrderDetails, getOrderIdOfCart } from "@/services/cartServices";
+import { updateOrder } from "@/services/paymentService";
+import DocumentDropdown from "@/components/ui/Dropdown/DocumentDropdown";
 
 const documents = ["Passport", "Certificate", "License"];
 const payments = ["Credit Card", "PayPal", "Bank Transfer"];
+const CustomerID = 9682;
+
+export interface DocType {
+  docTypeId: number;
+  docTypeName: string;
+  docCategoryId: number;
+  personalDoc: number;
+  physicalRequired: number;
+  createdBy: any;
+  createdAt: number;
+  modifiedBy: any;
+  modifiedAt: number;
+  ordSequence: any;
+  attachmentRequired: any;
+}
 
 export default function NotaryServiceForm() {
   const [country, setCountry] = useState<any>(null);
-  const [document, setDocument] = useState("");
+  const [document, setDocument] = useState<DocType | null>(null);
   const [additionalServices, setAdditionalServices] = useState<string[]>([]);
+  const [attachment, setAttachment] = useState<any>();
+  const [customerReference, setCustomerReference] = useState<any>();
+  const [additionalComments, setAdditionalComments] = useState<any>();
+  const [basePayload, setBasePayload] = useState<any>(null);
   const [payment, setPayment] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [numberOfPages, setNumberOfPages] = useState();
   const [additionalServicesState, setAdditionalServicesState] =
     useState(AdditionalServices);
   const [disabled, setDisabled] = useState(false);
+  const { showSnackbar } = useSnackbar();
+  const lastUploadedRef = useRef<string | null>(null);
 
   const handleDropdownChange =
     (setter: React.Dispatch<React.SetStateAction<string>>) =>
@@ -39,8 +73,99 @@ export default function NotaryServiceForm() {
       setter(event.target.value);
     };
 
+  const handleDocumentUpload = async (data: any) => {
+    setNumberOfPages(data?.numPages);
+
+    const file: File | null = data?.uploadedFile;
+    if (!file) return;
+
+    const fileKey = `${file.name}-${file.size}`;
+
+    if (lastUploadedRef.current === fileKey) {
+      return;
+    }
+    lastUploadedRef.current = fileKey;
+    try {
+      const formData = new FormData();
+      formData.append("file_0", file);
+      const response = await uploadFile(formData);
+      setAttachment(response);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const submitOrder = async () => {
+    let payload;
+    try {
+      if (basePayload == null) {
+        payload = buildNotaryPayload({
+          country,
+          additionalComments,
+          customerReference,
+          additionalServices,
+          attachment,
+          numberOfPages,
+          isNotary: true,
+        });
+        const response = await postTranslationOrder(payload);
+        console.log("response ----------> ", response);
+      } else {
+        payload = buildNotaryDispatchPayloadFromExistingOrder({
+          basePayload,
+          country,
+          additionalServices,
+          additionalComments,
+          attachment,
+          customerReference,
+          numberOfPages,
+          isNotary: true,
+        });
+        const response = await updateOrder(payload.orderId, payload);
+        console.log("response ----------> ", response);
+      }
+      window.location.href = "/cart?service=notary-service";
+    } catch (error) {
+      showSnackbar("Failed to submit order", "error");
+      console.error(error);
+    }
+  };
+
+  // Get the previous cart order details.
+  const getCartOrder = async () => {
+    try {
+      const basePayload = CART_SERVICE_MAP["us-authentication"];
+      if (!basePayload) {
+        return <div>Invalid service selected.</div>;
+      }
+      const payload = {
+        customerId: CustomerID,
+        docCategoryId: 528,
+        ...basePayload,
+      };
+      const orderId = await getOrderIdOfCart(payload);
+      if (orderId != null) {
+        const response = await getOrderDetails({ orderId: orderId });
+        const orderData = response[0];
+        setBasePayload(orderData);
+      }
+    } catch (error) {
+      console.error("Error in getCartOrder:", error);
+    }
+  };
+
+  useEffect(() => {
+    getCartOrder();
+  }, []);
+
+  const handleDocumentSelect = (newValue: DocType | null) => {
+    if (!newValue) return;
+    setDocument(newValue);
+    setDisabled(false);
+  };
+
   return (
-    <FormLayout title="Notary Service">
+    <FormLayout title="Notary Service" onProceed={submitOrder}>
       <Grid container spacing={2}>
         {/* Country */}
         <Grid size={{ xs: 12, sm: 6 }}>
@@ -53,11 +178,15 @@ export default function NotaryServiceForm() {
 
         {/* Document */}
         <Grid size={{ xs: 12, sm: 6 }}>
-          <Dropdown
+          <DocumentDropdown
             label="Select Document *"
-            options={documents}
+            country={country}
             value={document}
-            onChange={() => handleDropdownChange(setDocument)}
+            onChange={handleDocumentSelect}
+            open={dropdownOpen}
+            onOpen={() => setDropdownOpen(true)}
+            onClose={() => setDropdownOpen(false)}
+            disabled={!country}
           />
         </Grid>
 
@@ -66,6 +195,7 @@ export default function NotaryServiceForm() {
           <InputField
             label="Customer Reference"
             placeholder="Enter reference number"
+            onChange={(e) => setCustomerReference(e.target.value)}
           />
         </Grid>
 
@@ -160,7 +290,9 @@ export default function NotaryServiceForm() {
 
         {/* Upload */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <DocumentUpload country="" />
+          <Box sx={{ display: "flex", width: "100%" }}>
+            <DocumentUpload onChange={handleDocumentUpload} country={country} />
+          </Box>
         </Grid>
 
         {/* Additional Comments (multiline) */}
@@ -170,6 +302,7 @@ export default function NotaryServiceForm() {
             placeholder="Enter comments..."
             multiline
             rows={9}
+            onChange={(e) => setAdditionalComments(e.target.value)}
             sx={{
               height: "100%",
               "& .MuiOutlinedInput-root": {
