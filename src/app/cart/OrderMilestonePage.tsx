@@ -69,6 +69,17 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { getCustomer, getUser } from "@/services/userService";
 import ValidatedFileUpload from "@/components/features/Orders/Common/ValidatedFileUpload";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
+import {
+  deleteDoc,
+  deleteDocAttachments,
+  deleteDocFee,
+  deleteDocStatus,
+  deleteDocStops,
+  getDocAttachments,
+  getDocFees,
+  getDocStatus,
+  getDocStops,
+} from "@/services/deleteService";
 
 // ===== Custom Stepper Styles =====
 const CustomConnector = styled(StepConnector)(({ theme }) => ({
@@ -300,7 +311,56 @@ export default function OrderMilestonePage() {
     setShowExistingAddress(false);
   };
 
-  const handleDelete = (id: string) => setDocs(docs.filter((d) => d.id !== id));
+  const handleDelete = async (docId: number) => {
+    try {
+      const docketId =
+        orderDetails?.dockets?.find((d: any) =>
+          d.docs?.some((doc: any) => doc.docId === docId)
+        )?.docketId ?? null;
+
+      if (!docketId) {
+        console.error("Docket not found for docId:", docId);
+        return;
+      }
+
+      const docFees = await getDocFees(docId);
+      if (Array.isArray(docFees)) {
+        await Promise.all(
+          docFees.map((fee: any) => deleteDocFee(fee.docFeeId))
+        );
+      }
+
+      const docStops = await getDocStops(docId);
+      if (Array.isArray(docStops)) {
+        await Promise.all(
+          docStops.map((stop: any) => deleteDocStops(stop.docStopId))
+        );
+      }
+
+      const docStatuses = await getDocStatus(docId);
+      if (Array.isArray(docStatuses)) {
+        await Promise.all(
+          docStatuses.map((status: any) => deleteDocStatus(status.docStatusId))
+        );
+      }
+
+      const attachments = await getDocAttachments(docId);
+      if (Array.isArray(attachments)) {
+        await Promise.all(
+          attachments.map((att: any) => deleteDocAttachments(att.attachmentId))
+        );
+      }
+
+      await deleteDoc(docId);
+      showSnackbar("Document deleted successfully", "success");
+      getCartOrder();
+      
+    } catch (error) {
+      showSnackbar("Failed to delete document", "error");
+      console.error("Delete doc failed:", error);
+    }
+  };
+
 
   const totalAmount = allDocs
     .reduce(
@@ -822,7 +882,7 @@ export default function OrderMilestonePage() {
                       </Typography>
                       <Tooltip title="Remove document">
                         <IconButton
-                          onClick={() => handleDelete(doc.id)}
+                          onClick={() => handleDelete(doc.docId)}
                           size="small"
                         >
                           <DeleteIcon color="error" />

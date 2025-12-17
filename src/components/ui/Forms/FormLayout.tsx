@@ -82,100 +82,100 @@ const FormLayout: React.FC<FormLayoutProps> = ({
         </Grid>
       </Grid>
 
-      {country?.countryId === 144 && document ? (
-        <FormControl
-          fullWidth
-          variant="outlined"
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": {
-                border: "1px solid #C7C9CD",
+        {/* {country?.countryId === 144 && document ? (
+          <FormControl
+            fullWidth
+            variant="outlined"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": {
+                  border: "1px solid #C7C9CD",
+                },
+                "&:hover fieldset": {
+                  border: "1px solid #C7C9CD",
+                },
+                "&.Mui-focused fieldset": {
+                  border: "1px solid #C7C9CD",
+                },
               },
-              "&:hover fieldset": {
-                border: "1px solid #C7C9CD",
+            }}
+          >
+            <InputLabel shrink>Order Timeline</InputLabel>
+            <OutlinedInput
+              notched
+              label={"Order Timeline"}
+              inputComponent={() => (
+                <Box
+                  sx={{
+                    px: 2,
+                    py: 1.5,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1.5,
+                    borderRadius: "8px",
+                    width: "100%",
+                  }}
+                >
+                  <FormStepper
+                    steps={[
+                      { label: "New" },
+                      { label: "DOS" },
+                      { label: "DC EMB" },
+                      { label: "Customer" },
+                    ]}
+                    activeStep={0}
+                  />
+                </Box>
+              )}
+            />
+          </FormControl>
+        ) : country?.countryId === 2 && document ? (
+          <FormControl
+            fullWidth
+            variant="outlined"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": {
+                  border: "1px solid #C7C9CD",
+                },
+                "&:hover fieldset": {
+                  border: "1px solid #C7C9CD",
+                },
+                "&.Mui-focused fieldset": {
+                  border: "1px solid #C7C9CD",
+                },
               },
-              "&.Mui-focused fieldset": {
-                border: "1px solid #C7C9CD",
-              },
-            },
-          }}
-        >
-          <InputLabel shrink>Order Timeline</InputLabel>
-          <OutlinedInput
-            notched
-            label={"Order Timeline"}
-            inputComponent={() => (
-              <Box
-                sx={{
-                  px: 2,
-                  py: 1.5,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 1.5,
-                  borderRadius: "8px",
-                  width: "100%",
-                }}
-              >
-                <FormStepper
-                  steps={[
-                    { label: "New" },
-                    { label: "DOS" },
-                    { label: "DC EMB" },
-                    { label: "Customer" },
-                  ]}
-                  activeStep={0}
-                />
-              </Box>
-            )}
-          />
-        </FormControl>
-      ) : country?.countryId === 2 && document ? (
-        <FormControl
-          fullWidth
-          variant="outlined"
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": {
-                border: "1px solid #C7C9CD",
-              },
-              "&:hover fieldset": {
-                border: "1px solid #C7C9CD",
-              },
-              "&.Mui-focused fieldset": {
-                border: "1px solid #C7C9CD",
-              },
-            },
-          }}
-        >
-          <InputLabel shrink>Order Timeline</InputLabel>
-          <OutlinedInput
-            notched
-            label={"Order Timeline"}
-            inputComponent={() => (
-              <Box
-                sx={{
-                  px: 2,
-                  py: 1.5,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 1.5,
-                  borderRadius: "8px",
-                  width: "100%",
-                }}
-              >
-                <FormStepper
-                  steps={[
-                    { label: "New" },
-                    { label: "SOS" },
-                    { label: "Customer" },
-                  ]}
-                  activeStep={0}
-                />
-              </Box>
-            )}
-          />
-        </FormControl>
-      ) : null}
+            }}
+          >
+            <InputLabel shrink>Order Timeline</InputLabel>
+            <OutlinedInput
+              notched
+              label={"Order Timeline"}
+              inputComponent={() => (
+                <Box
+                  sx={{
+                    px: 2,
+                    py: 1.5,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1.5,
+                    borderRadius: "8px",
+                    width: "100%",
+                  }}
+                >
+                  <FormStepper
+                    steps={[
+                      { label: "New" },
+                      { label: "SOS" },
+                      { label: "Customer" },
+                    ]}
+                    activeStep={0}
+                  />
+                </Box>
+              )}
+            />
+          </FormControl>
+        ) : null} */}
     </Paper>
   );
 };
