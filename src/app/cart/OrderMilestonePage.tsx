@@ -257,6 +257,7 @@ export default function OrderMilestonePage() {
   const isFirstRender = useRef(true);
   const [fileName, setFileName] = useState("");
   const [uploadFileData, setUploadFileData] = useState<any>();
+  const [submitShipping, setSubmitShipping] = useState<boolean>(false);
   const [checked, setChecked] = useState<{
     option: string | null;
     regionAddressId: number | null;
@@ -526,7 +527,8 @@ export default function OrderMilestonePage() {
     if (
       orderDetails.labelByMail === false &&
       orderDetails.useUserCourier === false &&
-      orderDetails.pickupOrDropOff === false
+      orderDetails.pickupOrDropOff === false &&
+      submitShipping === false
     ) {
       showSnackbar("Please submit shipping details first.", "error");
       return;
@@ -649,6 +651,7 @@ export default function OrderMilestonePage() {
         await Promise.all(requests);
       }
       showSnackbar("Successfully saved shipping details", "success");
+      setSubmitShipping(true);
     } catch (e) {
       showSnackbar("Failed to save shipping details", "error");
       console.log(e);

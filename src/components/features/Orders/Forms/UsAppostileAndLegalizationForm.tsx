@@ -32,6 +32,13 @@ import Loader from "@/components/ui/Loader/Loader";
 import { AdditionalQuestions } from "../Common/AdditionalQuestions";
 import { createUSApostilleOrder, uploadFile } from "@/services/formsService";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
+import { CART_SERVICE_MAP } from "@/constants/serviceMap";
+import { getOrderDetails, getOrderIdOfCart } from "@/services/cartServices";
+import {
+  buildUSApostillePayload,
+  buildUSApostillePayloadFromExistingOrder,
+} from "../Common/USApostillePayload";
+import { updateOrder } from "@/services/paymentService";
 
 const payments = ["Credit Card", "PayPal", "Bank Transfer"];
 
@@ -64,6 +71,7 @@ export default function USAppostileAndLegalizationForm() {
   const [isNotarized, setIsNotarized] = useState("");
   const [additionalQuestions, setAdditionalQuestions] = useState([]);
   const [uploadedDoc, setUploadedDoc] = useState(null);
+  const [basePayload, setBasePayload] = useState<any>(null);
   const { showSnackbar } = useSnackbar();
 
   const handleValueChange = (key: string, value: any) => {
@@ -262,51 +270,67 @@ export default function USAppostileAndLegalizationForm() {
     if (!country || !document || !uploadedDoc)
       return showSnackbar("Please complete all required fields", "error");
 
-    const payload = {
-      customerId: CUSTOMERID,
-      orderOriginId: 611,
-      orderType: 1101,
-      initiatedBy: USERID,
-      dockets: [
-        {
-          docs: [
-            {
-              countryId: country?.countryId,
-              originCountryId: 190,
-              docCategoryId: document?.docCategoryId,
-              isRush: additionalServices.includes("Rush"),
-              isScan: additionalServices.includes("Pre-Scan"),
-              isDispatch: false,
-              isNotarized: 652,
-              isPostScan: additionalServices.includes("Post-Scan"),
-              isCopy: false,
-              isSoSDone: 652,
-              isDoSDone: 652,
-              noOfProducts: null,
-              isSoftCopyGiven: 651,
-              attachments: uploadedDoc,
-              isGeneralSoftCopy: 651,
-              isPhotocopyInclude: 651,
-              CIAmount: "0",
-              additionalDOX: "",
-              COCount: 0,
-              CICount: 1,
-              docTypeId: document?.docTypeId,
-            },
-          ],
-        },
-      ],
-    };
 
+    let payload;
     try {
-      const data = await createUSApostilleOrder(payload);
-      showSnackbar("Order created successfully", "success");
-      console.log(data);
+      const countryId = country?.countryId;
+      const docCategoryId = document?.docCategoryId;
+      const docTypeId = document?.docTypeId;
+      if (basePayload == null) {
+        payload = buildUSApostillePayload({
+          countryId,
+          docCategoryId,
+          additionalServices,
+          uploadedDoc,
+          docTypeId,
+        });
+        const response = await createUSApostilleOrder(payload);
+        console.log("order creation new -----------> ", response);
+        showSnackbar("Order created successfully", "success");
+      } else {
+        payload = buildUSApostillePayloadFromExistingOrder({
+          basePayload,
+          countryId,
+          docCategoryId,
+          additionalServices,
+          uploadedDoc,
+          docTypeId,
+        });
+        const response = await updateOrder(payload.orderId, payload);
+        console.log("New order in cart order ------> ", response);
+      }
+      window.location.href = "/cart?service=us-authentication";
     } catch (error) {
       showSnackbar("Failed to submit order", "error");
       console.error(error);
     }
   };
+
+  // Get the previous cart order details.
+  const getCartOrder = async () => {
+    try {
+      const basePayload = CART_SERVICE_MAP["us-authentication"];
+      if (!basePayload) {
+        return <div>Invalid service selected.</div>;
+      }
+      const payload = {
+        customerId: CUSTOMERID,
+        ...basePayload,
+      };
+      const orderId = await getOrderIdOfCart(payload);
+      if (orderId != null) {
+        const response = await getOrderDetails({ orderId: orderId });
+        const orderData = response[0];
+        setBasePayload(orderData);
+      }
+    } catch (error) {
+      console.error("Error in getCartOrder:", error);
+    }
+  };
+
+  useEffect(() => {
+    getCartOrder();
+  }, []);
 
   if (loading) return <Loader />;
 
@@ -332,7 +356,13 @@ export default function USAppostileAndLegalizationForm() {
           <InputField
             label="Selected Service"
             placeholder="Please select a country"
-            value={country?.countryTypeId == 502 ? "Legalization" : country?.countryTypeId == 501 ? "Apostille" : ""}
+            value={
+              country?.countryTypeId == 502
+                ? "Legalization"
+                : country?.countryTypeId == 501
+                ? "Apostille"
+                : ""
+            }
             slotProps={{
               input: {
                 readOnly: true,
