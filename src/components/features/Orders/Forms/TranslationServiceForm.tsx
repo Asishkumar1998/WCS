@@ -12,6 +12,8 @@ import {
 } from "@/services/formsService";
 import { FileUploadBox } from "../Common/TranslationFileUpload";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
+import { getOrderDetails, getOrderIdOfCart } from "@/services/cartServices";
+import { CART_SERVICE_MAP } from "@/constants/serviceMap";
 
 // Users constants
 const CUSTOMERID = 9682;
@@ -33,6 +35,7 @@ export default function TranslationServiceForm() {
   const [attachments, setAttachments] = useState<any>();
   const [coverLetter, setCoverLetter] = useState<any>();
   const [shippingLabel, setShippingLabel] = useState<any>();
+  const [basePayload, setBasePayload] = useState<any>(null);
   const { showSnackbar } = useSnackbar();
 
   const fetchLanguages = async () => {
@@ -86,35 +89,22 @@ export default function TranslationServiceForm() {
   }
 
   const submitOrder = async () => {
-    const payload = {
-      customerId: CUSTOMERID,
-      orderOriginId: 611,
-      orderType: 1103,
-      initiatedBy: USERID,
-      isUSOrigin: true,
-      dockets: [
-        {
-          docs: [
-            {
-              orderOriginId: 611,
-              docCategoryId: 527,
-              countryId: 190,
-              originCountryId: 190,
-              isPostScan: true,
-              translation: [
-                {
-                  originalLangId: originalLangId,
-                  translatedLangId: translatedLangId,
-                },
-              ],
-              attachments,
-              coverLetter,
-              shippingLabel,
-            },
-          ],
-        },
-      ],
-    };
+    let payload;
+    try {
+      if (basePayload == null) {
+      }
+      payload = buildTranslationPayload({
+        originalLangId,
+        translatedLangId,
+        attachments,
+        coverLetter,
+        shippingLabel,
+      });
+      const response = await postTranslationOrder(payload);
+      console.log("response -----------> ", response);
+    } catch (e) {
+      console.log(e);
+    }
 
     if (
       originalLangId == null ||
@@ -132,6 +122,32 @@ export default function TranslationServiceForm() {
       }
     }
   };
+
+  // Get the previous cart order details.
+  const getCartOrder = async () => {
+    try {
+      const basePayload = CART_SERVICE_MAP["translation-service"];
+      if (!basePayload) {
+        return <div>Invalid service selected.</div>;
+      }
+      const payload = {
+        customerId: CUSTOMERID,
+        ...basePayload,
+      };
+      const orderId = await getOrderIdOfCart(payload);
+      if (orderId != null) {
+        const response = await getOrderDetails({ orderId: orderId });
+        const orderData = response[0];
+        setBasePayload(orderData);
+      }
+    } catch (error) {
+      console.error("Error in getCartOrder:", error);
+    }
+  };
+
+  useEffect(() => {
+    getCartOrder();
+  }, []);
 
   return (
     <FormLayout title="Translation Service" onProceed={submitOrder}>

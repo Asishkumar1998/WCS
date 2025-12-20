@@ -30,12 +30,23 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import Loader from "@/components/ui/Loader/Loader";
 import { AdditionalQuestions } from "../Common/AdditionalQuestions";
-import { uploadFile } from "@/services/formsService";
+import { createUSApostilleOrder, uploadFile } from "@/services/formsService";
+import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
+import { CART_SERVICE_MAP } from "@/constants/serviceMap";
+import { getOrderDetails, getOrderIdOfCart } from "@/services/cartServices";
+import {
+  buildUSApostillePayload,
+  buildUSApostillePayloadFromExistingOrder,
+} from "../Common/USApostillePayload";
+import { updateOrder } from "@/services/paymentService";
 
 const payments = ["Credit Card", "PayPal", "Bank Transfer"];
 
 const STOP_DOCS_HAGUE_COUNTRIES = [6, 15, 28, 29, 30, 31, 35, 36];
 const STOP_DOCS_NON_HAGUE_COUNTRIES = [6, 12, 28, 29, 30, 31, 35, 36];
+
+const CUSTOMERID = 9682;
+const USERID = 7437;
 
 export default function USAppostileAndLegalizationForm() {
   const { loading } = useSelector((state: RootState) => state.formsData);
@@ -59,6 +70,9 @@ export default function USAppostileAndLegalizationForm() {
   const [summaryData, setSummaryData] = useState<Record<string, any>>({});
   const [isNotarized, setIsNotarized] = useState("");
   const [additionalQuestions, setAdditionalQuestions] = useState([]);
+  const [uploadedDoc, setUploadedDoc] = useState(null);
+  const [basePayload, setBasePayload] = useState<any>(null);
+  const { showSnackbar } = useSnackbar();
 
   const handleValueChange = (key: string, value: any) => {
     setSummaryData((prev) => ({
@@ -239,12 +253,84 @@ export default function USAppostileAndLegalizationForm() {
         const formData = new FormData();
         formData.append("file_0", file);
         const data = await uploadFile(formData);
-        console.log(data);
+        showSnackbar("Document uploaded successfully", "success");
+        setUploadedDoc(data);
       } catch (err) {
         console.log(err);
+        showSnackbar("Error while uploading document", "error");
       }
     }
   };
+
+  console.log(country);
+  console.log(document);
+  console.log(additionalServices);
+
+  const submitOrder = async () => {
+    if (!country || !document || !uploadedDoc)
+      return showSnackbar("Please complete all required fields", "error");
+
+
+    let payload;
+    try {
+      const countryId = country?.countryId;
+      const docCategoryId = document?.docCategoryId;
+      const docTypeId = document?.docTypeId;
+      if (basePayload == null) {
+        payload = buildUSApostillePayload({
+          countryId,
+          docCategoryId,
+          additionalServices,
+          uploadedDoc,
+          docTypeId,
+        });
+        const response = await createUSApostilleOrder(payload);
+        console.log("order creation new -----------> ", response);
+        showSnackbar("Order created successfully", "success");
+      } else {
+        payload = buildUSApostillePayloadFromExistingOrder({
+          basePayload,
+          countryId,
+          docCategoryId,
+          additionalServices,
+          uploadedDoc,
+          docTypeId,
+        });
+        const response = await updateOrder(payload.orderId, payload);
+        console.log("New order in cart order ------> ", response);
+      }
+      window.location.href = "/cart?service=us-authentication";
+    } catch (error) {
+      showSnackbar("Failed to submit order", "error");
+      console.error(error);
+    }
+  };
+
+  // Get the previous cart order details.
+  const getCartOrder = async () => {
+    try {
+      const basePayload = CART_SERVICE_MAP["us-authentication"];
+      if (!basePayload) {
+        return <div>Invalid service selected.</div>;
+      }
+      const payload = {
+        customerId: CUSTOMERID,
+        ...basePayload,
+      };
+      const orderId = await getOrderIdOfCart(payload);
+      if (orderId != null) {
+        const response = await getOrderDetails({ orderId: orderId });
+        const orderData = response[0];
+        setBasePayload(orderData);
+      }
+    } catch (error) {
+      console.error("Error in getCartOrder:", error);
+    }
+  };
+
+  useEffect(() => {
+    getCartOrder();
+  }, []);
 
   if (loading) return <Loader />;
 
@@ -253,6 +339,7 @@ export default function USAppostileAndLegalizationForm() {
       title="U.S. Apostilles and Legalizations"
       country={country}
       document={document}
+      onProceed={submitOrder}
     >
       <Grid alignItems="stretch" container spacing={2}>
         {/* Country */}
@@ -269,7 +356,13 @@ export default function USAppostileAndLegalizationForm() {
           <InputField
             label="Selected Service"
             placeholder="Please select a country"
-            value={country?.countryTypeId == 502 ? "Legalization" : country?.countryTypeId == 501 ? "Apostille" : ""}
+            value={
+              country?.countryTypeId == 502
+                ? "Legalization"
+                : country?.countryTypeId == 501
+                ? "Apostille"
+                : ""
+            }
             slotProps={{
               input: {
                 readOnly: true,

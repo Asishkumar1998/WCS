@@ -20,9 +20,13 @@ export const getDisplayData = async (payload: any) => {
 };
 
 export const exportDataToExcel = async (payload: any) => {
-  const response = await axiosInstance.post("orders/exportSearchOrders", payload, {
-    responseType: "arraybuffer",
-  });
+  const response = await axiosInstance.post(
+    "orders/exportSearchOrders",
+    payload,
+    {
+      responseType: "arraybuffer",
+    }
+  );
   return response.data;
 };
 
@@ -63,7 +67,7 @@ export const getBill = async (payload: any) => {
 export const postTranslationOrder = async (payload: any) => {
   const response = await axiosInstance.post("orders/", payload);
   return response.data;
-}
+};
 
 export const uploadFile = async (payload: any) => {
   const response = await axiosInstance.post("documents/UploadFile", payload, {
@@ -74,6 +78,12 @@ export const uploadFile = async (payload: any) => {
 
   return response.data;
 };
+
+export const createUSApostilleOrder = async (payload: any) => {
+  const response = await axiosInstance.post("orders", payload);
+  return response.data;
+};
+
 
 export const getStates = async () => {
   const response = await axiosInstance.get("states");

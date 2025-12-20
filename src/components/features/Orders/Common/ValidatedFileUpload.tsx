@@ -37,7 +37,7 @@ export default function ValidatedFileUpload({
   const inputId = useId();
 
   useEffect(() => {
-    if (fileNameProp !== undefined) {
+    if (fileNameProp && fileNameProp.trim() !== "") {
       setFileName(fileNameProp);
     }
   }, [fileNameProp]);
@@ -149,7 +149,9 @@ export default function ValidatedFileUpload({
           fullWidth
           variant="outlined"
           placeholder="Drag & drop your file here or choose manually"
-          value={fileNameProp ?? fileName}
+          value={
+            fileNameProp && fileNameProp.trim() !== "" ? fileNameProp : fileName
+          }
           InputProps={{
             readOnly: true,
             sx: { cursor: "default", fontWeight: fileName ? 600 : 400 },
