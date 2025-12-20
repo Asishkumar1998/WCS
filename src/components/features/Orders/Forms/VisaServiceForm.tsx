@@ -1,22 +1,37 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Grid, SelectChangeEvent } from "@mui/material";
+import {
+  Button,
+  Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  Grid,
+  Typography,
+} from "@mui/material";
 import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
-import FileUploadField from "@/components/ui/Input/FileInput";
 import FormLayout from "@/components/ui/Forms/FormLayout";
 import DateInput from "@/components/ui/Input/DateInput";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
-import ValidatedFileUpload from "../Common/ValidatedFileUpload";
-import DocumentUpload from "../Common/DocumentUpload";
 import {
+  addVisaDocument,
   getLookup,
   getStates,
   postTranslationOrder,
+  uploadVisaFile,
 } from "@/services/formsService";
 import dayjs, { Dayjs } from "dayjs";
 import buildVisaPayload from "../Common/VisaPayload";
+import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
+import validateVisaForm from "../Common/validateVisaForm";
+import { CART_SERVICE_MAP } from "@/constants/serviceMap";
+import { getOrderIdOfCart } from "@/services/cartServices";
+import { deleteOrder } from "@/services/deleteService";
+import { FileUploadBox } from "../Common/TranslationFileUpload";
 
 const entries = ["Single Entry", "Double Entry", "Multiple Entry"];
 
@@ -94,25 +109,50 @@ export default function VisaServiceForm() {
   const [entryType, setEntryType] = useState("");
   const [form, setForm] = useState<Form>(initialForm);
   const [states, setStates] = useState<StateType[]>([]);
+  const { showSnackbar } = useSnackbar();
+  const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
+  const [showCartConflict, setShowCartConflict] = useState(false);
+  const [checkingCart, setCheckingCart] = useState(true);
+  const [uploadedDocumentId, setUploadedDocumentId] = useState();
 
   const init = async () => {
-    const visaResponse = await getLookup({ lookupType: "TypeOfVisa" });
-    setVisaType(visaResponse);
+    try {
+      const visaResponse = await getLookup({ lookupType: "TypeOfVisa" });
+      setVisaType(visaResponse);
 
-    const passportResponse = await getLookup({ lookupType: "TypesOfPassport" });
-    setPassportType(passportResponse);
+      const passportResponse = await getLookup({
+        lookupType: "TypesOfPassport",
+      });
+      setPassportType(passportResponse);
 
-    const response = await getStates();
-    setStates(Object.values(response));
+      const response = await getStates();
+      setStates(Object.values(response));
+
+      const basePayload = CART_SERVICE_MAP["visa-service"];
+      if (!basePayload) {
+        return <div>Invalid service selected.</div>;
+      }
+      const payload = {
+        customerId: 9682,
+        ...basePayload,
+      };
+      const orderId = await getOrderIdOfCart(payload);
+      if (orderId) {
+        setExistingOrderId(orderId);
+        setShowCartConflict(true);
+      }
+    } finally {
+      setCheckingCart(false);
+    }
   };
-
-  const visaTypeOptions = visaType.map((l) => l.lookupName);
-  const passportTypeOptions = passportType.map((l) => l.lookupName);
-  const stateOptions = states.map((l) => l?.stateName);
 
   useEffect(() => {
     init();
   }, []);
+
+  const visaTypeOptions = visaType.map((l) => l.lookupName);
+  const passportTypeOptions = passportType.map((l) => l.lookupName);
+  const stateOptions = states.map((l) => l?.stateName);
 
   useEffect(() => {
     setForm((prev) => ({
@@ -120,12 +160,6 @@ export default function VisaServiceForm() {
       originCountryOfPassPort: originCountry?.countryId,
     }));
   }, [originCountry]);
-
-  const handleDropdownChange =
-    (setter: React.Dispatch<React.SetStateAction<string>>) =>
-    (event: SelectChangeEvent<string>) => {
-      setter(event.target.value);
-    };
 
   const handleVisaTypeChange = (selectedValue: string) => {
     const visaTypeId =
@@ -167,202 +201,353 @@ export default function VisaServiceForm() {
       ...prev,
       NumberOfEntries: value,
     }));
+    setEntryType(selectedValue);
   };
 
+  const isAtLeastSixMonths = (
+    issueDate: Dayjs | null,
+    validityDate: Dayjs | null
+  ) => {
+    if (!issueDate || !validityDate) return true;
+    return validityDate.diff(issueDate, "month") >= 6;
+  };
+
+  async function uploadAndStore(file: any) {
+    if (!file) return;
+
+    if (file) {
+      try {
+        const formData = new FormData();
+        formData.append("file_0", file);
+
+        const data = await uploadVisaFile(formData);
+        setUploadedDocumentId(data.data[0].documentId);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (
+      form.passportIssuanceDate &&
+      form.passportValidity &&
+      !isAtLeastSixMonths(form.passportIssuanceDate, form.passportValidity)
+    ) {
+      showSnackbar(
+        "Passport validity must be at least 6 months from date of issue",
+        "error"
+      );
+    }
+  }, [form.passportIssuanceDate, form.passportValidity]);
+
   const submitOrder = async () => {
+    const { isValid, error } = validateVisaForm(form);
+
+    if (!destinationCountry) {
+      showSnackbar("Destination Country is required", "error");
+      return;
+    }
+    if (!isValid) {
+      showSnackbar(error, "error");
+      return;
+    }
+
+    if (
+      !form.passportIssuanceDate ||
+      !form.passportValidity ||
+      form.passportValidity.diff(form.passportIssuanceDate, "month") < 6
+    ) {
+      showSnackbar(
+        "Passport validity must be at least 6 months from date of issue",
+        "error"
+      );
+      return;
+    }
+
     const payload = buildVisaPayload({
       customerId: 9682,
       userId: 7437,
       country: destinationCountry?.countryId,
       form,
     });
-    await postTranslationOrder(payload);
+    const response = await postTranslationOrder(payload);
+
+    const documentUploadPayload = [
+      {
+        docId: response[0].dockets[0].docs[0].docId,
+        documentId: uploadedDocumentId,
+        orderId: response[0].orderId,
+        uploadedBy: "7437",
+      },
+    ];
+    await addVisaDocument(documentUploadPayload);
+    showSnackbar("Document submitted successfully", "success");
     window.location.href = "/cart?service=visa-service";
   };
 
+  if (checkingCart) {
+    return null; // or spinner
+  }
+
   return (
-    <FormLayout title="Visa Service" onProceed={submitOrder}>
-      {/* Destination Country */}
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <CountrySelect
-          label="Destination Country for Visa *"
-          value={destinationCountry}
-          onChange={setDestinationCountry}
-        />
-      </Grid>
+    <>
+      <Dialog open={showCartConflict} disableEscapeKeyDown onClose={() => {}}>
+        <DialogTitle>Order Already in Cart</DialogTitle>
 
-      {/* Visa Type */}
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <Dropdown
-          label="Type of Visa *"
-          options={visaTypeOptions}
-          value={selectedVisaType.value}
-          onChange={handleVisaTypeChange}
-        />
-      </Grid>
+        <DialogContent>
+          <Typography>
+            You already have an order in your cart. Please choose one of the
+            options below to continue.
+          </Typography>
+        </DialogContent>
 
-      {/* Passport Type */}
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <Dropdown
-          label="Type of Passport *"
-          options={passportTypeOptions}
-          value={selectedPassportType.value}
-          onChange={handlePassportTypeChange}
-        />
-      </Grid>
+        <DialogActions>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              window.location.href = "/cart?service=visa-service";
+            }}
+          >
+            Go to Cart
+          </Button>
 
-      {/* Origin Country */}
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <CountrySelect
-          label="Origin Country of Passport *"
-          value={originCountry}
-          onChange={setOriginCountry}
-        />
-      </Grid>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={async () => {
+              await deleteOrder(existingOrderId!);
+              setShowCartConflict(false);
+              setExistingOrderId(null);
+            }}
+          >
+            Clear Cart
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      {/* Applicant Name */}
-      <Grid size={{ xs: 12 }}>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 6, sm: 6 }}>
-            <InputField
-              label="Given Name *"
-              value={form.applicantGivenName}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  applicantGivenName: e.target.value,
-                }))
-              }
-            />
-          </Grid>
-          <Grid size={{ xs: 6, sm: 6 }}>
-            <InputField
-              label="Surname *"
-              value={form.lastName}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, lastName: e.target.value }))
-              }
-            />
-          </Grid>
-          {/* <Grid size={{ xs: 6, sm: 3 }}>
+      <FormLayout title="Visa Service" onProceed={submitOrder}>
+        {/* Destination Country */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <CountrySelect
+            label="Destination Country for Visa *"
+            value={destinationCountry}
+            onChange={setDestinationCountry}
+          />
+        </Grid>
+
+        {/* Visa Type */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Dropdown
+            label="Type of Visa *"
+            options={visaTypeOptions}
+            value={selectedVisaType.value}
+            onChange={handleVisaTypeChange}
+          />
+        </Grid>
+
+        {/* Passport Type */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Dropdown
+            label="Type of Passport *"
+            options={passportTypeOptions}
+            value={selectedPassportType.value}
+            onChange={handlePassportTypeChange}
+          />
+        </Grid>
+
+        {/* Origin Country */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <CountrySelect
+            label="Origin Country of Passport *"
+            value={originCountry}
+            onChange={setOriginCountry}
+          />
+        </Grid>
+
+        {/* Applicant Name */}
+        <Grid size={{ xs: 12 }}>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 6, sm: 6 }}>
+              <InputField
+                label="Given Name *"
+                value={form.applicantGivenName}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    applicantGivenName: e.target.value,
+                  }))
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 6, sm: 6 }}>
+              <InputField
+                label="Surname *"
+                value={form.lastName}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, lastName: e.target.value }))
+                }
+              />
+            </Grid>
+            {/* <Grid size={{ xs: 6, sm: 3 }}>
             <InputField label="Last Name *" />
           </Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
             <InputField label="Suffix" />
           </Grid> */}
+          </Grid>
         </Grid>
-      </Grid>
 
-      {/* Passport Number */}
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <InputField
-          label="Passport Number *"
-          value={form.passportNumber}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, passportNumber: e.target.value }))
-          }
-        />
-      </Grid>
+        {/* Passport Number */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <InputField
+            label="Passport Number *"
+            value={form.passportNumber}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, passportNumber: e.target.value }))
+            }
+          />
+        </Grid>
 
-      {/* Dates */}
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <DateInput
-          label="Date of Issue *"
-          maxDate={dayjs()}
-          value={form.passportIssuanceDate}
-          onChange={(value) =>
-            setForm((prev) => ({ ...prev, passportIssuanceDate: value }))
-          }
-        />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <DateInput
-          label="Passport Validity (good until) *"
-          minDate={dayjs()}
-          value={form.passportValidity}
-          onChange={(value) =>
-            setForm((prev) => ({ ...prev, passportValidity: value }))
-          }
-        />
-      </Grid>
+        {/* Dates */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <DateInput
+            label="Date of Issue *"
+            maxDate={dayjs()}
+            value={form.passportIssuanceDate}
+            onChange={(value) =>
+              setForm((prev) => ({ ...prev, passportIssuanceDate: value }))
+            }
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <DateInput
+            label="Passport Validity (good until) *"
+            minDate={dayjs()}
+            value={form.passportValidity}
+            onChange={(value) =>
+              setForm((prev) => ({ ...prev, passportValidity: value }))
+            }
+          />
+        </Grid>
 
-      {/* State of Residence */}
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <Dropdown
-          label="Applicant State of Residence *"
-          options={stateOptions}
-          value={selectedState.value}
-          onChange={handleStateChange}
-        />
-      </Grid>
+        {/* State of Residence */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Dropdown
+            label="Applicant State of Residence *"
+            options={stateOptions}
+            value={selectedState.value}
+            onChange={handleStateChange}
+          />
+        </Grid>
 
-      {/* Entry Type */}
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <Dropdown
-          label="Number of Entry/IES *"
-          options={entries}
-          value={entryType}
-          onChange={handleEntryChange}
-        />
-      </Grid>
+        {/* Entry Type */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Dropdown
+            label="Number of Entry/IES *"
+            options={entries}
+            value={entryType}
+            onChange={handleEntryChange}
+          />
+        </Grid>
 
-      {/* Departure + Expedited */}
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <DateInput
-          label="Date of Departure from U.S *"
-          minDate={form.passportIssuanceDate ?? undefined}
-          maxDate={form.passportValidity ?? undefined}
-          value={form.dateOfDeparture}
-          onChange={(value) =>
-            setForm((prev) => ({
-              ...prev,
-              dateOfDeparture: value,
-            }))
-          }
-        />
-      </Grid>
+        {/* Departure + Expedited */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <DateInput
+            label="Date of Departure from U.S *"
+            minDate={form.passportIssuanceDate ?? undefined}
+            maxDate={form.passportValidity ?? undefined}
+            value={form.dateOfDeparture}
+            onChange={(value) =>
+              setForm((prev) => ({
+                ...prev,
+                dateOfDeparture: value,
+              }))
+            }
+          />
+        </Grid>
 
-      {/* Upload Docs */}
-      <Grid size={{ xs: 12, md: 6 }}>
-        <DocumentUpload country={""} />
-      </Grid>
+        {/* Upload Docs */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <FileUploadBox
+            label="Add Documents"
+            required
+            onSelectFile={(file) => uploadAndStore(file)}
+          />
+        </Grid>
 
-      {/* Comments */}
-      <Grid size={{ xs: 12, md: 6 }}>
-        <InputField
-          label="Additional Comments"
-          multiline
-          rows={9}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, additonalComments: e.target.value }))
-          }
-        />
-      </Grid>
+        {/* Comments */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <InputField
+            label="Additional Comments"
+            multiline
+            rows={5.45}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                additonalComments: e.target.value,
+              }))
+            }
+          />
+        </Grid>
 
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <DateInput
-          label="Expedited Service (Date Needed By)"
-          minDate={form.passportIssuanceDate ?? undefined}
-          maxDate={form.passportValidity ?? undefined}
-          value={form.expeditedDate}
-          onChange={(value) =>
-            setForm((prev) => ({
-              ...prev,
-              expeditedDate: value,
-            }))
-          }
-        />
-      </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid container alignItems="center" spacing={1}>
+            {/* Checkbox */}
+            <Grid>
+              <FormControlLabel
+                label=""
+                control={
+                  <Checkbox
+                    checked={form.isExpedited}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setForm((prev) => ({
+                        ...prev,
+                        isExpedited: checked,
+                        expeditedDate: checked ? prev.expeditedDate : null,
+                      }));
+                    }}
+                  />
+                }
+                sx={{
+                  m: 0,
+                }}
+              />
+            </Grid>
 
-      {/* Reference */}
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <InputField
-          label="Customer Reference"
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, customerReference: e.target.value }))
-          }
-        />
-      </Grid>
-    </FormLayout>
+            {/* Date Field */}
+            <Grid flex={1}>
+              <DateInput
+                label="Expedited Service (Date Needed By)"
+                disabled={!form.isExpedited}
+                minDate={form.passportIssuanceDate ?? undefined}
+                maxDate={form.passportValidity ?? undefined}
+                value={form.expeditedDate}
+                onChange={(value) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    expeditedDate: value,
+                  }))
+                }
+              />
+            </Grid>
+          </Grid>
+        </Grid>
+
+        {/* Reference */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <InputField
+            label="Customer Reference"
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                customerReference: e.target.value,
+              }))
+            }
+          />
+        </Grid>
+      </FormLayout>
+    </>
   );
 }

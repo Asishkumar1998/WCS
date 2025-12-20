@@ -89,3 +89,18 @@ export const getStates = async () => {
   const response = await axiosInstance.get("states");
   return response.data;
 }
+
+export const uploadVisaFile = async (payload: any) => {
+  const response = await axiosInstance.post("visaDocuments/documents", payload, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+};
+
+export const addVisaDocument = async (payload: any) => {
+  const response = await axiosInstance.post("visadocuments/addVisaDocuments", payload);
+  return response.data;
+};

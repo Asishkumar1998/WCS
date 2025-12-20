@@ -1,7 +1,3 @@
-// Users constants
-// const CustomerId = 9682;
-// const UserId = 7437;
-
 function buildVisaPayload({
   customerId,
   userId,
@@ -46,7 +42,7 @@ function buildVisaPayload({
                 placeOfBirth: form.placeOfBirth,
                 passportNumber: form.passportNumber,
                 passportIssuanceDate: form.passportIssuanceDate,
-                isExpedited: true,
+                isExpedited: form.isExpedited,
                 expeditedDate: form.expeditedDate,
                 customerReference: form.customerReference,
                 additionalComments: form.additionalComments,

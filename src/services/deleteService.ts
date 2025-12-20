@@ -45,3 +45,8 @@ export const deleteDoc = async (docId: number) => {
   return response.data;
 }
 
+export const deleteOrder = async (orderId: number) => {
+  const response = await axiosInstance.delete(`orders/clearCartItems/${orderId}`);
+  return response.data;
+}
+

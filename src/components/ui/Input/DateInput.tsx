@@ -13,6 +13,7 @@ interface DateInputProps {
   disableFuture?: boolean;
   minDate?: any;
   maxDate?: any;
+  disabled?: boolean;
 }
 
 const DateInput: React.FC<DateInputProps> = ({
@@ -23,6 +24,7 @@ const DateInput: React.FC<DateInputProps> = ({
   disableFuture = false,
   minDate,
   maxDate,
+  disabled,
 }) => {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -34,6 +36,7 @@ const DateInput: React.FC<DateInputProps> = ({
         disableFuture={disableFuture}
         minDate={minDate}
         maxDate={maxDate}
+        disabled={disabled}
         slotProps={{
           textField: {
             fullWidth: true,
