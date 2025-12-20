@@ -74,3 +74,8 @@ export const uploadFile = async (payload: any) => {
 
   return response.data;
 };
+
+export const getStates = async () => {
+  const response = await axiosInstance.get("states");
+  return response.data;
+}

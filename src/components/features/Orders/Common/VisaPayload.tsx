@@ -1,13 +1,23 @@
 // Users constants
-const CustomerId = 9682;
-const UserId = 7437;
+// const CustomerId = 9682;
+// const UserId = 7437;
 
-function buildVisaPayload() {
+function buildVisaPayload({
+  customerId,
+  userId,
+  country,
+  form,
+}: {
+  customerId: any;
+  userId: any;
+  country: any;
+  form: any;
+}) {
   return {
-    customerId: CustomerId,
+    customerId: customerId,
     orderOriginId: 611,
     orderType: 1102,
-    initiatedBy: UserId,
+    initiatedBy: userId,
     isUSOrigin: true,
     dockets: [
       {
@@ -16,30 +26,30 @@ function buildVisaPayload() {
             orderOriginId: 611,
             barcode: "",
             description: "",
-            countryId: 2,
+            countryId: country,
             docCategoryId: 526,
             isPostScan: true,
-            originCountryId: 190,
+            originCountryId: form.originCountryOfPassPort,
             visa: [
               {
-                typeOfPassport: 971,
-                passportValidity: "2026-07-17T18:30:00.000Z",
-                typeOfVisa: 991,
-                NumberOfEntries: 1,
-                applicantGivenName: "Raghvendra",
-                lastName: "Roy",
-                state: 1,
-                dateOfDeparture: "2025-12-18T18:30:00.000Z",
-                originCountryOfPassPort: 190,
+                typeOfPassport: form.typeOfPassport,
+                passportValidity: form.passportValidity,
+                typeOfVisa: form.typeOfVisa,
+                NumberOfEntries: form.NumberOfEntries,
+                applicantGivenName: form.applicantGivenName,
+                lastName: form.lastName,
+                state: form.state,
+                dateOfDeparture: form.dateOfDeparture,
+                originCountryOfPassPort: form.originCountryOfPassPort,
                 dateOfBirth: "1997-02-17T18:30:00.000Z",
                 gender: "Male",
-                placeOfBirth: "Fiji",
-                passportNumber: "123456789",
-                passportIssuanceDate: "2025-12-16T18:30:00.000Z",
+                placeOfBirth: form.placeOfBirth,
+                passportNumber: form.passportNumber,
+                passportIssuanceDate: form.passportIssuanceDate,
                 isExpedited: true,
-                expeditedDate: "2025-12-22T18:30:00.000Z",
-                customerReference: "Customer Reference",
-                additionalComments: "Additional Comments",
+                expeditedDate: form.expeditedDate,
+                customerReference: form.customerReference,
+                additionalComments: form.additionalComments,
               },
             ],
           },
@@ -48,3 +58,5 @@ function buildVisaPayload() {
     ],
   };
 }
+
+export default buildVisaPayload;
