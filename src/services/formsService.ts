@@ -83,3 +83,9 @@ export const createUSApostilleOrder = async (payload: any) => {
   const response = await axiosInstance.post("orders", payload);
   return response.data;
 };
+
+
+export const getStates = async () => {
+  const response = await axiosInstance.get("states");
+  return response.data;
+}
