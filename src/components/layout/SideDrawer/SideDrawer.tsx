@@ -79,7 +79,7 @@ const navItems = [
     href: "/notifications",
   },
   {
-    text: "FAQ*",
+    text: "FAQ",
     icon: <Info />,
     href: "/faq",
   },
@@ -89,9 +89,9 @@ const navItems = [
     href: "/cart",
   },
   {
-    text: "Profile*",
+    text: "Profile",
     icon: <Person />,
-    href: "/accounts/profile",
+    href: "/profile",
   },
 ];
 
