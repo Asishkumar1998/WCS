@@ -11,6 +11,7 @@ import "quill/dist/quill.snow.css";
 
 export type RichTextEditorHandle = {
   getContent: () => string;
+  clear: () => void;
 };
 
 const RichTextEditor = forwardRef<RichTextEditorHandle>((_, ref) => {
@@ -37,6 +38,11 @@ const RichTextEditor = forwardRef<RichTextEditorHandle>((_, ref) => {
 
   useImperativeHandle(ref, () => ({
     getContent: () => quillRef.current?.root.innerHTML || "",
+    clear: () => {
+      if (quillRef.current) {
+        quillRef.current.setText("");
+      }
+    },
   }));
 
   return (

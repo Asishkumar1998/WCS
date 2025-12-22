@@ -74,11 +74,6 @@ const navItems = [
     href: "/orders/bulk-ordering",
   },
   {
-    text: "Notifications*",
-    icon: <Notifications />,
-    href: "/notifications",
-  },
-  {
     text: "FAQ",
     icon: <Info />,
     href: "/faq",

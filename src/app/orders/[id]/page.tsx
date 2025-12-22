@@ -42,6 +42,7 @@ import {
 } from "@/services/formsService";
 import { countries } from "@/dataset/countries";
 import { useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 //Below are the Interfaces to handle the API response
 interface Instruction {
@@ -210,6 +211,7 @@ export default function OrdersPage() {
   const allExpanded =
     expanded.length === allOrderIds.length && allOrderIds.length > 0;
   const { id } = useParams();
+  const router = useRouter();
 
   console.log("ORDER ID FROM URL:", id);
 
@@ -224,7 +226,6 @@ export default function OrdersPage() {
   }, []);
 
   useEffect(() => {
-    // Only fetch automatically if orderId came from URL
     if (filters.orderId && id !== "all") {
       displayData();
     }
@@ -244,11 +245,11 @@ export default function OrdersPage() {
     }
   };
 
-  const viewConversation = (e: any) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setConversationDrawerOpen(true);
-  };
+  // const viewConversation = (e: any) => {
+  //   e.stopPropagation();
+  //   e.preventDefault();
+  //   setConversationDrawerOpen(true);
+  // };
 
   const trackOrder = (e: any) => {
     e.stopPropagation();
@@ -682,7 +683,9 @@ export default function OrdersPage() {
                   View Invoice
                 </Button>
                 <Button
-                  onClick={viewConversation}
+                  onClick={() => {
+                    router.push(`/orders/${order.orderId}/conversation`);
+                  }}
                   size="small"
                   startIcon={<ForumIcon />}
                 >

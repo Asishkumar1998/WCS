@@ -1,6 +1,6 @@
 // app/cart/page.tsx
 import { Suspense } from 'react';
-import OrderMilestonePage from './OrderMilestonePage'; // your current component
+import OrderMilestonePage from './OrderMilestonePage';
 
 export default function CartPage() {
   return (

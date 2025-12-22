@@ -1,178 +1,181 @@
 "use client";
-import React, { useRef } from "react";
+
+import React, { useEffect, useState } from "react";
 import {
   Box,
-  Grid,
+  Button,
   Typography,
   Paper,
-  Divider,
-  Avatar,
-  Button,
   Stack,
-  IconButton,
+  Chip,
+  Divider,
 } from "@mui/material";
+import ReplyIcon from "@mui/icons-material/Reply";
+import AddCommentIcon from "@mui/icons-material/AddComment";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import RichTextEditor from "@/components/ui/RichTextEditor/RichTextEditor";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { getCustomerNotification } from "@/services/notificationService";
+import Loader from "@/components/ui/Loader/Loader";
 
-export default function ConversationPage() {
-  const editorRef = useRef<any>(null);
+interface Notification {
+  notificationId: number;
+  subject: string;
+  createdAt: string;
+  parentId: number;
+  rootId: number;
+  readStatus: string;
+}
+
+const MyConversations = () => {
   const router = useRouter();
+  const [conversations, setConversations] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { id } = useParams();
 
-  const messages = [
-    {
-      id: 1,
-      sender: "Tarun Thakur (Processor)",
-      role: "processor",
-      text: "Hi Raghvendra, this is a conversation testing. Please respond.",
-      time: "Oct 1, 2025, 11:30 AM",
-    },
-    {
-      id: 2,
-      sender: "Raghvendra Roy (Customer)",
-      role: "customer",
-      text: "Hello Processor, successfully received the message.",
-      attachment: "SampleDocument1.txt",
-      time: "Oct 1, 2025, 11:32 AM",
-    },
-  ];
+  useEffect(() => {
+    fetchConversations();
+  }, []);
 
-  const handleSend = () => {
-    const content = editorRef.current?.getContent();
-  };
+  const fetchConversations = async () => {
+    setLoading(true);
+    try {
+      const res = await getCustomerNotification(Number(id));
+      const roots = res
+        .filter((n: Notification) => n.parentId === 0 && n.rootId === 0)
+        .sort(
+          (a: Notification, b: Notification) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
 
-  const handleBack = () => {
-    // 👇 You can use router.back() if using Next.js router
-    router.back();
+      setConversations(roots);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Grid container spacing={2} sx={{ mt: "64px", p: 3 }}>
-      {/* Left: Conversation */}
-      <Grid size={{ xs: 12, md: 8 }}>
-        <Paper
-          sx={{
-            p: 2,
-            height: "85vh",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {/* Header with Back button */}
-          <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-            <IconButton
-              onClick={handleBack}
-              sx={{ color: "primary.main" }}
-              aria-label="back"
-            >
-              <ArrowBackIcon />
-            </IconButton>
-            <Typography variant="h6" fontWeight="bold">
-              Order #250249 • Conversation
-            </Typography>
-          </Stack>
+    <>
+      {loading && <Loader />}
 
-          <Divider />
-
-          {/* Messages */}
-          <Box
-            sx={{
-              flex: 1,
-              overflowY: "auto",
-              my: 2,
-              pr: 1,
-            }}
+      <Box maxWidth="lg" mx="auto" mt={10} px={2}>
+        {/* Header */}
+        <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 3 }}>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "flex-start", sm: "center" }}
+            spacing={2}
           >
-            {messages.map((msg) => (
-              <Box
-                key={msg.id}
-                sx={{
-                  display: "flex",
-                  justifyContent:
-                    msg.role === "customer" ? "flex-end" : "flex-start",
-                  mb: 2,
-                }}
-              >
-                <Paper
-                  sx={{
-                    p: 2,
-                    maxWidth: "70%",
-                    borderRadius: 2,
-                    bgcolor:
-                      msg.role === "customer" ? "primary.light" : "error.light",
-                    color: "#fff",
-                  }}
-                  elevation={3}
-                >
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    {msg.sender}
-                  </Typography>
-                  <Typography variant="body2" sx={{ my: 1 }}>
-                    {msg.text}
-                  </Typography>
-                  {msg.attachment && (
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        textDecoration: "underline",
-                        cursor: "pointer",
-                      }}
-                    >
-                      📎 {msg.attachment}
-                    </Typography>
-                  )}
-                  <Typography
-                    variant="caption"
-                    sx={{ display: "block", textAlign: "right", mt: 1 }}
-                  >
-                    {msg.time}
-                  </Typography>
-                </Paper>
-              </Box>
-            ))}
-          </Box>
+            <Box>
+              <Typography variant="h5" fontWeight={600}>
+                Conversations
+              </Typography>
+              <Typography color="text.secondary">Order #{id}</Typography>
+            </Box>
 
-          {/* Rich Text Editor */}
-          <Box sx={{ flexShrink: 0 }}>
-            <RichTextEditor ref={editorRef} />
-            <Stack direction="row" justifyContent="flex-end" mt={2}>
-              <Button variant="contained" onClick={handleSend}>
-                Send
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                startIcon={<ArrowBackIcon />}
+                onClick={() => router.push("/orders/all")}
+              >
+                Orders
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<AddCommentIcon />}
+                onClick={() => router.push(`/orders/${id}/conversation/new`)}
+              >
+                New Message
               </Button>
             </Stack>
-          </Box>
-        </Paper>
-      </Grid>
-
-      {/* Right: Order Info */}
-      <Grid size={{ xs: 12, md: 4 }}>
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="h6" fontWeight="bold">
-            Order Info
-          </Typography>
-          <Typography variant="body2">Order ID: 250249</Typography>
-          <Typography variant="body2">Created: Oct 1, 2025</Typography>
-          <Typography variant="body2" mb={2}>
-            Status: In Process
-          </Typography>
-
-          <Divider />
-
-          <Typography variant="h6" fontWeight="bold" mt={2}>
-            Participants
-          </Typography>
-          <Stack spacing={1} mt={1}>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Avatar sx={{ bgcolor: "error.main" }}>T</Avatar>
-              <Typography variant="body2">Tarun Thakur (Processor)</Typography>
-            </Stack>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Avatar sx={{ bgcolor: "primary.main" }}>R</Avatar>
-              <Typography variant="body2">Raghvendra Roy (Customer)</Typography>
-            </Stack>
           </Stack>
         </Paper>
-      </Grid>
-    </Grid>
+
+        {/* Conversation List */}
+        <Paper elevation={0} sx={{ borderRadius: 3 }}>
+          {conversations.map((item, index) => (
+            <React.Fragment key={item.notificationId}>
+              <Box
+                onClick={() =>
+                  router.push(
+                    `/orders/${id}/conversation/${item.notificationId}`
+                  )
+                }
+                sx={{
+                  px: 3,
+                  py: 2,
+                  cursor: "pointer",
+                  transition: "0.2s",
+                  "&:hover": {
+                    backgroundColor: "action.hover",
+                  },
+                }}
+              >
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  spacing={2}
+                >
+                  <Stack direction="row" spacing={1.5} alignItems="center">
+                    <ReplyIcon
+                      color={
+                        item.readStatus === "unread" ? "primary" : "inherit"
+                      }
+                    />
+                    <Typography
+                      fontWeight={item.readStatus === "unread" ? 600 : 500}
+                      color={
+                        item.readStatus === "unread"
+                          ? "text.primary"
+                          : "text.secondary"
+                      }
+                    >
+                      {item.subject}
+                    </Typography>
+                  </Stack>
+
+                  <Stack alignItems="flex-end">
+                    <Typography variant="body2" color="text.secondary">
+                      {new Date(item.createdAt).toLocaleString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </Typography>
+                    <Chip size="small" label="Conversation" sx={{ mt: 0.5 }} />
+                  </Stack>
+                </Stack>
+              </Box>
+
+              {index !== conversations.length - 1 && <Divider />}
+            </React.Fragment>
+          ))}
+
+          {!loading && conversations.length === 0 && (
+            <Box py={6} textAlign="center">
+              <Typography variant="h6" gutterBottom>
+                No conversations yet
+              </Typography>
+              <Typography color="text.secondary" mb={2}>
+                Start a new message to contact support.
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<AddCommentIcon />}
+                onClick={() => router.push(`/orders/${id}/conversation/new`)}
+              >
+                Write Message
+              </Button>
+            </Box>
+          )}
+        </Paper>
+      </Box>
+    </>
   );
-}
+};
+
+export default MyConversations;
