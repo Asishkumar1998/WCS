@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import {
   Button,
-  SelectChangeEvent,
   Grid,
   FormGroup,
   FormControlLabel,
@@ -52,10 +51,20 @@ const STOP_DOCS_NON_HAGUE_COUNTRIES = [6, 12, 28, 29, 30, 31, 35, 36];
 const CUSTOMERID = 9682;
 const USERID = 7437;
 
-export default function USAppostileAndLegalizationForm() {
+export default function USAppostileAndLegalizationForm({
+  country,
+  setCountry,
+  document,
+  setDocument
+}: {
+  country: any;
+  setCountry: (value: any) => void;
+  document: any;
+  setDocument: any;
+}) {
   const { loading } = useSelector((state: RootState) => state.formsData);
-  const [country, setCountry] = useState<any>(null);
-  const [document, setDocument] = useState<DocType | null>(null);
+  // const [country, setCountry] = useState<any>(null);
+  // const [document, setDocument] = useState<DocType | null>(null);
   const [additionalServices, setAdditionalServices] = useState<string[]>([]);
   const [modal, setModal] = useState({
     open: false,
@@ -77,7 +86,6 @@ export default function USAppostileAndLegalizationForm() {
   const [states, setStates] = useState<any>();
   const [showCartConflict, setShowCartConflict] = useState(false);
   const { showSnackbar } = useSnackbar();
-
 
   const handleDocumentSelect = (newValue: DocType | null) => {
     if (!newValue) return;

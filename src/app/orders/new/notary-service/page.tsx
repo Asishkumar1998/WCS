@@ -2,7 +2,7 @@
 
 import { Container, Grid } from "@mui/material";
 import NotaryServiceForm from "@/components/features/Orders/Forms/NotaryServiceForm";
-import USAppostileAndLegalizationSidebar from "@/components/features/Orders/Sidebars/UsAppostileAndLegalizationSidebar";
+import NotaryServiceSidebar from "@/components/features/Orders/Sidebars/NotaryServiceSidebar";
 
 export default function NotaryService() {
   return (
@@ -15,7 +15,7 @@ export default function NotaryService() {
 
         {/* Right side - FAQ */}
         <Grid size={{ xs: 10, md: 4 }}>
-          <USAppostileAndLegalizationSidebar />
+          <NotaryServiceSidebar />
         </Grid>
       </Grid>
     </Container>

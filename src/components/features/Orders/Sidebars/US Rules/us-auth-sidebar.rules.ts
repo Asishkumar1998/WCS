@@ -1,0 +1,43 @@
+import { SIDEBAR_CONTENT } from "./us-auth-sidebar.content";
+import { SidebarContent } from "./us-auth-sidebar.content";
+
+export const sidebarRules: {
+  byCountryTypeAndDoc: Record<string, SidebarContent>;
+  byCountryType: Record<number, SidebarContent>;
+  byCountryId: Record<number, SidebarContent>;
+} = {
+  byCountryTypeAndDoc: {
+    "501_522": SIDEBAR_CONTENT.APOSTILLE_GENERAL,
+    "501_521": SIDEBAR_CONTENT.APOSTILLE_FEDERAL,
+  },
+
+  byCountryType: {
+    502: SIDEBAR_CONTENT.EMBASSY_GENERAL,
+  },
+
+  byCountryId: {
+    3: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Algeria"),
+    53: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Egypt"),
+    82: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Iraq"),
+    97: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Lebanon"),
+    144: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Qatar"),
+    196: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Yemen"),
+    205: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Kurdistan"),
+    199: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Taiwan"),
+    130: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Nigeria"),
+    93: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Kuwait"),
+    188: SIDEBAR_CONTENT.EMBASSY_COUNTRY("United Arab Emirates"),
+    195: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Vietnam"),
+    177: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Thailand"),
+    184: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Turkmenistan"),
+    31: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Cambodia"),
+    122: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Myanmar"),
+    88: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Jordan"),
+    66: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Ghana"),
+    90: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Kenya"),
+    100: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Libya"),
+    73: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Haiti"),
+    58: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Ethiopia"),
+    125: SIDEBAR_CONTENT.EMBASSY_COUNTRY("Nepal"),
+  },
+};

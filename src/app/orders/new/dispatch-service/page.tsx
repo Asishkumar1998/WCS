@@ -2,7 +2,7 @@
 
 import { Container, Grid } from "@mui/material";
 import DispatchServiceForm from "@/components/features/Orders/Forms/DispatchServiceForm";
-import USAppostileAndLegalizationSidebar from "@/components/features/Orders/Sidebars/UsAppostileAndLegalizationSidebar";
+import DispatchServiceSidebar from "@/components/features/Orders/Sidebars/DispatchServiceSidebar";
 
 export default function DispatchService() {
   return (
@@ -15,7 +15,7 @@ export default function DispatchService() {
 
         {/* Right side - FAQ */}
         <Grid size={{ xs: 10, md: 4 }}>
-          <USAppostileAndLegalizationSidebar />
+          <DispatchServiceSidebar />
         </Grid>
       </Grid>
     </Container>

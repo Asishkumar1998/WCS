@@ -1,70 +1,69 @@
 "use client";
 
-import React from "react";
-import {
-  Card,
-  CardContent,
-  Typography,
-  Divider,
-  List,
-  ListItem,
-  Box,
-} from "@mui/material";
-import FAQSidebarLayout from "@/components/layout/SideDrawer/FAQSideDrawerLayout";
+import { Typography, Divider, Box, List, ListItem } from "@mui/material";
 import Image from "next/image";
+import FAQSidebarLayout from "@/components/layout/SideDrawer/FAQSideDrawerLayout";
+import { getSidebarContent } from "./US Rules/getSidebarContent";
 
-export default function USAppostileAndLegalizationSidebar() {
+interface Props {
+  country: any;
+  document: any;
+}
+
+export default function USAppostileAndLegalizationSidebar({
+  country,
+  document,
+}: Props) {
+  const content = getSidebarContent(country, document);
+
+  if (!content) return null;
+
   return (
     <FAQSidebarLayout>
-      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-        WCS Express FAQ
+      {content.flag && (
+        <Image
+          src={content.flag}
+          alt="Country Flag"
+          width={80}
+          height={50}
+          style={{
+            display: "block",
+            margin: "0 auto 12px",
+          }}
+        />
+      )}
+
+      <Typography
+        variant="h6"
+        sx={{
+          fontWeight: 600,
+          textAlign: "center",
+          mb: 2,
+          color: "primary.main",
+        }}
+      >
+        {content.title}
       </Typography>
 
-      <Card sx={{ height: "40%" }}>
-        <CardContent>
-          {/* Title */}
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 600, mb: 2, color: "primary.main" }}
-          >
-            Apostille Services
-          </Typography>
+      <Divider sx={{ mb: 2 }} />
 
-          <Divider sx={{ mb: 2 }} />
-
-          {/* Bullet points */}
-          <List dense disablePadding>
-            <ListItem sx={{ display: "list-item", pl: 2 }}>
+      <Box sx={{ mt: 2 }}>
+        <List dense disablePadding>
+          {content.paragraphs.map((text, index) => (
+            <ListItem key={index} sx={{ pl: 0, mb: 1 }}>
               <Typography variant="body2" color="text.secondary">
-                Apostille is French for “certification” and represents the
-                authentication of an official gold seal or signature on a
-                document. If you are sending your documents to a country that is
-                part of the 1961 Hague Convention, an Apostille certificate is
-                used as proof of authenticity among the member nations.
+                {text}
               </Typography>
             </ListItem>
+          ))}
+        </List>
 
-            <ListItem sx={{ display: "list-item", pl: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                An Apostille signifies that the document has been reviewed,
-                approved, and certified as an authentic copy of an original and
-                that the certifying party has the authority to conduct such a
-                review.
-              </Typography>
-            </ListItem>
-          </List>
-        </CardContent>
-      </Card>
-
-      {/* Example Image */}
-      <Box
-        sx={{ border: "1px solid #ddd", borderRadius: 1, overflow: "hidden" }}
-      >
         <Image
-          src="/certificate-image.png"
-          alt="Apostille Sample"
+          src={content.sampleDoc}
+          alt="Sample Document"
           width={400}
-          height={450}
+          height={250}
+          style={{ width: "100%", height: "auto", marginTop: 24 }}
         />
       </Box>
     </FAQSidebarLayout>
