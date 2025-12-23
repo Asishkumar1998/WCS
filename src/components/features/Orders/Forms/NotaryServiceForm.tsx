@@ -11,17 +11,17 @@ import {
   InputLabel,
   OutlinedInput,
   Box,
-  Button,
 } from "@mui/material";
-import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
-import FileUploadField from "@/components/ui/Input/FileInput";
 import FormLayout from "@/components/ui/Forms/FormLayout";
 import { AdditionalServices } from "@/dataset/constants/constants";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
-import ValidatedFileUpload from "../Common/ValidatedFileUpload";
 import DocumentUpload from "../Common/DocumentUpload";
-import { postTranslationOrder, uploadFile } from "@/services/formsService";
+import {
+  postTranslationOrder,
+  updateFeeQuantity,
+  uploadFile,
+} from "@/services/formsService";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import {
   buildNotaryDispatchPayloadFromExistingOrder,
@@ -32,8 +32,6 @@ import { getOrderDetails, getOrderIdOfCart } from "@/services/cartServices";
 import { updateOrder } from "@/services/paymentService";
 import DocumentDropdown from "@/components/ui/Dropdown/DocumentDropdown";
 
-const documents = ["Passport", "Certificate", "License"];
-const payments = ["Credit Card", "PayPal", "Bank Transfer"];
 const CustomerID = 9682;
 
 export interface DocType {
@@ -58,20 +56,16 @@ export default function NotaryServiceForm() {
   const [customerReference, setCustomerReference] = useState<any>();
   const [additionalComments, setAdditionalComments] = useState<any>();
   const [basePayload, setBasePayload] = useState<any>(null);
-  const [payment, setPayment] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [numberOfPages, setNumberOfPages] = useState();
+  const [noOfNotarizedDoc, setNoOfNotarizedDoc] = useState<number>(0);
   const [additionalServicesState, setAdditionalServicesState] =
     useState(AdditionalServices);
   const [disabled, setDisabled] = useState(false);
+  const [existingDocIds, setExistingDocIds] = useState<any>();
   const { showSnackbar } = useSnackbar();
   const lastUploadedRef = useRef<string | null>(null);
 
-  const handleDropdownChange =
-    (setter: React.Dispatch<React.SetStateAction<string>>) =>
-    (event: SelectChangeEvent<string>) => {
-      setter(event.target.value);
-    };
 
   const handleDocumentUpload = async (data: any) => {
     setNumberOfPages(data?.numPages);
@@ -109,7 +103,12 @@ export default function NotaryServiceForm() {
           isNotary: true,
         });
         const response = await postTranslationOrder(payload);
-        console.log("response ----------> ", response);
+        if (noOfNotarizedDoc != 0) {
+          const docFeeId = response[0].dockets[0].docs[0].docFees.find(
+            (f: any) => f.feeAmount === 5
+          ).docFeeId;
+          await updateFeeQuantity(docFeeId, { quantity: noOfNotarizedDoc });
+        }
       } else {
         payload = buildNotaryDispatchPayloadFromExistingOrder({
           basePayload,
@@ -122,7 +121,18 @@ export default function NotaryServiceForm() {
           isNotary: true,
         });
         const response = await updateOrder(payload.orderId, payload);
-        console.log("response ----------> ", response);
+        const allDocsAfter = response[0].dockets.flatMap((d: any) => d.docs);
+        const newDocs = allDocsAfter.filter(
+          (doc: any) => !existingDocIds.includes(doc.docId)
+        );
+
+        if (noOfNotarizedDoc != 0) {
+          const createdDoc = newDocs[0];
+          const docFeeId = createdDoc.docFees.find(
+            (f: any) => f.feeAmount === 5
+          ).docFeeId;
+          await updateFeeQuantity(docFeeId, {quantity: noOfNotarizedDoc});
+        }
       }
       window.location.href = "/cart?service=notary-service";
     } catch (error) {
@@ -130,6 +140,9 @@ export default function NotaryServiceForm() {
       console.error(error);
     }
   };
+
+  const getAllDocIds = (order: any) =>
+    order.dockets.flatMap((d: any) => d.docs.map((doc: any) => doc.docId));
 
   // Get the previous cart order details.
   const getCartOrder = async () => {
@@ -147,6 +160,7 @@ export default function NotaryServiceForm() {
       if (orderId != null) {
         const response = await getOrderDetails({ orderId: orderId });
         const orderData = response[0];
+        setExistingDocIds(getAllDocIds(orderData));
         setBasePayload(orderData);
       }
     } catch (error) {
@@ -295,16 +309,33 @@ export default function NotaryServiceForm() {
           </Box>
         </Grid>
 
-        {/* Additional Comments (multiline) */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        {/*No of Notarized Docs & Additional Comments (multiline) */}
+        <Grid
+          size={{ xs: 12, md: 6 }}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {/* Number of Notarized Documents */}
+          <InputField
+            label="Number of Notarized documents"
+            placeholder="Enter number of notarized documents"
+            type="number"
+            inputProps={{ min: 0 }}
+            onChange={(e) => setNoOfNotarizedDoc(Number(e.target.value))}
+          />
+
+          {/* Spacer */}
+          <Box sx={{ height: 12 }} />
+
+          {/* Additional Comments */}
           <InputField
             label="Additional Comments"
             placeholder="Enter comments..."
             multiline
-            rows={9}
-            onChange={(e) => setAdditionalComments(e.target.value)}
             sx={{
-              height: "100%",
+              flex: 1,
               "& .MuiOutlinedInput-root": {
                 height: "100%",
                 alignItems: "flex-start",

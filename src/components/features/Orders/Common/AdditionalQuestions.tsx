@@ -15,7 +15,7 @@ import {
   Typography,
   IconButton,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const INPUT_MAP: any = {
   3: ["Include", "No"],
@@ -25,9 +25,11 @@ const INPUT_MAP: any = {
 
 export const AdditionalQuestions = ({
   country,
+  states,
   setAdditionalPreferences,
-}: AdditionalQuestionsComponent) => {
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  resetQuestionId,
+}: AdditionalQuestionsComponent & { resetQuestionId?: number | null }) => {
+  const [answers, setAnswers] = useState<Record<number, string>>({});
 
   const resolvedQuestions = useMemo(() => {
     const ids = ADDITIONAL_QUESTION_COUNTRY_MAP[country?.countryId] ?? [];
@@ -45,12 +47,12 @@ export const AdditionalQuestions = ({
     }));
   }, [country?.countryId, country?.countryShortName]);
 
-  const setPreferences = (question: string, answer: string) => {
+  const setPreferences = (questionId: number, answer: string) => {
     setAnswers((prev) => {
-      const updated = { ...prev, [question]: answer };
+      const updated = { ...prev, [questionId]: answer };
 
-      const finalArray = Object.entries(updated).map(([q, a]) => ({
-        question: q,
+      const finalArray = Object.entries(updated).map(([id, a]) => ({
+        questionId: Number(id),
         answer: a,
       }));
 
@@ -58,6 +60,16 @@ export const AdditionalQuestions = ({
       return updated;
     });
   };
+
+  useEffect(() => {
+    if (resetQuestionId) {
+      setAnswers((prev) => {
+        const updated = { ...prev };
+        delete updated[resetQuestionId];
+        return updated;
+      });
+    }
+  }, [resetQuestionId]);
 
   if (!resolvedQuestions.length) return null;
 
@@ -107,15 +119,12 @@ export const AdditionalQuestions = ({
                           }}
                         >
                           <Typography
-                            noWrap
                             sx={{
                               fontWeight: 600,
                               color: "#333",
                               fontSize: "0.95rem",
                               mr: 0.5,
                               overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
                             }}
                             title={text}
                           >
@@ -140,46 +149,91 @@ export const AdditionalQuestions = ({
 
                         {/* Answers */}
                         <Box
-                          sx={{
-                            width: { xs: "50%", sm: "35%", md: "30%" },
-                          }}
+                          sx={{ width: { xs: "50%", sm: "35%", md: "30%" } }}
                         >
-                          <RadioGroup
-                            row
-                            value={answers[text] ?? ""}
-                            onChange={(e: any) =>
-                              setPreferences(text, e.target.value)
-                            }
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "flex-end",
-                              gap: 1,
-                            }}
-                          >
-                            <FormControlLabel
-                              value={options[0]}
-                              control={<Radio size="small" />}
-                              label={options[0]}
+                          {id === 2 ? (
+                            /* Question 2 → State Dropdown */
+                            <FormControl
+                              fullWidth
+                              size="small"
+                              sx={{ alignItems: "flex-end" }}
+                            >
+                              <OutlinedInput
+                                label="Select State"
+                                value={answers[id] ?? ""}
+                                onChange={(e: any) =>
+                                  setPreferences(id, e.target.value)
+                                }
+                                style={{
+                                  width: "50%",
+                                }}
+                                inputComponent={() => (
+                                  <select
+                                    title="Select State"
+                                    value={answers[id] ?? ""}
+                                    onChange={(e) =>
+                                      setPreferences(id, e.target.value)
+                                    }
+                                    style={{
+                                      width: "100%",
+                                      height: 32,
+                                      borderRadius: 4,
+                                    }}
+                                  >
+                                    <option value="" disabled>
+                                      Select State
+                                    </option>
+                                    {states.map((state) => (
+                                      <option
+                                        key={state.stateId}
+                                        value={state.stateId}
+                                      >
+                                        {state.stateName}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
+                              />
+                            </FormControl>
+                          ) : (
+                            /* All Other Questions → Radios */
+                            <RadioGroup
+                              row
+                              value={answers[id] ?? ""}
+                              onChange={(e: any) =>
+                                setPreferences(id, e.target.value)
+                              }
                               sx={{
-                                ".MuiFormControlLabel-label": {
-                                  fontSize: "0.9rem",
-                                },
-                                width: "90px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "flex-end",
+                                gap: 1,
                               }}
-                            />
+                            >
+                              <FormControlLabel
+                                value={options[0]}
+                                control={<Radio size="small" />}
+                                label={options[0]}
+                                sx={{
+                                  ".MuiFormControlLabel-label": {
+                                    fontSize: "0.9rem",
+                                  },
+                                  width: "90px",
+                                }}
+                              />
 
-                            <FormControlLabel
-                              value={options[1]}
-                              control={<Radio size="small" />}
-                              label={options[1]}
-                              sx={{
-                                ".MuiFormControlLabel-label": {
-                                  fontSize: "0.9rem",
-                                },
-                              }}
-                            />
-                          </RadioGroup>
+                              <FormControlLabel
+                                value={options[1]}
+                                control={<Radio size="small" />}
+                                label={options[1]}
+                                sx={{
+                                  ".MuiFormControlLabel-label": {
+                                    fontSize: "0.9rem",
+                                  },
+                                }}
+                              />
+                            </RadioGroup>
+                          )}
                         </Box>
                       </Box>
                     );

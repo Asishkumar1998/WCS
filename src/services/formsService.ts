@@ -104,3 +104,8 @@ export const addVisaDocument = async (payload: any) => {
   const response = await axiosInstance.post("visadocuments/addVisaDocuments", payload);
   return response.data;
 };
+
+export const updateFeeQuantity = async (docFeeId: number, payload: any) => {
+  const response = await axiosInstance.put(`docFees/${docFeeId}`, payload);
+  return response.data;
+}

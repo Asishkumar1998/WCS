@@ -55,7 +55,7 @@ function buildNotaryPayload({
 
             attachments: attachment,
 
-            noOfPages: numberOfPages,
+            noOfPages: numberOfPages===""? undefined : numberOfPages,
           },
         ],
       },
@@ -110,7 +110,7 @@ const buildNotaryDispatchPayloadFromExistingOrder = ({
     isSoSDone: NO,
     isSoftCopyGiven: attachment ? YES : NO,
     noOfProducts: null,
-    noOfPages: numberOfPages,
+    noOfPages: numberOfPages==="" ? undefined : numberOfPages,
   };
 
   const updatedDockets = basePayload.dockets.map((docket: any) => ({

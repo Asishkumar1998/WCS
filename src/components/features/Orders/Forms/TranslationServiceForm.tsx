@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Grid } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Typography,
+} from "@mui/material";
 import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
 import FormLayout from "@/components/ui/Forms/FormLayout";
@@ -14,6 +22,8 @@ import { FileUploadBox } from "../Common/TranslationFileUpload";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import { getOrderDetails, getOrderIdOfCart } from "@/services/cartServices";
 import { CART_SERVICE_MAP } from "@/constants/serviceMap";
+import { deleteOrder } from "@/services/deleteService";
+import buildTranslationPayload from "../Common/TranslationPayload";
 
 // Users constants
 const CUSTOMERID = 9682;
@@ -36,6 +46,9 @@ export default function TranslationServiceForm() {
   const [coverLetter, setCoverLetter] = useState<any>();
   const [shippingLabel, setShippingLabel] = useState<any>();
   const [basePayload, setBasePayload] = useState<any>(null);
+  const [showCartConflict, setShowCartConflict] = useState(false);
+  const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
+
   const { showSnackbar } = useSnackbar();
 
   const fetchLanguages = async () => {
@@ -89,23 +102,6 @@ export default function TranslationServiceForm() {
   }
 
   const submitOrder = async () => {
-    let payload;
-    try {
-      if (basePayload == null) {
-      }
-      payload = buildTranslationPayload({
-        originalLangId,
-        translatedLangId,
-        attachments,
-        coverLetter,
-        shippingLabel,
-      });
-      const response = await postTranslationOrder(payload);
-      console.log("response -----------> ", response);
-    } catch (e) {
-      console.log(e);
-    }
-
     if (
       originalLangId == null ||
       translatedLangId == null ||
@@ -114,6 +110,13 @@ export default function TranslationServiceForm() {
       showSnackbar("Please complete all required fields", "error");
     } else {
       try {
+        const payload = buildTranslationPayload({
+          originalLangId,
+          translatedLangId,
+          attachments,
+          coverLetter,
+          shippingLabel,
+        });
         await postTranslationOrder(payload);
         window.location.href = "/cart?service=translation-service";
       } catch (error) {
@@ -135,6 +138,10 @@ export default function TranslationServiceForm() {
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);
+      if (orderId) {
+        setExistingOrderId(orderId);
+        setShowCartConflict(true);
+      }
       if (orderId != null) {
         const response = await getOrderDetails({ orderId: orderId });
         const orderData = response[0];
@@ -150,68 +157,103 @@ export default function TranslationServiceForm() {
   }, []);
 
   return (
-    <FormLayout title="Translation Service" onProceed={submitOrder}>
-      {/* Original + Translated Language */}
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <Dropdown
-          label="Original Language *"
-          options={languageOptions}
-          value={originalLang}
-          onChange={handleOriginalLangChange}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <Dropdown
-          label="Translated Language *"
-          options={translateLanguageOptions}
-          value={translatedLang}
-          onChange={handleTranslatedLangChange}
-          disabled={originalLang !== "English"}
-        />
-      </Grid>
+    <>
+      <Dialog open={showCartConflict} disableEscapeKeyDown onClose={() => {}}>
+        <DialogTitle>Order Already in Cart</DialogTitle>
 
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <FileUploadBox
-          label="Add Documents"
-          required
-          onSelectFile={(file) => uploadAndStore(file, "attachments")}
-        />
-      </Grid>
+        <DialogContent>
+          <Typography>
+            You already have an order in your cart. Please choose one of the
+            options below to continue.
+          </Typography>
+        </DialogContent>
 
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <FileUploadBox
-          label="Add Cover Letter"
-          onSelectFile={(file) => uploadAndStore(file, "coverLetter")}
-        />
-      </Grid>
+        <DialogActions>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              window.location.href = "/cart?service=translation-service";
+            }}
+          >
+            Go to Cart
+          </Button>
 
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <FileUploadBox
-          label="Add Shipping Label"
-          onSelectFile={(file) => uploadAndStore(file, "shippingLabel")}
-        />
-      </Grid>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={async () => {
+              await deleteOrder(existingOrderId!);
+              setShowCartConflict(false);
+              setExistingOrderId(null);
+            }}
+          >
+            Clear Cart
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <FormLayout title="Translation Service" onProceed={submitOrder}>
+        {/* Original + Translated Language */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Dropdown
+            label="Original Language *"
+            options={languageOptions}
+            value={originalLang}
+            onChange={handleOriginalLangChange}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Dropdown
+            label="Translated Language *"
+            options={translateLanguageOptions}
+            value={translatedLang}
+            onChange={handleTranslatedLangChange}
+            disabled={originalLang !== "English"}
+          />
+        </Grid>
 
-      {/* Comments */}
-      <Grid size={{ xs: 12, md: 6 }}>
-        <InputField
-          label="Additional Comments"
-          placeholder="Add Additional Comments"
-          multiline
-          rows={5}
-          sx={{
-            height: "100.1%",
-            "& .MuiOutlinedInput-root": {
-              height: "100%",
-              alignItems: "flex-start",
-            },
-            "& textarea": {
-              height: "100% !important",
-              resize: "none",
-            },
-          }}
-        />
-      </Grid>
-    </FormLayout>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <FileUploadBox
+            label="Add Documents"
+            required
+            onSelectFile={(file) => uploadAndStore(file, "attachments")}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <FileUploadBox
+            label="Add Cover Letter"
+            onSelectFile={(file) => uploadAndStore(file, "coverLetter")}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <FileUploadBox
+            label="Add Shipping Label"
+            onSelectFile={(file) => uploadAndStore(file, "shippingLabel")}
+          />
+        </Grid>
+
+        {/* Comments */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <InputField
+            label="Additional Comments"
+            placeholder="Add Additional Comments"
+            multiline
+            rows={5}
+            sx={{
+              height: "100.1%",
+              "& .MuiOutlinedInput-root": {
+                height: "100%",
+                alignItems: "flex-start",
+              },
+              "& textarea": {
+                height: "100% !important",
+                resize: "none",
+              },
+            }}
+          />
+        </Grid>
+      </FormLayout>
+    </>
   );
 }

@@ -355,20 +355,22 @@ export default function OrderMilestonePage() {
       await deleteDoc(docId);
       showSnackbar("Document deleted successfully", "success");
       getCartOrder();
-      
     } catch (error) {
       showSnackbar("Failed to delete document", "error");
       console.error("Delete doc failed:", error);
     }
   };
 
-
   const totalAmount = allDocs
-    .reduce(
-      (sum: any, d: any) =>
-        sum + d.docFees.reduce((fSum: any, f: any) => fSum + f.feeAmount, 0),
-      0
-    )
+    .reduce((sum: number, d: any) => {
+      const docTotal = (d.docFees ?? []).reduce(
+        (fSum: number, f: any) =>
+          fSum + (Number(f.feeAmount) || 0) * (Number(f.quantity) || 1),
+        0
+      );
+
+      return sum + docTotal;
+    }, 0)
     .toFixed(2);
 
   useEffect(() => {
@@ -1029,7 +1031,9 @@ export default function OrderMilestonePage() {
                               )?.feeTypeName
                             }
                           />
-                          <Typography>${f.feeAmount}</Typography>
+                          <Typography>
+                            ${f.feeAmount * (f.quantity ?? 1)}
+                          </Typography>
                         </ListItem>
                       ))}
                       <Divider />
@@ -1038,7 +1042,7 @@ export default function OrderMilestonePage() {
                         <Typography fontWeight={700}>
                           $
                           {doc.docFees
-                            .reduce((a: any, b: any) => a + b.feeAmount, 0)
+                            .reduce((a: any, b: any) => a + b.feeAmount * b.quantity, 0)
                             .toFixed(2)}
                         </Typography>
                       </ListItem>

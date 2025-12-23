@@ -8,12 +8,16 @@ function buildUSApostillePayload({
   additionalServices,
   uploadedDoc,
   docTypeId,
+  originState,
+  nusaccRequired
 }: {
   countryId: any;
   docCategoryId: any;
   additionalServices: any;
   uploadedDoc: any;
   docTypeId: any;
+  originState: any;
+  nusaccRequired: any;
 }) {
   return {
     customerId: CUSTOMERID,
@@ -45,6 +49,8 @@ function buildUSApostillePayload({
             COCount: 0,
             CICount: 1,
             docTypeId: docTypeId,
+            originState: originState ?? undefined,
+            nusaccRequired: nusaccRequired ?? undefined,
           },
         ],
       },

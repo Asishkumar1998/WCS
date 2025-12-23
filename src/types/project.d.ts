@@ -74,5 +74,11 @@ interface Notification {
 
 interface AdditionalQuestionsComponent {
   country: Country;
+  states: {
+    stateId: number;
+    stateName: string;
+    stateShortName: string;
+    active: boolean;
+  }[];
   setAdditionalPreferences: any;
 }

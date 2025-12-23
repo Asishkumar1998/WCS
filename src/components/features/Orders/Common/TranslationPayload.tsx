@@ -45,3 +45,5 @@ function buildTranslationPayload({
     ],
   };
 }
+
+export default buildTranslationPayload;
