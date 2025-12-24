@@ -18,6 +18,8 @@ import Loader from "@/components/ui/Loader/Loader";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "./store/store";
 import { fetchUserNotifications } from "./store/features/userSlice";
+import { getCustomer } from "@/services/userService";
+import RetailServiceCard from "@/components/features/Dashboard/ServiceCardRetail";
 
 export default function HomePage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -25,9 +27,20 @@ export default function HomePage() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [updates, setUpdates] = useState<UpdateItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [customer, setCustomer] = useState<any>();
+
+  const getCustomerDetails = async () => {
+    const customerDetails = await getCustomer("9682");
+    setCustomer(customerDetails[0]);
+  };
+
+  useEffect(() => {
+    getCustomerDetails();
+  }, []);
 
   async function loadDashboardData() {
     try {
+      setLoading(true);
       const payload = {
         news: {},
         updates: {
@@ -37,6 +50,7 @@ export default function HomePage() {
           PN: 1,
         },
       };
+      setLoading(true);
       const [news, updates] = await Promise.all([
         getNews(payload.news),
         getUpdates(payload.updates),
@@ -55,9 +69,11 @@ export default function HomePage() {
     loadDashboardData();
   }, []);
 
-  if (loading) return <Loader />;
+  const isCorporateCustomer = customer?.customerTypeId === 592;
 
-  return (
+  if (loading && !customer) return <Loader />;
+
+  return isCorporateCustomer ? (
     <Container maxWidth="xl" sx={{ px: 0, py: 2 }}>
       <Box sx={{ flexGrow: 1, pt: 3, mt: "64px" }}>
         <Grid container spacing={3}>
@@ -95,6 +111,39 @@ export default function HomePage() {
               <Grid size={{ xs: 12, md: 12 }}>
                 <NewsSection news={news} />
               </Grid>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Box>
+    </Container>
+  ) : (
+    <Container maxWidth="xl" sx={{ px: 0, py: 2 }}>
+      <Box sx={{ flexGrow: 1, pt: 3, mt: "64px" }}>
+        <Grid container spacing={4}>
+          {/* Services: 3 x 2 */}
+          <Grid container spacing={3}>
+            {DashboardServices.map((service, idx) => (
+              <Grid
+                key={idx}
+                size={{ xs: 12, sm: 6, md: 4 }}
+                sx={{ display: "flex" }}
+              >
+                <RetailServiceCard
+                  onClick={() => router.push(service.href)}
+                  {...service}
+                />
+              </Grid>
+            ))}
+          </Grid>
+
+          {/* Updates + News */}
+          <Grid container spacing={3} width="1248px">
+            <Grid size={{ xs: 12, md: 6 }} >
+              <UpdatesSection updates={updates} />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <NewsSection news={news} />
             </Grid>
           </Grid>
         </Grid>
