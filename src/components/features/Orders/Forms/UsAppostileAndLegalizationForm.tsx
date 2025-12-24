@@ -55,7 +55,7 @@ export default function USAppostileAndLegalizationForm({
   country,
   setCountry,
   document,
-  setDocument
+  setDocument,
 }: {
   country: any;
   setCountry: (value: any) => void;
@@ -246,13 +246,15 @@ export default function USAppostileAndLegalizationForm({
   }, [additionalServices]);
 
   const handleDocumentUpload = async (data: any) => {
-    const file = data?.uploadedFile;
+    const file: File | null = data?.uploadedFile;
+    if (!file) return;
+
     if (file) {
       try {
         const formData = new FormData();
         formData.append("file_0", file);
         const data = await uploadFile(formData);
-        showSnackbar("Document uploaded successfully", "success");
+        // showSnackbar("Document uploaded successfully", "success");
         setUploadedDoc(data);
       } catch (err) {
         console.log(err);
