@@ -69,7 +69,7 @@ export default function HomePage() {
     loadDashboardData();
   }, []);
 
-  const isCorporateCustomer = customer?.customerTypeId === 592;
+  const isCorporateCustomer = customer?.customerTypeId === 591;
 
   if (loading && !customer) return <Loader />;
 
