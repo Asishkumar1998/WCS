@@ -23,7 +23,6 @@ import { addNotification } from "@/services/notificationService";
 import { getOrderDetails } from "@/services/cartServices";
 import { uploadFile } from "@/services/formsService";
 
-
 export default function NewConversationPage() {
   const router = useRouter();
   const { id } = useParams();
@@ -32,8 +31,18 @@ export default function NewConversationPage() {
   const [subject, setSubject] = useState("");
   const [attachment, setAttachment] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const userId = localStorage.getItem("userId");
-  const customerId = localStorage.getItem("customerId");
+
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cid = localStorage.getItem("customerId");
+      const uid = localStorage.getItem("userId");
+      setCustomerId(cid);
+      setUserId(uid);
+    }
+  }, []);
 
   const editorRef = useRef<any>(null);
 

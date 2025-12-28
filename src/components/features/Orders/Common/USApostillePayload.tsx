@@ -1,7 +1,9 @@
-// Users constants
-const userId = localStorage.getItem("userId");
-const customerId = localStorage.getItem("customerId");
-
+const getSafeStorageValue = (key: string): string | null => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem(key);
+  }
+  return null;
+};
 function buildUSApostillePayload({
   countryId,
   docCategoryId,
@@ -19,6 +21,8 @@ function buildUSApostillePayload({
   originState: any;
   nusaccRequired: any;
 }) {
+  const userId = getSafeStorageValue("userId");
+  const customerId = getSafeStorageValue("customerId");
   return {
     customerId: customerId,
     orderOriginId: 611,

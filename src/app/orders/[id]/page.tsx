@@ -190,10 +190,18 @@ export const DOC_STATES: Record<number, string> = {
   607: "OnHold",
 };
 
-const userId = localStorage.getItem("userId");
-const customerId = localStorage.getItem("customerId");
-
 export default function OrdersPage() {
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cid = localStorage.getItem("customerId");
+      const uid = localStorage.getItem("userId");
+      setCustomerId(cid);
+      setUserId(uid);
+    }
+  }, []);
   const [data, setData] = useState<OrdersResponse | null>(null);
   const [expanded, setExpanded] = useState<number[]>([]);
   const [filters, setFilters] = useState<Filters>({
@@ -225,8 +233,6 @@ export default function OrdersPage() {
     expanded.length === allOrderIds.length && allOrderIds.length > 0;
   const { id } = useParams();
   const router = useRouter();
-
-  console.log("ORDER ID FROM URL:", id);
 
   const getStops = async () => {
     const response = await getAllStops();
@@ -345,9 +351,6 @@ export default function OrdersPage() {
     await generatePDF(payload);
   };
 
-  console.log("countries -----------------> ", countries);
-  console.log("stops -----------------> ", stops);
-
   const viewAttachments = (e: any, orderId: number, docIds: number[]) => {
     e.stopPropagation();
     e.preventDefault();
@@ -369,8 +372,10 @@ export default function OrdersPage() {
   };
 
   useEffect(() => {
-    displayData();
-  }, [filters.pageNumber, filters.rowsPerPage]);
+    if (userId) {
+      displayData();
+    }
+  }, [filters.pageNumber, filters.rowsPerPage, userId]);
 
   const displayData = async () => {
     const payload: Partial<Filters> = Object.entries(filters).reduce(
@@ -382,6 +387,10 @@ export default function OrdersPage() {
       },
       {}
     );
+
+    if (userId) {
+      (payload as any).userId = userId;
+    }
 
     if (country) {
       (payload as any).countryId =

@@ -1,8 +1,12 @@
 const YES = 651;
 const NO = 652;
 
-const userId = localStorage.getItem("userId");
-const customerId = localStorage.getItem("customerId");
+const getSafeStorageValue = (key: string): string | null => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem(key);
+  }
+  return null;
+};
 
 function buildNotaryPayload({
   country,
@@ -21,6 +25,8 @@ function buildNotaryPayload({
   numberOfPages: any;
   isNotary: boolean;
 }) {
+  const userId = getSafeStorageValue("userId");
+  const customerId = getSafeStorageValue("customerId");
   return {
     customerId: customerId,
     orderOriginId: 611,

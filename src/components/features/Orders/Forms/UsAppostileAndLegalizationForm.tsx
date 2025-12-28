@@ -48,8 +48,6 @@ import { updateOrder } from "@/services/paymentService";
 const STOP_DOCS_HAGUE_COUNTRIES = [6, 15, 28, 29, 30, 31, 35, 36];
 const STOP_DOCS_NON_HAGUE_COUNTRIES = [6, 12, 28, 29, 30, 31, 35, 36];
 
-const customerId = localStorage.getItem("customerId");
-
 export default function USAppostileAndLegalizationForm({
   country,
   setCountry,
@@ -85,6 +83,14 @@ export default function USAppostileAndLegalizationForm({
   const [states, setStates] = useState<any>();
   const [showCartConflict, setShowCartConflict] = useState(false);
   const { showSnackbar } = useSnackbar();
+  const [customerId, setCustomerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cid = localStorage.getItem("customerId");
+      setCustomerId(cid);
+    }
+  }, []);
 
   const handleDocumentSelect = (newValue: DocType | null) => {
     if (!newValue) return;
@@ -338,9 +344,11 @@ export default function USAppostileAndLegalizationForm({
   };
 
   useEffect(() => {
-    getCartOrder();
+    if (customerId) {
+      getCartOrder();
+    }
     fetchStates();
-  }, []);
+  }, [customerId]);
 
   useEffect(() => {
     additionalQuestions.find((q: any) => q.questionId === 1)?.answer === "No"

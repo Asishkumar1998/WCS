@@ -58,8 +58,18 @@ export default function ProfilePage() {
   const [defaultBillingId, setDefaultBillingId] = useState<number | null>(null);
   const [openAddAddress, setOpenAddAddress] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<any | null>(null);
-  const userId = localStorage.getItem("userId");
-  const customerId = localStorage.getItem("customerId");
+
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cid = localStorage.getItem("customerId");
+      const uid = localStorage.getItem("userId");
+      setCustomerId(cid);
+      setUserId(uid);
+    }
+  }, []);
 
   const [form, setForm] = useState({
     firstName: "",
@@ -94,9 +104,11 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
-    getProfileData();
-    getCustomerAddresses();
-  }, []);
+    if(customerId && userId){
+      getProfileData();
+      getCustomerAddresses();
+    }
+  }, [customerId, userId]);
 
   useEffect(() => {
     if (!profileData) return;

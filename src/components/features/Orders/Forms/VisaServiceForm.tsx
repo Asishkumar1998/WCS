@@ -114,8 +114,18 @@ export default function VisaServiceForm() {
   const [showCartConflict, setShowCartConflict] = useState(false);
   const [checkingCart, setCheckingCart] = useState(true);
   const [uploadedDocumentId, setUploadedDocumentId] = useState();
-  const userId = localStorage.getItem("userId");
-  const customerId = localStorage.getItem("customerId");
+
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cid = localStorage.getItem("customerId");
+      const uid = localStorage.getItem("userId");
+      setCustomerId(cid);
+      setUserId(uid);
+    }
+  }, []);
 
   const init = async () => {
     try {

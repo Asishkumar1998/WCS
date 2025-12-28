@@ -63,8 +63,14 @@ export default function NotaryServiceForm() {
   const [existingDocIds, setExistingDocIds] = useState<any>();
   const { showSnackbar } = useSnackbar();
   const lastUploadedRef = useRef<string | null>(null);
-  // const userId = localStorage.getItem("userId");
-  const customerId = localStorage.getItem("customerId");
+  const [customerId, setCustomerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cid = localStorage.getItem("customerId");
+      setCustomerId(cid);
+    }
+  }, []);
 
   const handleDocumentUpload = async (data: any) => {
     setNumberOfPages(data?.numPages);
@@ -168,8 +174,10 @@ export default function NotaryServiceForm() {
   };
 
   useEffect(() => {
-    getCartOrder();
-  }, []);
+    if (customerId) {
+      getCartOrder();
+    }
+  }, [customerId]);
 
   const handleDocumentSelect = (newValue: DocType | null) => {
     if (!newValue) return;

@@ -38,6 +38,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import { toggleDrawer } from "@/app/store/features/uiSlice";
 import { styled } from "@mui/material/styles";
+import { logoutUser } from "@/app/utils/authSerivce";
 
 const drawerWidth = 240;
 const collapsedWidth = 60;
@@ -329,6 +330,7 @@ const SideDrawer = () => {
                 display: "flex",
                 alignItems: "center",
               }}
+              onClick={() => logoutUser()}
             >
               <ListItemIcon sx={{ color: "#fff", minWidth: "40px" }}>
                 <Logout />

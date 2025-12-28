@@ -28,8 +28,14 @@ export default function HomePage() {
   const [updates, setUpdates] = useState<UpdateItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState<any>();
+  const [customerId, setCustomerId] = useState<string | null>(null);
 
-  const customerId = localStorage.getItem("customerId");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cid = localStorage.getItem("customerId");
+      setCustomerId(cid);
+    }
+  }, []);
 
   const getCustomerDetails = async () => {
     const customerDetails = await getCustomer(String(customerId));
@@ -37,8 +43,8 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    getCustomerDetails();
-  }, []);
+    if (customerId) getCustomerDetails();
+  }, [customerId]);
 
   async function loadDashboardData() {
     try {

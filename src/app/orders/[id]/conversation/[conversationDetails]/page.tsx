@@ -34,8 +34,18 @@ export default function ConversationPage() {
   const editorRef = useRef<any>(null);
   const router = useRouter();
   const { id, conversationDetails } = useParams();
-  const userId = localStorage.getItem("userId");
-  const customerId = localStorage.getItem("customerId");
+
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cid = localStorage.getItem("customerId");
+      const uid = localStorage.getItem("userId");
+      setCustomerId(cid);
+      setUserId(uid);
+    }
+  }, []);
 
   // const id = Number(params.id);
   const rootId = Number(conversationDetails);

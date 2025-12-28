@@ -56,8 +56,15 @@ export default function DispatchServiceForm() {
     useState(AdditionalServices);
   const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
-  // const userId = localStorage.getItem("userId");
-  const customerId = localStorage.getItem("customerId");
+
+  const [customerId, setCustomerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cid = localStorage.getItem("customerId");
+      setCustomerId(cid);
+    }
+  }, []);
 
   const handleDropdownChange =
     (setter: React.Dispatch<React.SetStateAction<string>>) =>
@@ -142,8 +149,10 @@ export default function DispatchServiceForm() {
   };
 
   useEffect(() => {
-    getCartOrder();
-  }, []);
+    if (customerId) {
+      getCartOrder();
+    }
+  }, [customerId]);
 
   const handleDocumentSelect = (newValue: DocType | null) => {
     if (!newValue) return;

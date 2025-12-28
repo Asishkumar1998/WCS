@@ -2,7 +2,6 @@ import { getUserNotifications } from "@/services/userService";
 import { Notification } from "@/types";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-const userId = localStorage.getItem("userId");
 interface UserState {
   notifications: Notification[];
   loading: boolean;
@@ -12,6 +11,13 @@ interface UserState {
 export const fetchUserNotifications = createAsyncThunk(
   "user/fetchUserNotifications",
   async (_, { rejectWithValue }) => {
+    const userId = typeof window !== "undefined"
+      ? localStorage.getItem("userId")
+      : null;
+
+    if (!userId) {
+      return rejectWithValue("User ID not found");
+    }
     const payload = {
       userId: userId,
     };

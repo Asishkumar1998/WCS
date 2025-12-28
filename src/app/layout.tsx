@@ -27,7 +27,7 @@ export default function RootLayout({
   const pathname = usePathname();
   const router = useRouter();
 
-  const publicRoutes = ["/login", "/signup", "/faq"];
+  const publicRoutes = ["/login", "/signup"];
 
   const hideLayout = publicRoutes.includes(pathname);
 

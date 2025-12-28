@@ -37,8 +37,17 @@ export default function GlobalAuthenticationForm() {
   const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
   const [showCartConflict, setShowCartConflict] = useState(false);
   const { showSnackbar } = useSnackbar();
-  const userId = localStorage.getItem("userId");
-  const customerId = localStorage.getItem("customerId");
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cid = localStorage.getItem("customerId");
+      const uid = localStorage.getItem("userId");
+      setCustomerId(cid);
+      setUserId(uid);
+    }
+  }, []);
 
   const init = async () => {
     const basePayload = CART_SERVICE_MAP["global-authentication"];
@@ -57,8 +66,10 @@ export default function GlobalAuthenticationForm() {
   };
 
   useEffect(() => {
-    init();
-  }, []);
+    if(customerId){
+      init();
+    }
+  }, [customerId]);
 
   useEffect(() => {
     if (documents.length) {

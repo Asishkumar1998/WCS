@@ -80,6 +80,7 @@ import {
   getDocStatus,
   getDocStops,
 } from "@/services/deleteService";
+import Loader from "@/components/ui/Loader/Loader";
 
 // ===== Custom Stepper Styles =====
 const CustomConnector = styled(StepConnector)(({ theme }) => ({
@@ -296,9 +297,20 @@ export default function OrderMilestonePage() {
     regionNote: "",
   });
   const { showSnackbar } = useSnackbar();
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const userId = localStorage.getItem("userId");
-  const customerId = localStorage.getItem("customerId");
+
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cid = localStorage.getItem("customerId");
+      const uid = localStorage.getItem("userId");
+      setCustomerId(cid);
+      setUserId(uid);
+    }
+  }, []);
 
   const searchParams = useSearchParams();
   const service = searchParams.get("service") as string;
@@ -315,6 +327,7 @@ export default function OrderMilestonePage() {
 
   const handleDelete = async (docId: number) => {
     try {
+      setLoading(true);
       const docketId =
         orderDetails?.dockets?.find((d: any) =>
           d.docs?.some((doc: any) => doc.docId === docId)
@@ -359,6 +372,8 @@ export default function OrderMilestonePage() {
     } catch (error) {
       showSnackbar("Failed to delete document", "error");
       console.error("Delete doc failed:", error);
+    } finally{
+      setLoading(false);
     }
   };
 
@@ -448,9 +463,12 @@ export default function OrderMilestonePage() {
   };
 
   useEffect(() => {
-    getCartOrder();
-    getCustomerDetails();
-  }, []);
+    if(customerId){
+      getCartOrder();
+      getCustomerDetails();
+    }
+  }, [customerId]);
+
   useEffect(() => {
     setInvoiceReference(orderDetails?.invoiceReference);
     const option = getShippingOptionFromOrder(orderDetails);
@@ -686,6 +704,8 @@ export default function OrderMilestonePage() {
 
     return ""; // ← nothing selected
   };
+
+  if(loading) return <Loader/>
 
   return (
     <Box sx={{ p: 3, bgcolor: "background.default", mt: "64px" }}>
@@ -937,7 +957,7 @@ export default function OrderMilestonePage() {
                             : "Original documents will be mailed to WCS office"}
                         </Typography>
                         {doc.isSoftCopyGiven == 651 &&
-                        service == "us-authentication" ? (
+                        service == "us-authentication" && doc.attachments?.length > 0 ? (
                           <Link
                             onClick={() =>
                               downloadAttachments({

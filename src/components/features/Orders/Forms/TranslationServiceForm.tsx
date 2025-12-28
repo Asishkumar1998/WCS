@@ -25,9 +25,6 @@ import { CART_SERVICE_MAP } from "@/constants/serviceMap";
 import { deleteOrder } from "@/services/deleteService";
 import buildTranslationPayload from "../Common/TranslationPayload";
 
-// Users constants
-const customerId = localStorage.getItem("customerId");
-
 type Lang = {
   lookupId: number;
   lookupType: string;
@@ -47,6 +44,15 @@ export default function TranslationServiceForm() {
   const [basePayload, setBasePayload] = useState<any>(null);
   const [showCartConflict, setShowCartConflict] = useState(false);
   const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
+
+  const [customerId, setCustomerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cid = localStorage.getItem("customerId");
+      setCustomerId(cid);
+    }
+  }, []);
 
   const { showSnackbar } = useSnackbar();
 
@@ -152,8 +158,10 @@ export default function TranslationServiceForm() {
   };
 
   useEffect(() => {
-    getCartOrder();
-  }, []);
+    if (customerId) {
+      getCartOrder();
+    }
+  }, [customerId]);
 
   return (
     <>
