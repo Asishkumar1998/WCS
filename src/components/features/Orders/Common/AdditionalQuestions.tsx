@@ -18,7 +18,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 const INPUT_MAP: any = {
-  3: ["Include", "No"],
+  3: ["Yes", "No"],
   7: ["Corporate", "Personal"],
   14: ["LOA", "POA"],
 };
@@ -165,7 +165,7 @@ export const AdditionalQuestions = ({
                                   setPreferences(id, e.target.value)
                                 }
                                 style={{
-                                  width: "50%",
+                                  width: "73%",
                                 }}
                                 inputComponent={() => (
                                   <select

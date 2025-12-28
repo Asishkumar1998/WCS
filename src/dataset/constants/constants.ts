@@ -52,7 +52,7 @@ export const ADDITIONAL_QUESTIONS: any = {
     subText: "",
   },
   2: {
-    text: "Please select the state of origin of the document from the drop-down menu",
+    text: "Please select the state of origin of the document",
     subText: "",
   },
   3: {
