@@ -32,8 +32,6 @@ import { getOrderDetails, getOrderIdOfCart } from "@/services/cartServices";
 import { updateOrder } from "@/services/paymentService";
 import DocumentDropdown from "@/components/ui/Dropdown/DocumentDropdown";
 
-const CustomerID = 9682;
-
 export interface DocType {
   docTypeId: number;
   docTypeName: string;
@@ -65,7 +63,8 @@ export default function NotaryServiceForm() {
   const [existingDocIds, setExistingDocIds] = useState<any>();
   const { showSnackbar } = useSnackbar();
   const lastUploadedRef = useRef<string | null>(null);
-
+  // const userId = localStorage.getItem("userId");
+  const customerId = localStorage.getItem("customerId");
 
   const handleDocumentUpload = async (data: any) => {
     setNumberOfPages(data?.numPages);
@@ -131,7 +130,7 @@ export default function NotaryServiceForm() {
           const docFeeId = createdDoc.docFees.find(
             (f: any) => f.feeAmount === 5
           ).docFeeId;
-          await updateFeeQuantity(docFeeId, {quantity: noOfNotarizedDoc});
+          await updateFeeQuantity(docFeeId, { quantity: noOfNotarizedDoc });
         }
       }
       window.location.href = "/cart?service=notary-service";
@@ -152,7 +151,7 @@ export default function NotaryServiceForm() {
         return <div>Invalid service selected.</div>;
       }
       const payload = {
-        customerId: CustomerID,
+        customerId: customerId,
         docCategoryId: 528,
         ...basePayload,
       };

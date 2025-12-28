@@ -114,6 +114,8 @@ export default function VisaServiceForm() {
   const [showCartConflict, setShowCartConflict] = useState(false);
   const [checkingCart, setCheckingCart] = useState(true);
   const [uploadedDocumentId, setUploadedDocumentId] = useState();
+  const userId = localStorage.getItem("userId");
+  const customerId = localStorage.getItem("customerId");
 
   const init = async () => {
     try {
@@ -133,7 +135,7 @@ export default function VisaServiceForm() {
         return <div>Invalid service selected.</div>;
       }
       const payload = {
-        customerId: 9682,
+        customerId: customerId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);
@@ -266,8 +268,8 @@ export default function VisaServiceForm() {
     }
 
     const payload = buildVisaPayload({
-      customerId: 9682,
-      userId: 7437,
+      customerId: customerId,
+      userId: userId,
       country: destinationCountry?.countryId,
       form,
     });
@@ -278,7 +280,7 @@ export default function VisaServiceForm() {
         docId: response[0].dockets[0].docs[0].docId,
         documentId: uploadedDocumentId,
         orderId: response[0].orderId,
-        uploadedBy: "7437",
+        uploadedBy: userId,
       },
     ];
     await addVisaDocument(documentUploadPayload);

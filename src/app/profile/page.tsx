@@ -58,6 +58,8 @@ export default function ProfilePage() {
   const [defaultBillingId, setDefaultBillingId] = useState<number | null>(null);
   const [openAddAddress, setOpenAddAddress] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<any | null>(null);
+  const userId = localStorage.getItem("userId");
+  const customerId = localStorage.getItem("customerId");
 
   const [form, setForm] = useState({
     firstName: "",
@@ -71,13 +73,13 @@ export default function ProfilePage() {
   });
 
   const getProfileData = async () => {
-    const profileResponse = await getProfile(7437);
+    const profileResponse = await getProfile(Number(userId));
     setProfileData(profileResponse);
   };
 
   const getCustomerAddresses = async () => {
     try {
-      const res = await getCustomer(9682);
+      const res = await getCustomer(Number(customerId));
 
       if (!Array.isArray(res) || res.length === 0) return;
 
@@ -148,8 +150,8 @@ export default function ProfilePage() {
     try {
       const payload = buildUpdatePayload();
 
-      await updateProfile(7437, payload);
-      
+      await updateProfile(Number(userId), payload);
+
       await getProfileData();
     } catch (err) {
       console.error("Profile update failed", err);
@@ -158,7 +160,7 @@ export default function ProfilePage() {
 
   const handleSetDefaultShipping = async (addressId: number) => {
     try {
-      await updateDefaultAddress(9682, {
+      await updateDefaultAddress(Number(customerId), {
         shippingAddressId: addressId,
       });
 
@@ -170,7 +172,7 @@ export default function ProfilePage() {
 
   const handleSetDefaultBilling = async (addressId: number) => {
     try {
-      await updateDefaultAddress(9682, {
+      await updateDefaultAddress(Number(customerId), {
         billingAddressId: addressId,
       });
 
@@ -562,7 +564,7 @@ export default function ProfilePage() {
       <AddressDialog
         open={openAddAddress}
         onClose={() => setOpenAddAddress(false)}
-        customerId={9682}
+        customerId={Number(customerId)}
         address={selectedAddress}
         onSuccess={getCustomerAddresses}
       />

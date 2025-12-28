@@ -25,9 +25,6 @@ import OneLineUpload from "@/components/features/Orders/Common/OneLineUpload";
 import { uploadFile } from "@/services/formsService";
 import Loader from "@/components/ui/Loader/Loader";
 
-const CustomerId = 9682;
-const UserId = 7437;
-
 export default function ConversationPage() {
   const [orderDetails, setOrderDetails] = useState<any>();
   const [messages, setMessages] = useState<any[]>([]);
@@ -37,6 +34,8 @@ export default function ConversationPage() {
   const editorRef = useRef<any>(null);
   const router = useRouter();
   const { id, conversationDetails } = useParams();
+  const userId = localStorage.getItem("userId");
+  const customerId = localStorage.getItem("customerId");
 
   // const id = Number(params.id);
   const rootId = Number(conversationDetails);
@@ -88,10 +87,10 @@ export default function ConversationPage() {
         subject: rootConversation.subject,
         messageBody: content,
         attachments: attachment,
-        customerId: String(CustomerId),
+        customerId: String(customerId),
         initiatedBy: 1,
         readStatus: "unread",
-        emailUserId: UserId,
+        emailUserId: userId,
         orderId: String(id),
         origin: 611,
       });
@@ -105,16 +104,16 @@ export default function ConversationPage() {
         notificationSubject: rootConversation.subject,
         notificationBody: rootConversation.messageBody,
         parentId: 0,
-        CustomerId,
+        customerId,
         id,
         docketId,
         docId,
         countryId,
-        notificationBy: UserId,
+        notificationBy: userId,
         rootId: 0,
         origin: 611,
         initiatedBy: 1,
-        dismissedBy: String(UserId),
+        dismissedBy: String(userId),
       });
 
       await fetchConversation();

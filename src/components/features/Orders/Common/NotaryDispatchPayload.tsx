@@ -1,6 +1,9 @@
 const YES = 651;
 const NO = 652;
 
+const userId = localStorage.getItem("userId");
+const customerId = localStorage.getItem("customerId");
+
 function buildNotaryPayload({
   country,
   additionalComments,
@@ -19,10 +22,10 @@ function buildNotaryPayload({
   isNotary: boolean;
 }) {
   return {
-    customerId: "9682",
+    customerId: customerId,
     orderOriginId: 611,
     orderType: 1101,
-    initiatedBy: "7437",
+    initiatedBy: userId,
 
     dockets: [
       {
@@ -55,7 +58,7 @@ function buildNotaryPayload({
 
             attachments: attachment,
 
-            noOfPages: numberOfPages===""? undefined : numberOfPages,
+            noOfPages: numberOfPages === "" ? undefined : numberOfPages,
           },
         ],
       },
@@ -110,7 +113,7 @@ const buildNotaryDispatchPayloadFromExistingOrder = ({
     isSoSDone: NO,
     isSoftCopyGiven: attachment ? YES : NO,
     noOfProducts: null,
-    noOfPages: numberOfPages==="" ? undefined : numberOfPages,
+    noOfPages: numberOfPages === "" ? undefined : numberOfPages,
   };
 
   const updatedDockets = basePayload.dockets.map((docket: any) => ({

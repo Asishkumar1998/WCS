@@ -233,8 +233,6 @@ const initialForm = {
   emailId: "",
 };
 
-const CustomerID = 9682;
-
 export default function OrderMilestonePage() {
   const [docs, setDocs] = useState(dummyDocs);
   const [allDocs, setAllDocs] = useState<any>([]);
@@ -298,6 +296,9 @@ export default function OrderMilestonePage() {
     regionNote: "",
   });
   const { showSnackbar } = useSnackbar();
+
+  const userId = localStorage.getItem("userId");
+  const customerId = localStorage.getItem("customerId");
 
   const searchParams = useSearchParams();
   const service = searchParams.get("service") as string;
@@ -384,7 +385,7 @@ export default function OrderMilestonePage() {
         return <div>Invalid service selected.</div>;
       }
       const payload = {
-        customerId: CustomerID,
+        customerId: customerId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);
@@ -440,8 +441,8 @@ export default function OrderMilestonePage() {
   };
 
   const getCustomerDetails = async () => {
-    const customerDetails = await getCustomer("9682");
-    const userDetails = await getUser("7437");
+    const customerDetails = await getCustomer(String(customerId));
+    const userDetails = await getUser(String(userId));
     setCustomer(customerDetails[0]);
     setUser(userDetails[0]);
   };
@@ -563,7 +564,7 @@ export default function OrderMilestonePage() {
 
   //Show Exisiting Addresses for Shipping Label Options
   const showExistingAddresses = async () => {
-    const response = await getRegionAddresses({ customerId: 9682 });
+    const response = await getRegionAddresses({ customerId: customerId });
     setAddresses(response);
     setShowExistingAddress(true);
   };
@@ -1042,7 +1043,10 @@ export default function OrderMilestonePage() {
                         <Typography fontWeight={700}>
                           $
                           {doc.docFees
-                            .reduce((a: any, b: any) => a + b.feeAmount * b.quantity, 0)
+                            .reduce(
+                              (a: any, b: any) => a + b.feeAmount * b.quantity,
+                              0
+                            )
                             .toFixed(2)}
                         </Typography>
                       </ListItem>

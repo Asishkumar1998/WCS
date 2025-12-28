@@ -12,9 +12,7 @@ import {
   OutlinedInput,
   Box,
 } from "@mui/material";
-import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
-import FileUploadField from "@/components/ui/Input/FileInput";
 import FormLayout from "@/components/ui/Forms/FormLayout";
 import { AdditionalServices } from "@/dataset/constants/constants";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
@@ -25,17 +23,11 @@ import {
   buildNotaryDispatchPayloadFromExistingOrder,
   buildNotaryPayload,
 } from "../Common/NotaryDispatchPayload";
-import {
-  postTranslationOrder,
-  uploadFile,
-} from "@/services/formsService";
+import { postTranslationOrder, uploadFile } from "@/services/formsService";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import { updateOrder } from "@/services/paymentService";
 import DocumentDropdown from "@/components/ui/Dropdown/DocumentDropdown";
 
-const documents = ["Passport", "Certificate", "License"];
-const payments = ["Credit Card", "PayPal", "Bank Transfer"];
-const CustomerID = 9682;
 export interface DocType {
   docTypeId: number;
   docTypeName: string;
@@ -60,11 +52,12 @@ export default function DispatchServiceForm() {
   const [additionalComments, setAdditionalComments] = useState<any>();
   const [numberOfPages, setNumberOfPages] = useState();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [payment, setPayment] = useState("");
   const [additionalServicesState, setAdditionalServicesState] =
     useState(AdditionalServices);
   const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
+  // const userId = localStorage.getItem("userId");
+  const customerId = localStorage.getItem("customerId");
 
   const handleDropdownChange =
     (setter: React.Dispatch<React.SetStateAction<string>>) =>
@@ -132,7 +125,7 @@ export default function DispatchServiceForm() {
         return <div>Invalid service selected.</div>;
       }
       const payload = {
-        customerId: CustomerID,
+        customerId: customerId,
         docCategoryId: 529,
         ...basePayload,
       };

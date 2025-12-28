@@ -9,13 +9,14 @@ import SideDrawer from "@/components/layout/SideDrawer/SideDrawer";
 import { ThemeProvider } from "@mui/material";
 import { theme } from "@/theme/theme";
 import Navbar from "@/components/layout/NavBar/NavBar";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { SnackbarProvider } from "@/components/ui/Snakebar/SnackbarProvider";
+import { useEffect } from "react";
 
 const roboto = Roboto({
   variable: "--font-roboto",
   subsets: ["latin"],
-  weight: ["400", "500", "700"], // adjust as needed
+  weight: ["400", "500", "700"],
 });
 
 export default function RootLayout({
@@ -24,7 +25,30 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const hideLayout = ["/login", "/signup"].includes(pathname);
+  const router = useRouter();
+
+  const publicRoutes = ["/login", "/signup", "/faq"];
+
+  const hideLayout = publicRoutes.includes(pathname);
+
+  useEffect(() => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+
+    const isPublicRoute = publicRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+
+    // Not logged in → block protected routes
+    if (!token && !isPublicRoute) {
+      router.replace("/login");
+    }
+
+    // Logged in → block login/signup
+    if (token && (pathname === "/login" || pathname === "/signup")) {
+      router.replace("/");
+    }
+  }, [pathname, router]);
 
   return (
     <html lang="en">

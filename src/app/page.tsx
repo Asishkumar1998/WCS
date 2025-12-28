@@ -29,8 +29,10 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState<any>();
 
+  const customerId = localStorage.getItem("customerId");
+
   const getCustomerDetails = async () => {
-    const customerDetails = await getCustomer("9682");
+    const customerDetails = await getCustomer(String(customerId));
     setCustomer(customerDetails[0]);
   };
 
@@ -138,7 +140,7 @@ export default function HomePage() {
 
           {/* Updates + News */}
           <Grid container spacing={3} width="1248px">
-            <Grid size={{ xs: 12, md: 6 }} >
+            <Grid size={{ xs: 12, md: 6 }}>
               <UpdatesSection updates={updates} />
             </Grid>
 

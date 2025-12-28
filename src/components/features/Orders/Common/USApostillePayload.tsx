@@ -1,6 +1,6 @@
 // Users constants
-const CUSTOMERID = 9682;
-const USERID = 7437;
+const userId = localStorage.getItem("userId");
+const customerId = localStorage.getItem("customerId");
 
 function buildUSApostillePayload({
   countryId,
@@ -9,7 +9,7 @@ function buildUSApostillePayload({
   uploadedDoc,
   docTypeId,
   originState,
-  nusaccRequired
+  nusaccRequired,
 }: {
   countryId: any;
   docCategoryId: any;
@@ -20,10 +20,10 @@ function buildUSApostillePayload({
   nusaccRequired: any;
 }) {
   return {
-    customerId: CUSTOMERID,
+    customerId: customerId,
     orderOriginId: 611,
     orderType: 1101,
-    initiatedBy: USERID,
+    initiatedBy: userId,
     dockets: [
       {
         docs: [

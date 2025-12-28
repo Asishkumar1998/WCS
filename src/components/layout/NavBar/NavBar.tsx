@@ -17,6 +17,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import NotificationPopup from "@/components/features/NotificationPopup/NotificationPopup";
+import { logoutUser } from "@/app/utils/authSerivce";
 
 const drawerWidth = 240;
 const collapsedWidth = 60;
@@ -47,6 +48,11 @@ export default function Navbar() {
       router.push(`/orders/${query.trim()}`);
     }
   };
+
+  const logOut = () => {
+    logoutUser();
+    router.replace("/login");
+  }
 
   return (
     <AppBar
@@ -122,7 +128,7 @@ export default function Navbar() {
               onClose={handleClose}
             >
               <MenuItem onClick={navigateToProfile}>Profile</MenuItem>
-              <MenuItem onClick={handleClose}>Signout</MenuItem>
+              <MenuItem onClick={logOut}>Logout</MenuItem>
             </Menu>
           </Box>
         </Box>

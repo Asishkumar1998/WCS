@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Grid, Box, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
+import {
+  Grid,
+  Box,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+} from "@mui/material";
 import InputField from "@/components/ui/Input/Input";
 import FormLayout from "@/components/ui/Forms/FormLayout";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
@@ -28,6 +37,8 @@ export default function GlobalAuthenticationForm() {
   const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
   const [showCartConflict, setShowCartConflict] = useState(false);
   const { showSnackbar } = useSnackbar();
+  const userId = localStorage.getItem("userId");
+  const customerId = localStorage.getItem("customerId");
 
   const init = async () => {
     const basePayload = CART_SERVICE_MAP["global-authentication"];
@@ -35,7 +46,7 @@ export default function GlobalAuthenticationForm() {
       return <div>Invalid service selected.</div>;
     }
     const payload = {
-      customerId: 9682,
+      customerId: customerId,
       ...basePayload,
     };
     const orderId = await getOrderIdOfCart(payload);
@@ -133,10 +144,10 @@ export default function GlobalAuthenticationForm() {
   const handleSubmit = async () => {
     try {
       const payload = {
-        customerId: "9682",
+        customerId: customerId,
         orderOriginId: 611,
         orderType: 1101,
-        initiatedBy: "7437",
+        initiatedBy: userId,
         isUSOrigin: false,
         dockets: [
           {

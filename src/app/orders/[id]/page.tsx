@@ -39,10 +39,17 @@ import {
   exportDataToExcel,
   getBill,
   getDisplayData,
+  getLookup,
 } from "@/services/formsService";
 import { countries } from "@/dataset/countries";
 import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
+import { getAllStops } from "@/services/TrackOrderService";
+import { buildPrintCoverPayload } from "@/components/features/Orders/Common/BuildPrintCoverPayload";
+import { generatePDF } from "@/app/utils/generatePDF";
+import { getOrder } from "@/services/cartServices";
+import { getCustomer, getUser } from "@/services/userService";
+import Loader from "@/components/ui/Loader/Loader";
 
 //Below are the Interfaces to handle the API response
 interface Instruction {
@@ -183,6 +190,9 @@ export const DOC_STATES: Record<number, string> = {
   607: "OnHold",
 };
 
+const userId = localStorage.getItem("userId");
+const customerId = localStorage.getItem("customerId");
+
 export default function OrdersPage() {
   const [data, setData] = useState<OrdersResponse | null>(null);
   const [expanded, setExpanded] = useState<number[]>([]);
@@ -197,7 +207,7 @@ export default function OrdersPage() {
     orderStatusId: null,
     fromDate: dayjs().subtract(90, "day"),
     toDate: dayjs(),
-    userId: 7437,
+    userId: Number(userId),
     pageNumber: 1,
     rowsPerPage: 10,
   });
@@ -207,6 +217,9 @@ export default function OrdersPage() {
   const [country, setCountry] = useState<any>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [selectedDocIds, setSelectedDocIds] = useState<number[]>([]);
+  const [docTypes, setDocTypes] = useState<any>();
+  const [stops, setStops] = useState<any>();
+  const [loading, setLoading] = useState<boolean>(false);
   const allOrderIds = data?.orders?.map((o) => o.orderId) ?? [];
   const allExpanded =
     expanded.length === allOrderIds.length && allOrderIds.length > 0;
@@ -214,6 +227,12 @@ export default function OrdersPage() {
   const router = useRouter();
 
   console.log("ORDER ID FROM URL:", id);
+
+  const getStops = async () => {
+    const response = await getAllStops();
+    setStops(response);
+    setDocTypes(await getLookup({ lookupType: "DocumentCategories" }));
+  };
 
   useEffect(() => {
     if (id && id !== "all") {
@@ -223,6 +242,7 @@ export default function OrdersPage() {
         pageNumber: 1,
       }));
     }
+    getStops();
   }, []);
 
   useEffect(() => {
@@ -287,7 +307,46 @@ export default function OrdersPage() {
     }
   };
 
-  const printCover = () => {};
+  const printCover = async (orderId: number) => {
+    const order = await getOrder(orderId);
+    const customer = await getCustomer(String(customerId));
+    const user = await getUser(String(userId));
+
+    const userData = {
+      customerId: customer[0].sageCustomerId,
+      customerName: customer[0].customerName,
+      userName: `${user[0].name} ${user[0].lastName}`,
+      email: user[0].email,
+      contactNo: user[0].contactNo,
+    };
+
+    console.log("customer -----------> ", customer);
+    console.log("user -----------> ", user);
+    const countryMapById = Object.fromEntries(
+      countries.map((c) => [c.countryId, c])
+    );
+
+    const stopMapById = Object.fromEntries(
+      stops.map((s: any) => [s.stopId, s])
+    );
+
+    const docTypeMapById = Object.fromEntries(
+      docTypes.map((d: any) => [d.lookupId, d])
+    );
+
+    const payload = buildPrintCoverPayload(
+      order[0],
+      countryMapById,
+      stopMapById,
+      docTypeMapById,
+      userData
+    );
+
+    await generatePDF(payload);
+  };
+
+  console.log("countries -----------------> ", countries);
+  console.log("stops -----------------> ", stops);
 
   const viewAttachments = (e: any, orderId: number, docIds: number[]) => {
     e.stopPropagation();
@@ -329,8 +388,15 @@ export default function OrdersPage() {
         country.value ?? country.countryId ?? country;
     }
 
-    const response = await getDisplayData(payload);
-    setData(response);
+    try {
+      setLoading(true);
+      const response = await getDisplayData(payload);
+      setData(response);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePageChange = (event: unknown, newPage: number) => {
@@ -399,6 +465,8 @@ export default function OrdersPage() {
       console.error("Failed to export Excel:", err);
     }
   };
+
+  if (loading) return <Loader />;
 
   return (
     <Box sx={{ p: 3, mt: "64px" }}>
@@ -575,7 +643,7 @@ export default function OrdersPage() {
                 orderStatusId: null,
                 fromDate: dayjs().subtract(90, "day"),
                 toDate: dayjs(),
-                userId: 7437,
+                userId: Number(userId),
                 pageNumber: 1,
                 rowsPerPage: 10,
               });
@@ -594,25 +662,26 @@ export default function OrdersPage() {
         <Typography variant="h5" fontWeight="bold">
           My Orders
         </Typography>
-        <Button
-          variant="outlined"
-          startIcon={allExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />}
-          onClick={toggleExpandAll}
-        >
-          {allExpanded ? "Collapse All" : "Expand All"}
-        </Button>
+        <Grid display="flex" flexDirection="row">
+          {data && (
+            <TablePagination
+              component="div"
+              count={data?.totalRows || 0}
+              page={filters.pageNumber - 1} // MUI is 0-based
+              onPageChange={handlePageChange}
+              rowsPerPage={filters.rowsPerPage}
+              onRowsPerPageChange={handleRowsPerPageChange}
+            />
+          )}
+          <Button
+            variant="outlined"
+            startIcon={allExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />}
+            onClick={toggleExpandAll}
+          >
+            {allExpanded ? "Collapse All" : "Expand All"}
+          </Button>
+        </Grid>
       </Grid>
-
-      {data && (
-        <TablePagination
-          component="div"
-          count={data?.totalRows || 0}
-          page={filters.pageNumber - 1} // MUI is 0-based
-          onPageChange={handlePageChange}
-          rowsPerPage={filters.rowsPerPage}
-          onRowsPerPageChange={handleRowsPerPageChange}
-        />
-      )}
 
       {data?.orders.map((order) => (
         <Accordion
@@ -639,7 +708,7 @@ export default function OrdersPage() {
 
               <Stack direction="row" spacing={1} flexWrap="wrap">
                 <Button
-                  onClick={printCover}
+                  onClick={() => printCover(order.orderId)}
                   size="small"
                   startIcon={<PrintIcon />}
                 >

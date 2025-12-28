@@ -1,25 +1,25 @@
 // Users constants
-const CUSTOMERID = 9682;
-const USERID = 7437;
+const userId = localStorage.getItem("userId");
+const customerId = localStorage.getItem("customerId");
 
 function buildTranslationPayload({
-    originalLangId,
-    translatedLangId,
-    attachments,
-    coverLetter,
-    shippingLabel
+  originalLangId,
+  translatedLangId,
+  attachments,
+  coverLetter,
+  shippingLabel,
 }: {
-    originalLangId: any,
-    translatedLangId: any,
-    attachments: any,
-    coverLetter: any,
-    shippingLabel: any
+  originalLangId: any;
+  translatedLangId: any;
+  attachments: any;
+  coverLetter: any;
+  shippingLabel: any;
 }) {
   return {
-    customerId: CUSTOMERID,
+    customerId: customerId,
     orderOriginId: 611,
     orderType: 1103,
-    initiatedBy: USERID,
+    initiatedBy: userId,
     isUSOrigin: true,
     dockets: [
       {

@@ -26,8 +26,7 @@ import { deleteOrder } from "@/services/deleteService";
 import buildTranslationPayload from "../Common/TranslationPayload";
 
 // Users constants
-const CUSTOMERID = 9682;
-const USERID = 7437;
+const customerId = localStorage.getItem("customerId");
 
 type Lang = {
   lookupId: number;
@@ -134,7 +133,7 @@ export default function TranslationServiceForm() {
         return <div>Invalid service selected.</div>;
       }
       const payload = {
-        customerId: CUSTOMERID,
+        customerId: customerId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);

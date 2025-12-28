@@ -11,14 +11,21 @@ const axiosInstance = axios.create({
 // Intercept request to attach the Bearer token dynamically
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("authToken");
+
+      if (!config.headers.Authorization && token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
+
     if (config.method === "get") {
-      const noCacheValue = Date.now();
-      config.params = { ...(config.params || {}), noCache: noCacheValue };
+      config.params = {
+        ...(config.params || {}),
+        noCache: Date.now(),
+      };
     }
+
     return config;
   },
   (error) => {
@@ -29,8 +36,12 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response.status === 401) {
-      console.log("Unauthorized! Token may have expired");
+    if (error.response?.status === 401) {
+      console.warn("Unauthorized! Token may have expired");
+      if (typeof window !== "undefined") {
+        localStorage.clear();
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }

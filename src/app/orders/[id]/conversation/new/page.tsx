@@ -19,15 +19,10 @@ import RichTextEditor from "@/components/ui/RichTextEditor/RichTextEditor";
 import OneLineUpload from "@/components/features/Orders/Common/OneLineUpload";
 import Loader from "@/components/ui/Loader/Loader";
 
-import {
-  addNotification,
-} from "@/services/notificationService";
+import { addNotification } from "@/services/notificationService";
 import { getOrderDetails } from "@/services/cartServices";
 import { uploadFile } from "@/services/formsService";
 
-/* TEMP – same as your existing page */
-const CustomerId = 9682;
-const UserId = 7437;
 
 export default function NewConversationPage() {
   const router = useRouter();
@@ -37,6 +32,8 @@ export default function NewConversationPage() {
   const [subject, setSubject] = useState("");
   const [attachment, setAttachment] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const userId = localStorage.getItem("userId");
+  const customerId = localStorage.getItem("customerId");
 
   const editorRef = useRef<any>(null);
 
@@ -56,7 +53,9 @@ export default function NewConversationPage() {
       const docket = orderData?.[0]?.dockets?.[0];
       const doc = docket?.docs?.[0];
 
-      const defaultSubject = `Order#: ${id}, Doc#: ${doc?.docId}, ${doc?.countryName ?? "NAA"}`;
+      const defaultSubject = `Order#: ${id}, Doc#: ${doc?.docId}, ${
+        doc?.countryName ?? "NAA"
+      }`;
       setSubject(defaultSubject);
     } finally {
       setLoading(false);
@@ -96,10 +95,10 @@ export default function NewConversationPage() {
         subject,
         messageBody: content,
         attachments: attachment,
-        customerId: String(CustomerId),
+        customerId: String(customerId),
         initiatedBy: 1,
         readStatus: "unread",
-        emailUserId: UserId,
+        emailUserId: userId,
         orderId: String(id),
         origin: 611,
       });

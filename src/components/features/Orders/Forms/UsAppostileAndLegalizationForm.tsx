@@ -48,8 +48,7 @@ import { updateOrder } from "@/services/paymentService";
 const STOP_DOCS_HAGUE_COUNTRIES = [6, 15, 28, 29, 30, 31, 35, 36];
 const STOP_DOCS_NON_HAGUE_COUNTRIES = [6, 12, 28, 29, 30, 31, 35, 36];
 
-const CUSTOMERID = 9682;
-const USERID = 7437;
+const customerId = localStorage.getItem("customerId");
 
 export default function USAppostileAndLegalizationForm({
   country,
@@ -315,7 +314,7 @@ export default function USAppostileAndLegalizationForm({
         return <div>Invalid service selected.</div>;
       }
       const payload = {
-        customerId: CUSTOMERID,
+        customerId: customerId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);
