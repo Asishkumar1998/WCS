@@ -70,6 +70,7 @@ import { getCustomer, getUser } from "@/services/userService";
 import ValidatedFileUpload from "@/components/features/Orders/Common/ValidatedFileUpload";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import {
+  deleteCartOrder,
   deleteDoc,
   deleteDocAttachments,
   deleteDocFee,
@@ -367,6 +368,9 @@ export default function OrderMilestonePage() {
       }
 
       await deleteDoc(docId);
+      if(allDocs.length == 1){
+        await deleteCartOrder(orderDetails.orderId);
+      }
       showSnackbar("Document deleted successfully", "success");
       getCartOrder();
     } catch (error) {
@@ -1053,7 +1057,7 @@ export default function OrderMilestonePage() {
                             }
                           />
                           <Typography>
-                            ${f.feeAmount * (f.quantity ?? 1)}
+                            ${(f.feeAmount * (f.quantity ?? 1)).toFixed(2)}
                           </Typography>
                         </ListItem>
                       ))}
