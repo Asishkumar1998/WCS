@@ -42,7 +42,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import Modal from "@/components/ui/Modal/Modal";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
 import StatusStepper from "@/components/ui/Stepper/FormStepper";
-import { DescriptionOutlined } from "@mui/icons-material";
+import { DescriptionOutlined, Email, Home, Phone } from "@mui/icons-material";
 import Image from "next/image";
 import { savePayment } from "./savePayment";
 import { processPayLater, updateOrder } from "@/services/paymentService";
@@ -51,6 +51,7 @@ import {
   getFeeTypes,
   getOrderDetails,
   getOrderIdOfCart,
+  getRegionAddress,
   getRegionAddresses,
   shippingDetailsUpload,
   shippingLabelUpload,
@@ -83,17 +84,6 @@ import {
 } from "@/services/deleteService";
 import Loader from "@/components/ui/Loader/Loader";
 
-// ===== Custom Stepper Styles =====
-const CustomConnector = styled(StepConnector)(({ theme }) => ({
-  [`&.${stepConnectorClasses.alternativeLabel}`]: { top: 22 },
-  [`& .${stepConnectorClasses.line}`]: {
-    height: 3,
-    border: 0,
-    backgroundColor: theme.palette.divider,
-    borderRadius: 1,
-  },
-}));
-
 const StepIconRoot = styled("div")<{
   ownerState: { active?: boolean; completed?: boolean };
 }>(({ theme, ownerState }) => ({
@@ -113,58 +103,6 @@ const StepIconRoot = styled("div")<{
     ? `0 0 8px ${theme.palette.primary.main}`
     : "none",
 }));
-
-function CustomStepIcon(props: any) {
-  const { active, completed, icon } = props;
-  const icons: { [index: string]: React.ReactElement } = {
-    1: <WorkOutlineIcon fontSize="small" />,
-    2: <WorkOutlineIcon fontSize="small" />,
-    3: <ScheduleIcon fontSize="small" />,
-    4: <CheckCircleIcon fontSize="small" />,
-  };
-  return (
-    <StepIconRoot ownerState={{ active, completed }}>
-      {icons[String(icon)]}
-    </StepIconRoot>
-  );
-}
-
-// ===== Dummy Data =====
-const dummyDocs = [
-  {
-    id: "1",
-    country: "Albania",
-    authority: "General",
-    handlingOption: "Proceeding with attached documents",
-    fileName: "Albania_Certified_Documents.pdf",
-    timeline: [
-      { label: "Secretary of State", sub: "7 business days" },
-      { label: "Estimated Completion", sub: "Oct 13, 2025" },
-    ],
-    fees: [
-      { label: "MD-SOS", amount: 20 },
-      { label: "WCS Service Fee", amount: 90 },
-    ],
-  },
-  {
-    id: "2",
-    country: "Afghanistan",
-    authority: "Federal Government",
-    handlingOption: "Original documents will be mailed to WCS office",
-    fileName: "Afghanistan_Embassy_Forms.pdf",
-    timeline: [
-      { label: "U.S. Department of State", sub: "20 business days" },
-      { label: "Embassy", sub: "7 business days" },
-      { label: "Estimated Completion", sub: "Nov 12, 2025" },
-    ],
-    fees: [
-      { label: "USDOS Authentication", amount: 20 },
-      { label: "Afghanistan Legalization", amount: 125 },
-      { label: "Money Order Fee", amount: 10 },
-      { label: "WCS Service Fee", amount: 110 },
-    ],
-  },
-];
 
 interface CardDetails {
   amount: number | null;
@@ -236,7 +174,6 @@ const initialForm = {
 };
 
 export default function OrderMilestonePage() {
-  const [docs, setDocs] = useState(dummyDocs);
   const [allDocs, setAllDocs] = useState<any>([]);
   const [paymentType, setPaymentType] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
@@ -258,6 +195,7 @@ export default function OrderMilestonePage() {
   const [fileName, setFileName] = useState("");
   const [uploadFileData, setUploadFileData] = useState<any>();
   const [submitShipping, setSubmitShipping] = useState<boolean>(false);
+  const [region, setRegion] = useState<any>();
   const [checked, setChecked] = useState<{
     option: string | null;
     regionAddressId: number | null;
@@ -300,7 +238,6 @@ export default function OrderMilestonePage() {
   const { showSnackbar } = useSnackbar();
   const [loading, setLoading] = useState<boolean>(false);
 
-
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -327,6 +264,10 @@ export default function OrderMilestonePage() {
   };
 
   const handleDelete = async (docId: number) => {
+    if (!window.confirm("Are you sure you want to delete this document?")) {
+      return;
+    }
+
     try {
       setLoading(true);
       const docketId =
@@ -368,7 +309,7 @@ export default function OrderMilestonePage() {
       }
 
       await deleteDoc(docId);
-      if(allDocs.length == 1){
+      if (allDocs.length == 1) {
         await deleteCartOrder(orderDetails.orderId);
       }
       showSnackbar("Document deleted successfully", "success");
@@ -376,7 +317,7 @@ export default function OrderMilestonePage() {
     } catch (error) {
       showSnackbar("Failed to delete document", "error");
       console.error("Delete doc failed:", error);
-    } finally{
+    } finally {
       setLoading(false);
     }
   };
@@ -392,10 +333,6 @@ export default function OrderMilestonePage() {
       return sum + docTotal;
     }, 0)
     .toFixed(2);
-
-  useEffect(() => {
-    if (checked.option === "courier") setOpenDialog(true);
-  }, [checked]);
 
   const getCartOrder = async () => {
     try {
@@ -426,6 +363,10 @@ export default function OrderMilestonePage() {
       if (service == "translation-service") {
         setTranslationAttachment(orderData?.dockets[0]?.docs[0]?.attachments);
       }
+      if(orderData?.regionNote){
+        const response = await getRegionAddress(orderData.regionNote);
+        setRegion(response[0])
+      }
 
       const flattenedDocs = orderData.dockets.flatMap((docket: any) => {
         if (!docket.docs || !Array.isArray(docket.docs)) {
@@ -448,11 +389,6 @@ export default function OrderMilestonePage() {
       setAllStops(await getAllStops());
       setDocTypes(await getLookup({ lookupType: "DocumentCategories" }));
 
-      // setCountries(
-      //   await getCountries({
-      //     active: 1,
-      //   })
-      // );
     } catch (error) {
       console.error("Error in getCartOrder:", error);
       setAllDocs([]);
@@ -467,7 +403,7 @@ export default function OrderMilestonePage() {
   };
 
   useEffect(() => {
-    if(customerId){
+    if (customerId) {
       getCartOrder();
       getCustomerDetails();
     }
@@ -610,7 +546,11 @@ export default function OrderMilestonePage() {
       phoneNumber: selectedAddressDetails.phoneNumber,
     };
 
-    await updateRegionAddress(selectedAddressDetails.regionAddressId, payload);
+    const response = await updateRegionAddress(
+      selectedAddressDetails.regionAddressId,
+      payload
+    );
+    setRegion(response[0]);
   };
 
   useEffect(() => {
@@ -709,7 +649,7 @@ export default function OrderMilestonePage() {
     return ""; // ← nothing selected
   };
 
-  if(loading) return <Loader/>
+  if (loading) return <Loader />;
 
   return (
     <Box sx={{ p: 3, bgcolor: "background.default", mt: "64px" }}>
@@ -796,9 +736,26 @@ export default function OrderMilestonePage() {
                 control={<Radio size="small" />}
                 label="Enclose return shipping label by mail"
               />
-              <FormControlLabel
+              {/* <FormControlLabel
                 value="courier"
                 control={<Radio size="small" />}
+                label="Use WCS courier account"
+              /> */}
+              <FormControlLabel
+                value="courier"
+                control={
+                  <Radio
+                    size="small"
+                    onClick={() => {
+                      setChecked((prev) => ({
+                        ...prev,
+                        option: "courier",
+                      }));
+                      handleShippingOptionChange("courier");
+                      setOpenDialog(true); // ✅ ALWAYS opens
+                    }}
+                  />
+                }
                 label="Use WCS courier account"
               />
               <FormControlLabel
@@ -858,6 +815,42 @@ export default function OrderMilestonePage() {
                     shipper/sender. Do Not use WCS information (name, address,
                     phone) as the shipper/sender.
                   </Typography>
+                )}
+                {checked.option === "courier" && region && (
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    gap={1}
+                    flexWrap="wrap"
+                  >
+                    {/* Name */}
+                    <Typography fontWeight={600}>
+                      {region.contactName}
+                    </Typography>
+
+                    {/* Address */}
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                      <Home fontSize="small" />
+                      <Typography variant="body2">
+                        {region.address}, {region.city}, {region.state},{" "}
+                        {region.postalCode}, {region.country}
+                      </Typography>
+                    </Box>
+
+                    {/* Phone */}
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                      <Phone fontSize="small" />
+                      <Typography variant="body2">
+                        {region.phoneNumber}
+                      </Typography>
+                    </Box>
+
+                    {/* Email */}
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                      <Email fontSize="small" />
+                      <Typography variant="body2">{region.emailId}</Typography>
+                    </Box>
+                  </Box>
                 )}
               </Box>
             </Collapse>
@@ -961,7 +954,8 @@ export default function OrderMilestonePage() {
                             : "Original documents will be mailed to WCS office"}
                         </Typography>
                         {doc.isSoftCopyGiven == 651 &&
-                        service == "us-authentication" && doc.attachments?.length > 0 ? (
+                        service == "us-authentication" &&
+                        doc.attachments?.length > 0 ? (
                           <Link
                             onClick={() =>
                               downloadAttachments({
@@ -1047,23 +1041,27 @@ export default function OrderMilestonePage() {
                     </List>
                     <Divider sx={{ my: 2 }} />
                     <List dense disablePadding>
-                      {doc.docFees.map((f: any, idx: any) => (
-                        <ListItem key={idx} sx={{ py: 0.5 }}>
-                          <ListItemText
-                            primary={
-                              feeTypes?.find(
-                                (a: any) => f.feeTypeId === a.feeTypeId
-                              )?.feeTypeName
-                            }
-                          />
-                          <Typography>
-                            ${(f.feeAmount * (f.quantity ?? 1)).toFixed(2)}
-                          </Typography>
-                        </ListItem>
-                      ))}
+                      {doc.docFees.map((f: any, idx: any) => {
+                        const feeName =
+                          f.description?.trim() ||
+                          feeTypes?.find(
+                            (a: any) => a.feeTypeId === f.feeTypeId
+                          )?.feeTypeName;
+                        return (
+                          <ListItem key={idx} sx={{ py: 0.5 }}>
+                            <ListItemText primary={feeName} />
+                            <Typography>
+                              ${(f.feeAmount * (f.quantity ?? 1)).toFixed(2)}
+                            </Typography>
+                          </ListItem>
+                        );
+                      })}
                       <Divider />
                       <ListItem>
-                        <ListItemText primary="Total" />
+                        <ListItemText
+                          primary="Total"
+                          primaryTypographyProps={{ fontWeight: 700 }}
+                        />
                         <Typography fontWeight={700}>
                           $
                           {doc.docFees
@@ -1104,7 +1102,7 @@ export default function OrderMilestonePage() {
                       sx={{ mb: 3 }}
                       value={user ? `${user.name} ${user.lastName}` : ""}
                       InputProps={{
-                        readOnly: true, // 🔹 makes the input read-only
+                        readOnly: true,
                       }}
                     />
                     <TextField
@@ -1112,10 +1110,9 @@ export default function OrderMilestonePage() {
                       fullWidth
                       size="small"
                       sx={{ mb: 3 }}
-                      // defaultValue="raghvendra@redintegro.com"
                       value={user ? user.email : ""}
                       InputProps={{
-                        readOnly: true, // 🔹 makes the input read-only
+                        readOnly: true,
                       }}
                     />
                     <TextField
@@ -1123,10 +1120,9 @@ export default function OrderMilestonePage() {
                       fullWidth
                       size="small"
                       sx={{ mb: 3 }}
-                      // defaultValue="7987076459"
                       value={user ? user.contactNo : ""}
                       InputProps={{
-                        readOnly: true, // 🔹 makes the input read-only
+                        readOnly: true,
                       }}
                     />
                     <TextField
@@ -1136,10 +1132,9 @@ export default function OrderMilestonePage() {
                       multiline
                       rows={2}
                       sx={{ mb: 3 }}
-                      // defaultValue="146, 5-B, 3, TB, Aditya Nagar, Indore, MP-452010"
                       value={customer ? customer.billAddress : ""}
                       InputProps={{
-                        readOnly: true, // 🔹 makes the input read-only
+                        readOnly: true,
                       }}
                     />
                   </AccordionDetails>
@@ -1307,7 +1302,7 @@ export default function OrderMilestonePage() {
             }}
             title="Add New WCS Courier Address"
             type="custom"
-            showActions={false} // we handle buttons inside children
+            showActions={false}
           >
             <RadioGroup
               row
@@ -1333,12 +1328,13 @@ export default function OrderMilestonePage() {
               <RadioGroup
                 row
                 value={checked.regionAddressId}
-                onChange={(e) =>
+                onChange={(e) => {
                   setChecked((prev) => ({
                     ...prev,
                     regionAddressId: Number(e.target.value),
-                  }))
-                }
+                  }));
+                  setOpenDialog(false);
+                }}
               >
                 {addresses.map((addr: any) => (
                   <FormControlLabel

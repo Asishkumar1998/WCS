@@ -19,6 +19,11 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useSearchParams } from "next/navigation";
 import { getBarcode, getOrder, SplitOrder } from "@/services/cartServices";
 import { countries } from "@/dataset/countries";
+import { buildPrintCoverPayload } from "@/components/features/Orders/Common/BuildPrintCoverPayload";
+import { generatePDF } from "../utils/generatePDF";
+import { getCustomer, getUser } from "@/services/userService";
+import { getAllStops } from "@/services/TrackOrderService";
+import { getLookup } from "@/services/formsService";
 
 const DOC_TYPE_OPTIONS = [
   { label: "Federal Government", id: 521 },
@@ -52,6 +57,21 @@ const OrderConfirmation = () => {
   const [allOrders, setAllOrders] = useState<any[]>([]);
   const [barcodeMap, setBarcodeMap] = useState<Record<number, string>>({});
 
+  const [docTypes, setDocTypes] = useState<any>();
+  const [stops, setStops] = useState<any>();
+
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cid = localStorage.getItem("customerId");
+      const uid = localStorage.getItem("userId");
+      setCustomerId(cid);
+      setUserId(uid);
+    }
+  }, []);
+
   const getData = async () => {
     const orderIds = await SplitOrder(orderId);
     const orders = await Promise.all(
@@ -62,6 +82,16 @@ const OrderConfirmation = () => {
     );
     setAllOrders(orders);
   };
+
+  const getStops = async () => {
+    const response = await getAllStops();
+    setStops(response);
+    setDocTypes(await getLookup({ lookupType: "DocumentCategories" }));
+  };
+
+  useEffect(() => {
+    getStops();
+  }, []);
 
   useEffect(() => {
     getData();
@@ -110,9 +140,50 @@ const OrderConfirmation = () => {
     fetchBarcodes();
   }, [documents]);
 
-  const handleDownloadAll = () => {};
-  const handlePrintAll = () => {};
-  const handleDownloadSingle = (docId: number) => {};
+  const handleDownload = async (docId: number, type: string) => {
+    const order = await getOrder(Number(orderId));
+    const customer = await getCustomer(String(customerId));
+    const user = await getUser(String(userId));
+
+    const userData = {
+      customerId: customer[0].sageCustomerId,
+      customerName: customer[0].customerName,
+      userName: `${user[0].name} ${user[0].lastName}`,
+      email: user[0].email,
+      contactNo: user[0].contactNo,
+    };
+
+    const countryMapById = Object.fromEntries(
+      countries.map((c) => [c.countryId, c])
+    );
+
+    const stopMapById = Object.fromEntries(
+      stops.map((s: any) => [s.stopId, s])
+    );
+
+    const docTypeMapById = Object.fromEntries(
+      docTypes.map((d: any) => [d.lookupId, d])
+    );
+    const fullPayload = await buildPrintCoverPayload(
+      order[0],
+      countryMapById,
+      stopMapById,
+      docTypeMapById,
+      userData
+    );
+    if (type === "single") {
+      const singleDocPayload = {
+        ...fullPayload,
+        fileName: `Order_${fullPayload.orderId}_Doc_${docId}.pdf`,
+        documents: fullPayload.documents.filter((doc) => doc.docId === docId),
+      };
+      await generatePDF(singleDocPayload, "download");
+    }else if(type === "all"){
+      await generatePDF(fullPayload, "download");
+    }else if(type === "print"){
+      await generatePDF(fullPayload, "print");
+    }
+  };
 
   return (
     <Box sx={{ mt: "125px", px: 3 }}>
@@ -141,14 +212,14 @@ const OrderConfirmation = () => {
             variant="contained"
             sx={{ mr: 1 }}
             startIcon={<DownloadIcon />}
-            onClick={handleDownloadAll}
+            onClick={() => handleDownload(0, "all")}
           >
             Download All Order Forms
           </Button>
           <Button
             variant="contained"
             startIcon={<PrintIcon />}
-            onClick={handlePrintAll}
+            onClick={() => handleDownload(0, "print")}
           >
             Print All Order Forms
           </Button>
@@ -195,7 +266,7 @@ const OrderConfirmation = () => {
                       <Button
                         size="small"
                         startIcon={<DownloadIcon />}
-                        onClick={() => handleDownloadSingle(doc.docId)}
+                        onClick={() => handleDownload(doc.docId, "single")}
                         sx={{
                           color: "#fff",
                           textTransform: "none",

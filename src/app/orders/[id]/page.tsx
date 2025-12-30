@@ -346,7 +346,7 @@ export default function OrdersPage() {
       userData
     );
 
-    await generatePDF(payload);
+    await generatePDF(payload, "download");
   };
 
   const viewAttachments = (e: any, orderId: number, docIds: number[]) => {
