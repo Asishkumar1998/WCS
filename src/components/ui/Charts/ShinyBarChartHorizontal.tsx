@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { useTheme, styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
@@ -10,41 +12,63 @@ import { useAnimate, useAnimateBar, useDrawingArea } from "@mui/x-charts/hooks";
 import { PiecewiseColorLegend } from "@mui/x-charts/ChartsLegend";
 import { interpolateObject } from "@mui/x-charts-vendor/d3-interpolate";
 import Box from "@mui/material/Box";
-import votesTurnout from "@/dataset/votes.json";
 
-export default function ShinyBarChartHorizontal() {
+type ChartItem = {
+  label: string;
+  value: number;
+};
+
+export default function ShinyBarChartHorizontal({
+  data,
+}: {
+  data: ChartItem[];
+}) {
+  debugger;
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+
+  const dataset = data.map((item) => ({
+    country: item.label,
+    percentage:
+      total === 0 ? 0 : Number(((item.value / total) * 100).toFixed(1)),
+  }));
+
+  // const dataset = data.map((item) => ({
+  //   country: item.label,
+  //   turnout: item.value,
+  // }));
+
+  // const maxValue = Math.max(...dataset.map((d) => d.turnout), 0);
+
   return (
     <Box width="100%">
       <Typography align="center" marginBottom={2}>
-        Count of Orders and Documents by DocType
+        Document Share by Country (%)
       </Typography>
       <BarChart
         height={250}
         margin={{ left: -40 }}
-        dataset={votesTurnout}
+        dataset={dataset}
         series={[
           {
-            id: "turnout",
-            dataKey: "turnout",
-            stack: "voter turnout",
-            valueFormatter: (value: number | null) => `${value}%`,
+            id: "percentage",
+            dataKey: "percentage",
+            valueFormatter: (value) => (value === null ? null : `${value}%`),
           },
         ]}
         layout="horizontal"
         xAxis={[
           {
-            id: "color",
             min: 0,
             max: 100,
+            valueFormatter: (value: any) => `${value}%`,
             colorMap: {
               type: "piecewise",
-              thresholds: [50, 85],
+              thresholds: [30, 70],
               colors: ["#d32f2f", "#78909c", "#1976d2"],
             },
-            valueFormatter: (value: number) => `${value}%`,
           },
         ]}
-        barLabel={(v) => `${v.value}%`}
+        barLabel={(v) => (v.value === null ? null : `${v.value}%`)}
         yAxis={[
           {
             scaleType: "band",
@@ -56,18 +80,6 @@ export default function ShinyBarChartHorizontal() {
           legend: PiecewiseColorLegend,
           barLabel: BarLabelAtBase,
           bar: BarShadedBackground,
-        }}
-        slotProps={{
-          legend: {
-            axisDirection: "x",
-            markType: "square",
-            labelPosition: "inline-start",
-            labelFormatter: ({ index }) => {
-              if (index === 0) return "Count of orders";
-              if (index === 1) return "Count of documents";
-              return null;
-            },
-          },
         }}
       />
     </Box>

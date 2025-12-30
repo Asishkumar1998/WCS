@@ -52,3 +52,8 @@ export const updateAddress = async (addressId: any, payload: any) => {
   const response = await axiosInstance.put(`addresses?addressId=${addressId}`, payload);
   return response.data;
 }
+
+export const getGraphData = async (userId: number) => {
+  const response = await axiosInstance.get(`orders/GetGraphData?userId=${userId}`);
+  return response.data;
+}

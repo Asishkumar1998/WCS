@@ -20,6 +20,7 @@ import { AppDispatch } from "./store/store";
 import { fetchUserNotifications } from "./store/features/userSlice";
 import { getCustomer } from "@/services/userService";
 import RetailServiceCard from "@/components/features/Dashboard/ServiceCardRetail";
+import ChartsWrapper from "@/components/ui/Charts/ChartsWrapper";
 
 export default function HomePage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -106,16 +107,12 @@ export default function HomePage() {
           {/* Right: Charts */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Grid container spacing={3} alignItems="stretch">
-              <Grid size={{ xs: 12, sm: 6, md: 12 }} sx={{ display: "flex" }}>
+              <Grid size={{ xs: 12, md: 12 }} sx={{ display: "flex", height: 667 }}>
                 <ChartCard>
-                  <ShinyBarChartHorizontal />
+                  <ChartsWrapper />
                 </ChartCard>
               </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 12 }} sx={{ display: "flex" }}>
-                <ChartCard>
-                  <CustomPieChart />
-                </ChartCard>
-              </Grid>
+
               <Grid size={{ xs: 12, md: 12 }}>
                 <NewsSection news={news} />
               </Grid>

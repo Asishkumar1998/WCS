@@ -1,13 +1,18 @@
 import { Box, Typography } from "@mui/material";
 import { PieChart } from "@mui/x-charts";
 
-export default function CustomPieChart() {
-  const data = [
-    { label: "Mexico", value: 400, color: "#0088FE" },
-    { label: "US", value: 300, color: "#00C49F" },
-    { label: "Colombia", value: 300, color: "#FFBB28" },
-    { label: "Egypt", value: 200, color: "#FF8042" },
-  ];
+type ChartItem = {
+  label: string;
+  value: number;
+};
+
+export default function CustomPieChart({ data }: { data: ChartItem[] }) {
+  // const data = [
+  //   { label: "Mexico", value: 400, color: "#0088FE" },
+  //   { label: "US", value: 300, color: "#00C49F" },
+  //   { label: "Colombia", value: 300, color: "#FFBB28" },
+  //   { label: "Egypt", value: 200, color: "#FF8042" },
+  // ];
 
   const settings = {
     margin: { right: 5 },
