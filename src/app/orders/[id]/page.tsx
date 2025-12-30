@@ -326,8 +326,6 @@ export default function OrdersPage() {
       contactNo: user[0].contactNo,
     };
 
-    console.log("customer -----------> ", customer);
-    console.log("user -----------> ", user);
     const countryMapById = Object.fromEntries(
       countries.map((c) => [c.countryId, c])
     );
@@ -340,7 +338,7 @@ export default function OrdersPage() {
       docTypes.map((d: any) => [d.lookupId, d])
     );
 
-    const payload = buildPrintCoverPayload(
+    const payload = await buildPrintCoverPayload(
       order[0],
       countryMapById,
       stopMapById,

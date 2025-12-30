@@ -1,22 +1,39 @@
-import { PrintCoverPayload } from "@/app/utils/generatePDF";
+import { getBarcode } from "@/services/cartServices";
 
+const fetchBarcodeForDoc = async (docId: number): Promise<string> => {
+  try {
+    const response = await getBarcode(docId);
+    return response.barcode || "";
+  } catch (error) {
+    console.error(`Error fetching barcode for docId ${docId}:`, error);
+    return "";
+  }
+};
 
-export const buildPrintCoverPayload = (
+export const buildPrintCoverPayload = async (
   order: any,
   countryMapById: Record<number, any>,
   stopMapById: Record<number, any>,
   docTypeMapById: Record<number, any>,
-  userData: any,
+  userData: any
 ) => {
-  // ✅ Flatten docs from dockets
-  const docs =
-    order?.dockets?.flatMap((d: any) => d.docs ?? []) ?? [];
+  const docs = order?.dockets?.flatMap((d: any) => d.docs ?? []) ?? [];
 
   if (!docs.length) {
     throw new Error("No documents found for this order");
   }
 
   const firstDoc = docs[0];
+
+  const docsWithBarcodes = await Promise.all(
+    docs.map(async (doc: any) => {
+      const barcode = await fetchBarcodeForDoc(doc.docId);
+      return {
+        ...doc,
+        barcode: barcode,
+      };
+    })
+  );
 
   return {
     fileName: `Order_${order.orderId}_Cover.pdf`,
@@ -39,7 +56,7 @@ export const buildPrintCoverPayload = (
       phone: firstDoc.contactNo,
     },
 
-    documents: docs.map((doc: any) => ({
+    documents: docsWithBarcodes.map((doc: any) => ({
       docId: doc.docId,
       barcode: doc.barcode || "-",
       docCategoryName: docTypeMapById[doc.docCategoryId]?.lookupName,
@@ -56,15 +73,15 @@ export const buildPrintCoverPayload = (
       isScan: doc.isScan,
       isPostScan: doc.isPostScan,
 
-      stops: doc.docStops?.map((ds: any) => {
-        const stop = stopMapById[ds.stopId];
+      stops:
+        doc.docStops?.map((ds: any) => {
+          const stop = stopMapById[ds.stopId];
 
-        return {
-          stopName: stop?.stopName ?? `Stop ${ds.stopId}`,
-          processDays: ds.processDays,
-        };
-      }) ?? [],
+          return {
+            stopName: stop?.stopName ?? `Stop ${ds.stopId}`,
+            processDays: ds.processDays,
+          };
+        }) ?? [],
     })),
   };
 };
-
