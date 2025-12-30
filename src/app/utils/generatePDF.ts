@@ -37,6 +37,24 @@ export interface PrintCoverPayload {
     phone?: string;
     country?: string;
   };
+  region?: {
+    address?: string;
+    city?: string;
+    company?: string;
+    contactName?: string;
+    country?: string;
+    phoneNumber?: string;
+    postalCode?: string;
+    state?: string;
+  };
+  shppingInstructions?: {
+    labelByMail?: boolean;
+    pickupOrDropOff?: boolean;
+    useUserCourier?: boolean;
+    regionId?: number;
+    payLaterOptions?: string;
+
+  };
   documents: Array<{
     docId: number;
     barcode?: string;
@@ -251,18 +269,18 @@ export const generatePDF = async (data: PrintCoverPayload) => {
                     { text: "\n\n" },
                     { text: "\n PO/Invoice Ref: " },
                     {
-                      text: doc.invoiceReference ?? "Ref",
+                      text: doc.invoiceReference ?? "Not Provided",
                       bold: true,
                     },
                     { text: "\n Customer Ref: " },
                     {
-                      text: doc.internalReference ? doc.internalReference : `Cus ${index + 1}`,
+                      text: doc.internalReference ? doc.internalReference : "Not Provided",
                       bold: true,
                     },
                     { text: "\n Payment: " },
                     {
-                      text: data.payLaterOptions
-                        ? `Pay later (${data.payLaterOptions})`
+                      text: data.shppingInstructions?.payLaterOptions
+                        ? `Pay later (${data.shppingInstructions.payLaterOptions})`
                         : (doc.orderAmount ?? 0) <= (doc.paidAmount ?? 0)
                           ? "Paid"
                           : "Payment Due",
@@ -279,25 +297,25 @@ export const generatePDF = async (data: PrintCoverPayload) => {
                     { text: "\n\nReturn/Shipping Instructions: " },
                     {
                       text:
-                        data.regionId !== 0
+                        data?.shppingInstructions?.regionId
                           ? "\n*Use WCS Courier Account for additional fee"
-                          : data.useUserCourier
+                          : data.shppingInstructions?.useUserCourier
                             ? "\n*Use Prepaid Label Uploaded"
-                            : data.labelByMail
+                            : data.shppingInstructions?.labelByMail
                               ? "\nEnclose Return Shipping Label by mail with documents"
-                              : data.pickupOrDropOff
+                              : data.shppingInstructions?.pickupOrDropOff
                                 ? "\nPickup / Dropoff"
                                 : "",
                       bold: true,
                       italics: true,
                     },
                     {
-                      text: data.regionNote ? "\n\nReturn Address: " : "",
+                      text: data.shppingInstructions?.regionId ? "\n\nReturn Address: " : "",
                       italics: true,
                     },
                     {
-                      text: data.regionNote
-                        ? `\n${data.regContactName}, ${data.regAddress}\n${data.regCity}, ${data.regCountry}, ${data.regPostalCode}\n${data.regPhoneNumber}, ${data.emailAddress}`
+                      text: data.region
+                        ? `\n${data.region.contactName}, ${data.region.address}\n${data.region.city}, ${data.region.country}, ${data.region.postalCode}\n${data.region.phoneNumber}`
                         : "",
                       italics: true,
                     },

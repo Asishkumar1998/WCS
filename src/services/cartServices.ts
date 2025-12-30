@@ -65,3 +65,8 @@ export const getBarcode = async (docId: number) => {
   const response = await axiosInstance.get(`docsBarcode/fromDocId?docId=${docId}`);
   return response.data;
 }
+
+export const getRegionAddress = async (regionAddressId: number) => {
+  const response = await axiosInstance.get(`regionAddresses/${regionAddressId}`);
+  return response.data;
+}

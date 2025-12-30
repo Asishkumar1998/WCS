@@ -1,4 +1,4 @@
-import { getBarcode } from "@/services/cartServices";
+import { getBarcode, getRegionAddress } from "@/services/cartServices";
 
 const fetchBarcodeForDoc = async (docId: number): Promise<string> => {
   try {
@@ -18,6 +18,12 @@ export const buildPrintCoverPayload = async (
   userData: any
 ) => {
   const docs = order?.dockets?.flatMap((d: any) => d.docs ?? []) ?? [];
+  
+  let region: any = undefined;
+  if (order.regionId != 0) {
+    const regionResponse = await getRegionAddress(order.regionNote);
+    region = regionResponse?.[0];
+  }
 
   if (!docs.length) {
     throw new Error("No documents found for this order");
@@ -49,11 +55,21 @@ export const buildPrintCoverPayload = async (
 
     returnAddress: {
       name: firstDoc.customerName,
-      address: order.shipAddress || "",
+      address: order.billAddress || "",
       country:
         countryMapById[firstDoc.countryId]?.countryShortName ??
         countryMapById[firstDoc.countryId]?.countryName,
       phone: firstDoc.contactNo,
+    },
+
+    region: region,
+
+    shppingInstructions: {
+      regionId: order.regionId,
+      labelByMail: order.labelByMail,
+      useUserCourier: order.useUserCourier,
+      pickupOrDropOff: order.pickupOrDropOff,
+      payLaterOptions: order.payLaterOptions,
     },
 
     documents: docsWithBarcodes.map((doc: any) => ({
@@ -72,6 +88,9 @@ export const buildPrintCoverPayload = async (
       isRush: doc.isRush,
       isScan: doc.isScan,
       isPostScan: doc.isPostScan,
+
+      internalReference: doc.internalReference,
+      invoiceReference: doc.invoiceReference,
 
       stops:
         doc.docStops?.map((ds: any) => {
