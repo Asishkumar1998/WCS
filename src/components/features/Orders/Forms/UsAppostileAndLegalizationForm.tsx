@@ -44,6 +44,7 @@ import {
   buildUSApostillePayloadFromExistingOrder,
 } from "../Common/USApostillePayload";
 import { updateOrder } from "@/services/paymentService";
+import { getAuth } from "@/app/utils/auth";
 
 const STOP_DOCS_HAGUE_COUNTRIES = [6, 15, 28, 29, 30, 31, 35, 36];
 const STOP_DOCS_NON_HAGUE_COUNTRIES = [6, 12, 28, 29, 30, 31, 35, 36];
@@ -86,9 +87,10 @@ export default function USAppostileAndLegalizationForm({
   const [customerId, setCustomerId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cid = localStorage.getItem("customerId");
-      setCustomerId(cid);
+    const auth = getAuth();
+
+    if (auth) {
+      setCustomerId(auth.customerId);
     }
   }, []);
 

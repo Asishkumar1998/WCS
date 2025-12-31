@@ -24,6 +24,7 @@ import { generatePDF } from "../utils/generatePDF";
 import { getCustomer, getUser } from "@/services/userService";
 import { getAllStops } from "@/services/TrackOrderService";
 import { getLookup } from "@/services/formsService";
+import { getAuth } from "../utils/auth";
 
 const DOC_TYPE_OPTIONS = [
   { label: "Federal Government", id: 521 },
@@ -64,11 +65,11 @@ const OrderConfirmation = () => {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cid = localStorage.getItem("customerId");
-      const uid = localStorage.getItem("userId");
-      setCustomerId(cid);
-      setUserId(uid);
+    const auth = getAuth();
+
+    if (auth) {
+      setUserId(auth.userId);
+      setCustomerId(auth.customerId);
     }
   }, []);
 
@@ -178,9 +179,9 @@ const OrderConfirmation = () => {
         documents: fullPayload.documents.filter((doc) => doc.docId === docId),
       };
       await generatePDF(singleDocPayload, "download");
-    }else if(type === "all"){
+    } else if (type === "all") {
       await generatePDF(fullPayload, "download");
-    }else if(type === "print"){
+    } else if (type === "print") {
       await generatePDF(fullPayload, "print");
     }
   };

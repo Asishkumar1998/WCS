@@ -50,6 +50,7 @@ import { generatePDF } from "@/app/utils/generatePDF";
 import { getOrder } from "@/services/cartServices";
 import { getCustomer, getUser } from "@/services/userService";
 import Loader from "@/components/ui/Loader/Loader";
+import { getAuth } from "@/app/utils/auth";
 
 //Below are the Interfaces to handle the API response
 interface Instruction {
@@ -193,15 +194,6 @@ export const DOC_STATES: Record<number, string> = {
 export default function OrdersPage() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cid = localStorage.getItem("customerId");
-      const uid = localStorage.getItem("userId");
-      setCustomerId(cid);
-      setUserId(uid);
-    }
-  }, []);
   const [data, setData] = useState<OrdersResponse | null>(null);
   const [expanded, setExpanded] = useState<number[]>([]);
   const [filters, setFilters] = useState<Filters>({
@@ -233,6 +225,15 @@ export default function OrdersPage() {
     expanded.length === allOrderIds.length && allOrderIds.length > 0;
   const { id } = useParams();
   const router = useRouter();
+
+  useEffect(() => {
+    const auth = getAuth();
+
+    if (auth) {
+      setUserId(auth.userId);
+      setCustomerId(auth.customerId);
+    }
+  }, []);
 
   const getStops = async () => {
     const response = await getAllStops();

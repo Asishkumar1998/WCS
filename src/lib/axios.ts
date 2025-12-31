@@ -1,4 +1,5 @@
 // lib/axios.js
+import { getAuth } from "@/app/utils/auth";
 import axios from "axios";
 
 const axiosInstance = axios.create({
@@ -12,18 +13,15 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("authToken");
+      const auth = getAuth();
 
-      if (!config.headers.Authorization && token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      if (!auth) {
+        window.location.href = "/login";
+        return Promise.reject("Session expired");
       }
-    }
 
-    if (config.method === "get") {
-      config.params = {
-        ...(config.params || {}),
-        noCache: Date.now(),
-      };
+      config.headers.Authorization = auth.restApiToken;
+
     }
 
     return config;
@@ -39,7 +37,7 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401) {
       console.warn("Unauthorized! Token may have expired");
       if (typeof window !== "undefined") {
-        localStorage.clear();
+        sessionStorage.removeItem("auth");
         window.location.href = "/login";
       }
     }

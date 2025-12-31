@@ -31,6 +31,7 @@ import { CART_SERVICE_MAP } from "@/constants/serviceMap";
 import { getOrderDetails, getOrderIdOfCart } from "@/services/cartServices";
 import { updateOrder } from "@/services/paymentService";
 import DocumentDropdown from "@/components/ui/Dropdown/DocumentDropdown";
+import { getAuth } from "@/app/utils/auth";
 
 export interface DocType {
   docTypeId: number;
@@ -66,9 +67,10 @@ export default function NotaryServiceForm() {
   const [customerId, setCustomerId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cid = localStorage.getItem("customerId");
-      setCustomerId(cid);
+    const auth = getAuth();
+
+    if (auth) {
+      setCustomerId(auth.customerId);
     }
   }, []);
 

@@ -24,6 +24,7 @@ import { getOrderDetails, getOrderIdOfCart } from "@/services/cartServices";
 import { CART_SERVICE_MAP } from "@/constants/serviceMap";
 import { deleteOrder } from "@/services/deleteService";
 import buildTranslationPayload from "../Common/TranslationPayload";
+import { getAuth } from "@/app/utils/auth";
 
 type Lang = {
   lookupId: number;
@@ -48,9 +49,10 @@ export default function TranslationServiceForm() {
   const [customerId, setCustomerId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cid = localStorage.getItem("customerId");
-      setCustomerId(cid);
+    const auth = getAuth();
+
+    if (auth) {
+      setCustomerId(auth.customerId);
     }
   }, []);
 

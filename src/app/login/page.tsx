@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { loginUser } from "../utils/authSerivce";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
+import { getCustomerId } from "@/services/userService";
 
 const CustomerLogin = () => {
   const router = useRouter();
@@ -37,7 +38,12 @@ const CustomerLogin = () => {
     try {
       const res = await loginUser(form.email, form.password);
       if (res?.authToken) {
-        localStorage.setItem("token", res.authToken);
+        const customerId = await getCustomerId(res.userId);
+        const updatedAuth = {
+          ...res,
+          customerId,
+        };
+        sessionStorage.setItem("auth", JSON.stringify(updatedAuth));
         router.push("/");
       } else {
         throw new Error();

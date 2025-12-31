@@ -31,6 +31,7 @@ import {
   updateProfile,
 } from "@/services/dashboardService";
 import AddressDialog from "@/components/features/Orders/Dialogs/AddressDialog";
+import { getAuth } from "../utils/auth";
 
 function TabPanel({
   children,
@@ -63,11 +64,11 @@ export default function ProfilePage() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cid = localStorage.getItem("customerId");
-      const uid = localStorage.getItem("userId");
-      setCustomerId(cid);
-      setUserId(uid);
+    const auth = getAuth();
+
+    if (auth) {
+      setUserId(auth.userId);
+      setCustomerId(auth.customerId);
     }
   }, []);
 
@@ -104,7 +105,7 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
-    if(customerId && userId){
+    if (customerId && userId) {
       getProfileData();
       getCustomerAddresses();
     }

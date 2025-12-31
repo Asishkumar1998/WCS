@@ -1,4 +1,3 @@
-import { getCustomerId } from '@/services/userService';
 import axios from 'axios';
 
 const API_URL = "https://wcsstestserver.azurewebsites.net/api/v1/token";
@@ -25,23 +24,17 @@ const loginUser = async (username: string, password: string) => {
             token: restApiToken,
         } = response.data;
 
-        // Store only what frontend needs
-        localStorage.setItem("authToken", authToken);
-        localStorage.setItem("userId", userId);
-        localStorage.setItem("authId", authId);
+        const authData = {
+            authToken,
+            restApiToken,
+            userId,
+            authId,
+            issuedAt: Date.now(),
+        };
 
-        await getCustomerId(userId);
+        sessionStorage.setItem("auth", JSON.stringify(authData));
 
-        if (restApiToken) {
-            localStorage.setItem("restApiToken", restApiToken);
-        }
-
-
-        // if (response.data.authToken) {
-        //     localStorage.setItem('token', response.data.authToken);
-        //     // document.cookie = `user=${response.data.authToken}; path=/; max-age=20`;
-        // }
-        return response.data;
+        return authData;
     } catch (error) {
         if (axios.isAxiosError(error)) {
             console.log(error);
@@ -56,8 +49,8 @@ const loginUser = async (username: string, password: string) => {
 
 const logoutUser = async () => {
     console.log("Logging out...");
-    localStorage.clear();
-    sessionStorage.clear();
+    sessionStorage.removeItem("auth");
+    window.location.href = "/login";
 }
 
 export { loginUser, logoutUser };

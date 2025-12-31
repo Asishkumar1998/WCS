@@ -27,6 +27,7 @@ import { postTranslationOrder, uploadFile } from "@/services/formsService";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import { updateOrder } from "@/services/paymentService";
 import DocumentDropdown from "@/components/ui/Dropdown/DocumentDropdown";
+import { getAuth } from "@/app/utils/auth";
 
 export interface DocType {
   docTypeId: number;
@@ -60,9 +61,10 @@ export default function DispatchServiceForm() {
   const [customerId, setCustomerId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cid = localStorage.getItem("customerId");
-      setCustomerId(cid);
+    const auth = getAuth();
+
+    if (auth) {
+      setCustomerId(auth.customerId);
     }
   }, []);
 

@@ -32,6 +32,7 @@ import { CART_SERVICE_MAP } from "@/constants/serviceMap";
 import { getOrderIdOfCart } from "@/services/cartServices";
 import { deleteOrder } from "@/services/deleteService";
 import { FileUploadBox } from "../Common/TranslationFileUpload";
+import { getAuth } from "@/app/utils/auth";
 
 const entries = ["Single Entry", "Double Entry", "Multiple Entry"];
 
@@ -119,11 +120,11 @@ export default function VisaServiceForm() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cid = localStorage.getItem("customerId");
-      const uid = localStorage.getItem("userId");
-      setCustomerId(cid);
-      setUserId(uid);
+    const auth = getAuth();
+
+    if (auth) {
+      setUserId(auth.userId);
+      setCustomerId(auth.customerId);
     }
   }, []);
 

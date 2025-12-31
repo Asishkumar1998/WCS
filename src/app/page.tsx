@@ -21,6 +21,7 @@ import { fetchUserNotifications } from "./store/features/userSlice";
 import { getCustomer } from "@/services/userService";
 import RetailServiceCard from "@/components/features/Dashboard/ServiceCardRetail";
 import ChartsWrapper from "@/components/ui/Charts/ChartsWrapper";
+import { getAuth } from "./utils/auth";
 
 export default function HomePage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -32,9 +33,10 @@ export default function HomePage() {
   const [customerId, setCustomerId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cid = localStorage.getItem("customerId");
-      setCustomerId(cid);
+    const auth = getAuth();
+
+    if (auth) {
+      setCustomerId(auth.customerId);
     }
   }, []);
 
@@ -107,7 +109,10 @@ export default function HomePage() {
           {/* Right: Charts */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Grid container spacing={3} alignItems="stretch">
-              <Grid size={{ xs: 12, md: 12 }} sx={{ display: "flex", height: 667 }}>
+              <Grid
+                size={{ xs: 12, md: 12 }}
+                sx={{ display: "flex", height: 667 }}
+              >
                 <ChartCard>
                   <ChartsWrapper />
                 </ChartCard>

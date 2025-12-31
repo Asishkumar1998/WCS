@@ -83,6 +83,7 @@ import {
   getDocStops,
 } from "@/services/deleteService";
 import Loader from "@/components/ui/Loader/Loader";
+import { getAuth } from "../utils/auth";
 
 const StepIconRoot = styled("div")<{
   ownerState: { active?: boolean; completed?: boolean };
@@ -242,11 +243,11 @@ export default function OrderMilestonePage() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cid = localStorage.getItem("customerId");
-      const uid = localStorage.getItem("userId");
-      setCustomerId(cid);
-      setUserId(uid);
+    const auth = getAuth();
+
+    if (auth) {
+      setUserId(auth.userId);
+      setCustomerId(auth.customerId);
     }
   }, []);
 
@@ -1171,8 +1172,8 @@ export default function OrderMilestonePage() {
                     orders. After 24 hours, cancellation requests may be
                     eligible for a <strong>partial refund</strong>, excluding
                     WCS service fees or any embassy/agency fees that have
-                    already been incurred.<br/> Embassy and agency fees are subject
-                    to change.
+                    already been incurred.
+                    <br /> Embassy and agency fees are subject to change.
                   </Typography>
 
                   {/* Acceptance */}

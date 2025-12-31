@@ -22,6 +22,7 @@ import Loader from "@/components/ui/Loader/Loader";
 import { addNotification } from "@/services/notificationService";
 import { getOrderDetails } from "@/services/cartServices";
 import { uploadFile } from "@/services/formsService";
+import { getAuth } from "@/app/utils/auth";
 
 export default function NewConversationPage() {
   const router = useRouter();
@@ -36,14 +37,13 @@ export default function NewConversationPage() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cid = localStorage.getItem("customerId");
-      const uid = localStorage.getItem("userId");
-      setCustomerId(cid);
-      setUserId(uid);
+    const auth = getAuth();
+
+    if (auth) {
+      setUserId(auth.userId);
+      setCustomerId(auth.customerId);
     }
   }, []);
-
   const editorRef = useRef<any>(null);
 
   /* ---------------------------------- */

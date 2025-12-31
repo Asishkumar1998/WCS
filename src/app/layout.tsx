@@ -12,6 +12,7 @@ import Navbar from "@/components/layout/NavBar/NavBar";
 import { usePathname, useRouter } from "next/navigation";
 import { SnackbarProvider } from "@/components/ui/Snakebar/SnackbarProvider";
 import { useEffect } from "react";
+import { getAuth } from "./utils/auth";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -31,21 +32,39 @@ export default function RootLayout({
 
   const hideLayout = publicRoutes.includes(pathname);
 
+  // useEffect(() => {
+  //   const token =
+  //     typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+
+  //   const isPublicRoute = publicRoutes.some((route) =>
+  //     pathname.startsWith(route)
+  //   );
+
+  //   // Not logged in → block protected routes
+  //   if (!token && !isPublicRoute) {
+  //     router.replace("/login");
+  //   }
+
+  //   // Logged in → block login/signup
+  //   if (token && (pathname === "/login" || pathname === "/signup")) {
+  //     router.replace("/");
+  //   }
+  // }, [pathname, router]);
+
   useEffect(() => {
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+    const auth = getAuth();
 
     const isPublicRoute = publicRoutes.some((route) =>
       pathname.startsWith(route)
     );
 
-    // Not logged in → block protected routes
-    if (!token && !isPublicRoute) {
+    // Not logged in or expired
+    if (!auth && !isPublicRoute) {
       router.replace("/login");
     }
 
-    // Logged in → block login/signup
-    if (token && (pathname === "/login" || pathname === "/signup")) {
+    // Logged in → block login page
+    if (auth && (pathname === "/login" || pathname === "/signup")) {
       router.replace("/");
     }
   }, [pathname, router]);

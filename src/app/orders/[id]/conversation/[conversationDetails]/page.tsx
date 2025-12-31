@@ -24,6 +24,7 @@ import { getOrderDetails } from "@/services/cartServices";
 import OneLineUpload from "@/components/features/Orders/Common/OneLineUpload";
 import { uploadFile } from "@/services/formsService";
 import Loader from "@/components/ui/Loader/Loader";
+import { getAuth } from "@/app/utils/auth";
 
 export default function ConversationPage() {
   const [orderDetails, setOrderDetails] = useState<any>();
@@ -39,11 +40,11 @@ export default function ConversationPage() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cid = localStorage.getItem("customerId");
-      const uid = localStorage.getItem("userId");
-      setCustomerId(cid);
-      setUserId(uid);
+    const auth = getAuth();
+
+    if (auth) {
+      setUserId(auth.userId);
+      setCustomerId(auth.customerId);
     }
   }, []);
 

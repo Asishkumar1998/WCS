@@ -20,9 +20,7 @@ export const getUser = async (userId: string) => {
 export const getCustomerId = async (userId: string) => {
   try {
     const response = await axios.get(`users/${userId}`);
-    const customerId = response.data[0].companyName;
-    localStorage.setItem("customerId", customerId);
-    return customerId;
+    return response.data[0].companyName;
   } catch (err) {
     console.error("Error fetching customerId", err);
     throw err;

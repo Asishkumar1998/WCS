@@ -20,6 +20,7 @@ import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import { getOrderIdOfCart } from "@/services/cartServices";
 import { CART_SERVICE_MAP } from "@/constants/serviceMap";
 import { deleteOrder } from "@/services/deleteService";
+import { getAuth } from "@/app/utils/auth";
 
 type DocItem = {
   description: string;
@@ -41,11 +42,11 @@ export default function GlobalAuthenticationForm() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cid = localStorage.getItem("customerId");
-      const uid = localStorage.getItem("userId");
-      setCustomerId(cid);
-      setUserId(uid);
+    const auth = getAuth();
+
+    if (auth) {
+      setUserId(auth.userId);
+      setCustomerId(auth.customerId);
     }
   }, []);
 
@@ -66,7 +67,7 @@ export default function GlobalAuthenticationForm() {
   };
 
   useEffect(() => {
-    if(customerId){
+    if (customerId) {
       init();
     }
   }, [customerId]);
