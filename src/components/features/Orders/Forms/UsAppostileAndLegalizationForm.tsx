@@ -573,10 +573,10 @@ export default function USAppostileAndLegalizationForm({
             />
           </Grid>
 
-          <InfoCard
+          {/* <InfoCard
             message="Selecting Rush/Expedited as additional service will skip US Department of State authentication for Egypt & Kuwait ,UAE ,Lebanon (General document only), and Vietnam (General and Federal Government document)."
             visible={infoCardVisible}
-          />
+          /> */}
 
           {/* Customer Reference */}
           <Grid size={{ xs: 12, sm: 12, md: 12 }}>

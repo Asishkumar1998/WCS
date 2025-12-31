@@ -23,7 +23,6 @@ export default function ShinyBarChartHorizontal({
 }: {
   data: ChartItem[];
 }) {
-  debugger;
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   const dataset = data.map((item) => ({

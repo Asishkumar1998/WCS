@@ -202,7 +202,7 @@ export default function ValidatedFileUpload({
               Allowed: {allowedTypes.map((t) => t.toUpperCase()).join(", ")} |
               Max size: {maxSizeMB} MB
             </Typography>
-            {label !== "Upload File" ? (
+            {/* {label !== "Upload File" ? (
               <Typography
                 variant="caption"
                 sx={{ color: "primary.main", display: "block" }}
@@ -222,7 +222,7 @@ export default function ValidatedFileUpload({
               </Typography>
             ) : (
               ""
-            )}
+            )} */}
           </Box>
         )}
       </Stack>

@@ -108,17 +108,17 @@ export default function DocumentUpload({
                         sx={{ p: 0.5, "& .MuiSvgIcon-root": { fontSize: 18 } }}
                       />
                     }
-                    label="Proceed with attached documents"
+                    label="Process Attached Documents"
                   />
 
                   {nestedSelection === "proceedWithAttached" && (
                     <TextField
-                      label="Number of pages"
+                      label="Add Number of Pages"
                       type="number"
                       value={numPages}
                       onChange={(e) => setNumPages(e.target.value)}
                       size="small"
-                      sx={{ width: { xs: "100%", sm: "50%" } }}
+                      sx={{ width: { xs: "100%", sm: "60%" }, marginTop: "6px", marginBottom: "6px" }}
                     />
                   )}
                 </Box>
@@ -135,8 +135,8 @@ export default function DocumentUpload({
                     }
                     label={
                       country?.countryShortName === "Vietnam"
-                        ? "Original document will be mailed to WCS office (after notarization & state certification)"
-                        : "Original document will be mailed to WCS office"
+                        ? "Mail Original Documents to WCS office (after notarization & state certification)"
+                        : "Mail Original Documents to WCS office"
                     }
                   />
 

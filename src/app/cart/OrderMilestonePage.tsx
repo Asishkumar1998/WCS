@@ -363,9 +363,9 @@ export default function OrderMilestonePage() {
       if (service == "translation-service") {
         setTranslationAttachment(orderData?.dockets[0]?.docs[0]?.attachments);
       }
-      if(orderData?.regionNote){
+      if (orderData?.regionNote) {
         const response = await getRegionAddress(orderData.regionNote);
-        setRegion(response[0])
+        setRegion(response[0]);
       }
 
       const flattenedDocs = orderData.dockets.flatMap((docket: any) => {
@@ -388,7 +388,6 @@ export default function OrderMilestonePage() {
       setFeeTypes(await getFeeTypes());
       setAllStops(await getAllStops());
       setDocTypes(await getLookup({ lookupType: "DocumentCategories" }));
-
     } catch (error) {
       console.error("Error in getCartOrder:", error);
       setAllDocs([]);
@@ -1140,6 +1139,55 @@ export default function OrderMilestonePage() {
                   </AccordionDetails>
                 </Accordion>
 
+                <Card
+                  sx={{
+                    borderRadius: 2,
+                    p: 3,
+                    backgroundColor: "#fafafa",
+                    border: "1px solid #e0e0e0",
+                    borderLeft: "4px solid #c8102e", // WCS accent
+                  }}
+                >
+                  {/* Heading */}
+                  <Typography
+                    variant="h6"
+                    fontWeight={700}
+                    gutterBottom
+                    sx={{ color: "#333" }}
+                  >
+                    Cancellation & Refund Policy
+                  </Typography>
+
+                  {/* Description */}
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "#555",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    Orders may be cancelled within <strong>24 hours</strong> for
+                    a full refund, except for <strong>same-day service</strong>{" "}
+                    orders. After 24 hours, cancellation requests may be
+                    eligible for a <strong>partial refund</strong>, excluding
+                    WCS service fees or any embassy/agency fees that have
+                    already been incurred.<br/> Embassy and agency fees are subject
+                    to change.
+                  </Typography>
+
+                  {/* Acceptance */}
+                  <FormControlLabel
+                    sx={{ mt: 2 }}
+                    control={<Checkbox />}
+                    label={
+                      <Typography variant="body2" fontWeight={500}>
+                        I have read and accept the cancellation and refund
+                        policy
+                      </Typography>
+                    }
+                  />
+                </Card>
+
                 {/* Payment Card */}
                 <Card sx={{ borderRadius: 2, p: 3 }}>
                   <Typography fontWeight={600} mb={2}>
@@ -1252,12 +1300,6 @@ export default function OrderMilestonePage() {
                       </Grid>
                     </>
                   )}
-
-                  <FormControlLabel
-                    control={<Checkbox />}
-                    label="I accept the terms of use"
-                    sx={{ mt: 1 }}
-                  />
 
                   <Divider sx={{ my: 2 }} />
 

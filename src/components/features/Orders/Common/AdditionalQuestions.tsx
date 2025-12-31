@@ -151,7 +151,7 @@ export const AdditionalQuestions = ({
                         <Box
                           sx={{ width: { xs: "50%", sm: "35%", md: "30%" } }}
                         >
-                          {id === 2 ? (
+                          {id === 1 ? null : id === 2 ? (
                             /* Question 2 → State Dropdown */
                             <FormControl
                               fullWidth
