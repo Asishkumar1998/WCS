@@ -30,7 +30,11 @@ export default function Navbar() {
   const [query, setQuery] = useState("");
 
   const pathName = usePathname();
-  const service = pathName.split("/")[3];
+  let service = pathName.split("/")[3];
+
+  if (service == undefined) {
+    service = "us-authentication";
+  }
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -38,8 +42,8 @@ export default function Navbar() {
 
   const handleClose = () => setAnchorEl(null);
 
-  const navigateToProfile = () => {
-    router.replace("/profile");
+  const navigateToChangePassword = () => {
+    router.replace("/changePassword");
     handleClose();
   };
 
@@ -52,7 +56,7 @@ export default function Navbar() {
   const logOut = () => {
     logoutUser();
     router.replace("/login");
-  }
+  };
 
   return (
     <AppBar
@@ -127,7 +131,9 @@ export default function Navbar() {
               open={Boolean(anchorEl)}
               onClose={handleClose}
             >
-              <MenuItem onClick={navigateToProfile}>Profile</MenuItem>
+              <MenuItem onClick={navigateToChangePassword}>
+                Change Password
+              </MenuItem>
               <MenuItem onClick={logOut}>Logout</MenuItem>
             </Menu>
           </Box>

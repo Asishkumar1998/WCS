@@ -26,3 +26,13 @@ export const getCustomerId = async (userId: string) => {
     throw err;
   }
 };
+
+export const updatePassword = async (userId: number, payload: any) => {
+  try {
+    const response = await axios.put(`users/${userId}/changepassword`, payload);
+    return response.data;
+  } catch (err) {
+    console.log("Error in updating password", err);
+    throw err;
+  }
+}

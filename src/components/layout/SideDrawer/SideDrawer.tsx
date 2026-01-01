@@ -82,7 +82,7 @@ const navItems = [
   {
     text: "Cart",
     icon: <ShoppingCart />,
-    href: "/cart",
+    href: "/cart?service=us-authentication",
   },
   {
     text: "Profile",
