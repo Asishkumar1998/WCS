@@ -1,11 +1,18 @@
 const YES = 651;
 const NO = 652;
 
-const getSafeStorageValue = (key: string): string | null => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem(key);
+const getAuthValue = (key: "userId" | "customerId"): string | null => {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const authRaw = sessionStorage.getItem("auth");
+    if (!authRaw) return null;
+
+    const auth = JSON.parse(authRaw);
+    return auth?.[key]?.toString() ?? null;
+  } catch {
+    return null;
   }
-  return null;
 };
 
 function buildNotaryPayload({
@@ -25,8 +32,8 @@ function buildNotaryPayload({
   numberOfPages: any;
   isNotary: boolean;
 }) {
-  const userId = getSafeStorageValue("userId");
-  const customerId = getSafeStorageValue("customerId");
+  const userId = getAuthValue("userId");
+  const customerId = getAuthValue("customerId");
   return {
     customerId: customerId,
     orderOriginId: 611,

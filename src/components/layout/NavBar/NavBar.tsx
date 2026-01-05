@@ -111,7 +111,7 @@ export default function Navbar() {
           {/* Icons */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <NotificationPopup />
-            <IconButton color="inherit">
+            <IconButton onClick={() => router.replace(`/faq`)} color="inherit">
               <Info />
             </IconButton>
             <IconButton

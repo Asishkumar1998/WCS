@@ -6,6 +6,7 @@ import ShinyBarChartHorizontal from "./ShinyBarChartHorizontal";
 import { getGraphData } from "@/services/dashboardService";
 import { Grid } from "@mui/material";
 import ChartCard from "@/components/features/Dashboard/ChartCard";
+import { getAuth } from "@/app/utils/auth";
 
 type ChartItem = {
   label: string;
@@ -15,11 +16,22 @@ type ChartItem = {
 export default function ChartsWrapper() {
   const [chartData, setChartData] = useState<ChartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    const auth = getAuth();
+
+    if (auth) {
+      setUserId(auth.userId);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
     async function loadCharts() {
       try {
-        const apiData = await getGraphData(7437);
+        const apiData = await getGraphData(Number(userId));
 
         const mapped = apiData.map((item: any) => ({
           label: item.countryShortName.trim(),
@@ -35,7 +47,7 @@ export default function ChartsWrapper() {
     }
 
     loadCharts();
-  }, []);
+  }, [userId]);
 
   if (loading) return null;
 

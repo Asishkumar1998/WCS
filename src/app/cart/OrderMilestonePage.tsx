@@ -84,6 +84,9 @@ import {
 } from "@/services/deleteService";
 import Loader from "@/components/ui/Loader/Loader";
 import { getAuth } from "../utils/auth";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../store/store";
+import { fetchFormsSharedData } from "../store/features/formsSlice";
 
 const StepIconRoot = styled("div")<{
   ownerState: { active?: boolean; completed?: boolean };
@@ -250,6 +253,18 @@ export default function OrderMilestonePage() {
       setCustomerId(auth.customerId);
     }
   }, []);
+
+  const dispatch = useDispatch<AppDispatch>();
+  const sharedFormData = useSelector((state: RootState) => state.formsData);
+
+  useEffect(() => {
+    if (
+      !sharedFormData.countries.length ||
+      !sharedFormData.documentTypes.length
+    ) {
+      dispatch(fetchFormsSharedData());
+    }
+  }, [dispatch, sharedFormData]);
 
   const searchParams = useSearchParams();
   const service = searchParams.get("service") as string;
@@ -1444,7 +1459,7 @@ export default function OrderMilestonePage() {
                     value={country}
                     onChange={(value: any) => {
                       setCountry(value);
-                      form.country = (value)?.countryName ?? "";
+                      form.country = value?.countryName ?? "";
                     }}
                   />
                 </Grid>
