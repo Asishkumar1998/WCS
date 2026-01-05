@@ -342,7 +342,7 @@ export default function OrderMilestonePage() {
         return <div>Invalid service selected.</div>;
       }
       const payload = {
-        customerId: customerId,
+        userId: userId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);
@@ -1442,9 +1442,9 @@ export default function OrderMilestonePage() {
                   <CountrySelect
                     label="Select Country *"
                     value={country}
-                    onChange={() => {
-                      setCountry(country);
-                      form.country = country.countryName;
+                    onChange={(value: any) => {
+                      setCountry(value);
+                      form.country = (value)?.countryName ?? "";
                     }}
                   />
                 </Grid>

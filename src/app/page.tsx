@@ -88,40 +88,26 @@ export default function HomePage() {
     <Container maxWidth="xl" sx={{ px: 0, py: 2 }}>
       <Box sx={{ flexGrow: 1, pt: 3, mt: "64px" }}>
         <Grid container spacing={3}>
-          {/* Left: Services */}
-          <Grid container spacing={3} size={{ xs: 12, md: 6 }}>
-            <Grid container spacing={2}>
-              {DashboardServices.map((service, idx) => (
-                <Grid size={{ xs: 12, sm: 6, md: 12 }} key={idx}>
-                  <ServiceCard
-                    onClick={() => router.push(service.href)}
-                    {...service}
-                  />
-                </Grid>
-              ))}
+          {/* SERVICES (2 x 3 GRID) */}
+          {DashboardServices.map((service, idx) => (
+            <Grid key={idx} size={{ xs: 12, sm: 6, md: 6 }}>
+              <ServiceCard
+                onClick={() => router.push(service.href)}
+                {...service}
+              />
             </Grid>
-            {/* Bottom: Updates + News */}
-            <Grid size={{ xs: 12, md: 12 }}>
-              <UpdatesSection updates={updates} />
-            </Grid>
+          ))}
+
+          <ChartsWrapper />
+
+          {/* UPDATES */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <UpdatesSection updates={updates} />
           </Grid>
 
-          {/* Right: Charts */}
+          {/* NEWS */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Grid container spacing={3} alignItems="stretch">
-              <Grid
-                size={{ xs: 12, md: 12 }}
-                sx={{ display: "flex", height: 667 }}
-              >
-                <ChartCard>
-                  <ChartsWrapper />
-                </ChartCard>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 12 }}>
-                <NewsSection news={news} />
-              </Grid>
-            </Grid>
+            <NewsSection news={news} />
           </Grid>
         </Grid>
       </Box>

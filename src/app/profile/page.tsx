@@ -32,6 +32,7 @@ import {
 } from "@/services/dashboardService";
 import AddressDialog from "@/components/features/Orders/Dialogs/AddressDialog";
 import { getAuth } from "../utils/auth";
+import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 
 function TabPanel({
   children,
@@ -59,6 +60,8 @@ export default function ProfilePage() {
   const [defaultBillingId, setDefaultBillingId] = useState<number | null>(null);
   const [openAddAddress, setOpenAddAddress] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<any | null>(null);
+
+  const {showSnackbar} = useSnackbar();
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -166,7 +169,9 @@ export default function ProfilePage() {
       await updateProfile(Number(userId), payload);
 
       await getProfileData();
+      showSnackbar("Profile updated successfully", "success");
     } catch (err) {
+      showSnackbar("Profile update failed", "error");
       console.error("Profile update failed", err);
     }
   };

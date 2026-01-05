@@ -65,11 +65,13 @@ export default function NotaryServiceForm() {
   const { showSnackbar } = useSnackbar();
   const lastUploadedRef = useRef<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const auth = getAuth();
 
     if (auth) {
+      setUserId(auth.userId);
       setCustomerId(auth.customerId);
     }
   }, []);
@@ -159,7 +161,7 @@ export default function NotaryServiceForm() {
         return <div>Invalid service selected.</div>;
       }
       const payload = {
-        customerId: customerId,
+        userId: userId,
         docCategoryId: 528,
         ...basePayload,
       };

@@ -146,7 +146,7 @@ export default function VisaServiceForm() {
         return <div>Invalid service selected.</div>;
       }
       const payload = {
-        customerId: customerId,
+        userId : userId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);

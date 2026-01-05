@@ -47,11 +47,13 @@ export default function TranslationServiceForm() {
   const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
 
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const auth = getAuth();
 
     if (auth) {
+      setUserId(auth.userId);
       setCustomerId(auth.customerId);
     }
   }, []);
@@ -141,7 +143,7 @@ export default function TranslationServiceForm() {
         return <div>Invalid service selected.</div>;
       }
       const payload = {
-        customerId: customerId,
+        userId: userId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);

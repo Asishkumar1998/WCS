@@ -59,11 +59,13 @@ export default function DispatchServiceForm() {
   const { showSnackbar } = useSnackbar();
 
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const auth = getAuth();
 
     if (auth) {
+      setUserId(auth.userId);
       setCustomerId(auth.customerId);
     }
   }, []);
@@ -134,7 +136,7 @@ export default function DispatchServiceForm() {
         return <div>Invalid service selected.</div>;
       }
       const payload = {
-        customerId: customerId,
+        userId: userId,
         docCategoryId: 529,
         ...basePayload,
       };
