@@ -25,6 +25,7 @@ import ReceiptIcon from "@mui/icons-material/Receipt";
 import ForumIcon from "@mui/icons-material/Forum";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore"; // expand all
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess"; // collapse all
+import InboxIcon from "@mui/icons-material/Inbox";
 import dayjs, { Dayjs } from "dayjs";
 
 import InputField from "@/components/ui/Input/Input";
@@ -220,6 +221,7 @@ export default function OrdersPage() {
   const [docTypes, setDocTypes] = useState<any>();
   const [stops, setStops] = useState<any>();
   const [loading, setLoading] = useState<boolean>(false);
+  const [noOrderMessage, setNoOrderMessage] = useState<boolean>(false);
   const allOrderIds = data?.orders?.map((o) => o.orderId) ?? [];
   const allExpanded =
     expanded.length === allOrderIds.length && allOrderIds.length > 0;
@@ -400,6 +402,8 @@ export default function OrdersPage() {
       setLoading(true);
       const response = await getDisplayData(payload);
       setData(response);
+      if (response.totalRows == 0) setNoOrderMessage(true);
+      else setNoOrderMessage(false);
     } catch (e) {
       console.log(e);
     } finally {
@@ -690,159 +694,207 @@ export default function OrdersPage() {
           </Button>
         </Grid>
       </Grid>
-
-      {data?.orders.map((order) => (
-        <Accordion
-          key={order.orderId}
-          expanded={expanded.includes(order.orderId)}
-          onChange={() => toggleExpand(order.orderId)}
+      {noOrderMessage ? (
+        <Paper
+          elevation={0}
           sx={{
-            mb: 2,
-            border: "1px solid #e0e0e0",
-            boxShadow: 0,
+            p: 6,
+            mt: 4,
+            textAlign: "center",
+            border: "1px dashed",
+            borderColor: "divider",
+            borderRadius: 3,
+            backgroundColor: "background.paper",
           }}
         >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Grid
-              container
-              alignItems="center"
-              justifyContent="space-between"
-              width="100%"
-            >
-              <Typography fontWeight="bold">
-                Created: {dayjs(order.orderCreatedAt).format("MMM D, YYYY")} |
-                Order ID: {order.orderId}
-              </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              mb: 2,
+              color: "text.secondary",
+            }}
+          >
+            <InboxIcon sx={{ fontSize: 56 }} />
+          </Box>
 
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                <Button
-                  onClick={() => printCover(order.orderId)}
-                  size="small"
-                  startIcon={<PrintIcon />}
-                >
-                  Print Cover
-                </Button>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    viewTrackDetails(
-                      e,
-                      order.orderId,
-                      order.docs.map((d) => d.docId)
-                    );
-                  }}
-                  size="small"
-                  startIcon={<LocalShippingIcon />}
-                >
-                  Track Order
-                </Button>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    viewAttachments(
-                      e,
-                      order.orderId,
-                      order.docs.map((d) => d.docId)
-                    );
-                  }}
-                  size="small"
-                  startIcon={<AttachFileIcon />}
-                >
-                  View Attachments
-                </Button>
-                <Button
-                  onClick={() => viewInvoice(order.orderId)}
-                  size="small"
-                  startIcon={<ReceiptIcon />}
-                >
-                  View Invoice
-                </Button>
-                <Button
-                  onClick={() => {
-                    router.push(`/orders/${order.orderId}/conversation`);
-                  }}
-                  size="small"
-                  startIcon={<ForumIcon />}
-                >
-                  View Conversation
-                </Button>
-              </Stack>
-            </Grid>
-          </AccordionSummary>
+          <Typography variant="h6" fontWeight={600} gutterBottom>
+            No orders found
+          </Typography>
 
-          <AccordionDetails>
-            <Table size="small">
-              <TableHead sx={{ backgroundColor: "grey.100" }}>
-                <TableRow>
-                  <TableCell>
-                    <strong>Doc Id</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Country Name</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Country Type</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Doc Type</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Customer Reference</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Invoice (PO) Ref</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Order Date</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Est. Date of Completion</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Order Status</strong>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {order.docs.map((doc) => (
-                  <TableRow key={doc.docId}>
-                    <TableCell>{doc.docId}</TableCell>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ maxWidth: 420, mx: "auto", mb: 3 }}
+          >
+            You don’t have any orders yet. Once you place an order, it will
+            appear here along with tracking and document details.
+          </Typography>
+
+          <Button
+            variant="contained"
+            size="medium"
+            onClick={() => router.push("/")}
+          >
+            Create New Order
+          </Button>
+        </Paper>
+      ) : (
+        data?.orders.map((order) => (
+          <Accordion
+            key={order.orderId}
+            expanded={expanded.includes(order.orderId)}
+            onChange={() => toggleExpand(order.orderId)}
+            sx={{
+              mb: 2,
+              border: "1px solid #e0e0e0",
+              boxShadow: 0,
+            }}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Grid
+                container
+                alignItems="center"
+                justifyContent="space-between"
+                width="100%"
+              >
+                <Typography fontWeight="bold">
+                  Created: {dayjs(order.orderCreatedAt).format("MMM D, YYYY")} |
+                  Order ID: {order.orderId}
+                </Typography>
+
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  <Button
+                    onClick={() => printCover(order.orderId)}
+                    size="small"
+                    startIcon={<PrintIcon />}
+                  >
+                    Print Cover
+                  </Button>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      viewTrackDetails(
+                        e,
+                        order.orderId,
+                        order.docs.map((d) => d.docId)
+                      );
+                    }}
+                    size="small"
+                    startIcon={<LocalShippingIcon />}
+                  >
+                    Track Order
+                  </Button>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      viewAttachments(
+                        e,
+                        order.orderId,
+                        order.docs.map((d) => d.docId)
+                      );
+                    }}
+                    size="small"
+                    startIcon={<AttachFileIcon />}
+                  >
+                    View Attachments
+                  </Button>
+                  <Button
+                    onClick={() => viewInvoice(order.orderId)}
+                    size="small"
+                    startIcon={<ReceiptIcon />}
+                  >
+                    View Invoice
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      router.push(`/orders/${order.orderId}/conversation`);
+                    }}
+                    size="small"
+                    startIcon={<ForumIcon />}
+                  >
+                    View Conversation
+                  </Button>
+                </Stack>
+              </Grid>
+            </AccordionSummary>
+
+            <AccordionDetails>
+              <Table size="small">
+                <TableHead sx={{ backgroundColor: "grey.100" }}>
+                  <TableRow>
                     <TableCell>
-                      {countries.find(
-                        (c: any) =>
-                          c.countryId === doc.countryId ||
-                          c.id === doc.countryId ||
-                          c.value === doc.countryId
-                      )?.countryShortName ??
-                        doc.countryShortName ??
-                        ""}
+                      <strong>Doc Id</strong>
                     </TableCell>
                     <TableCell>
-                      {countries.find((c: any) => c.countryId === doc.countryId)
-                        ?.countryTypeId === 501
-                        ? "Hague"
-                        : "Non Hague"}
+                      <strong>Country Name</strong>
                     </TableCell>
                     <TableCell>
-                      {DOCUMENT_CATEGORIES[doc.docCategoryId] ||
-                        doc.docCategoryId}
+                      <strong>Country Type</strong>
                     </TableCell>
-                    <TableCell>{doc.internalReference}</TableCell>
-                    <TableCell>{doc.invoiceReference}</TableCell>
-                    <TableCell>{doc.orderDate}</TableCell>
-                    <TableCell>{doc.estDateOfCompletion}</TableCell>
                     <TableCell>
-                      {DOC_STATES[doc.docStatusId] || doc.docStatusId}
+                      <strong>Doc Type</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Customer Reference</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Invoice (PO) Ref</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Order Date</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Est. Date of Completion</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Order Status</strong>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </AccordionDetails>
-        </Accordion>
-      ))}
+                </TableHead>
+                <TableBody>
+                  {order.docs.map((doc) => (
+                    <TableRow key={doc.docId}>
+                      <TableCell>{doc.docId}</TableCell>
+                      <TableCell>
+                        {countries.find(
+                          (c: any) =>
+                            c.countryId === doc.countryId ||
+                            c.id === doc.countryId ||
+                            c.value === doc.countryId
+                        )?.countryShortName ??
+                          doc.countryShortName ??
+                          ""}
+                      </TableCell>
+                      <TableCell>
+                        {countries.find(
+                          (c: any) => c.countryId === doc.countryId
+                        )?.countryTypeId === 501
+                          ? "Hague"
+                          : "Non Hague"}
+                      </TableCell>
+                      <TableCell>
+                        {DOCUMENT_CATEGORIES[doc.docCategoryId] ||
+                          doc.docCategoryId}
+                      </TableCell>
+                      <TableCell>{doc.internalReference}</TableCell>
+                      <TableCell>{doc.invoiceReference}</TableCell>
+                      <TableCell>{doc.orderDate}</TableCell>
+                      <TableCell>{doc.estDateOfCompletion}</TableCell>
+                      <TableCell>
+                        {DOC_STATES[doc.docStatusId] || doc.docStatusId}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </AccordionDetails>
+          </Accordion>
+        ))
+      )}
+
       <ConversationDrawer
         open={conversationDrawerOpen}
         setOpen={setConversationDrawerOpen}
