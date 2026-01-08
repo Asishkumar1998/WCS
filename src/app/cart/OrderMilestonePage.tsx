@@ -200,6 +200,7 @@ export default function OrderMilestonePage() {
   const [uploadFileData, setUploadFileData] = useState<any>();
   const [submitShipping, setSubmitShipping] = useState<boolean>(false);
   const [region, setRegion] = useState<any>();
+  const [isPolicyAccepted, setIsPolicyAccepted] = useState(false);
   const [checked, setChecked] = useState<{
     option: string | null;
     regionAddressId: number | null;
@@ -507,6 +508,10 @@ export default function OrderMilestonePage() {
       submitShipping === false
     ) {
       showSnackbar("Please submit shipping details first.", "error");
+      return;
+    }
+    if(!isPolicyAccepted){
+      showSnackbar("Please accept Cancellation & Refund Policy.", "error");
       return;
     }
     if (paymentType == "") {
@@ -1039,6 +1044,9 @@ export default function OrderMilestonePage() {
                         </ListItem>
                       ))}
                       {/* Extra instruction if feeTypeId === 17 */}
+                      <Typography fontWeight={600} mb={2}>
+                        Price Details / Cost Estimate
+                      </Typography>
                       {doc.docFees?.some((f: any) => f.feeTypeId === 17) && (
                         <ListItem disablePadding sx={{ py: 0.5 }}>
                           <ListItemText
@@ -1194,7 +1202,12 @@ export default function OrderMilestonePage() {
                   {/* Acceptance */}
                   <FormControlLabel
                     sx={{ mt: 2 }}
-                    control={<Checkbox />}
+                    control={
+                      <Checkbox
+                        checked={isPolicyAccepted}
+                        onChange={(e) => setIsPolicyAccepted(e.target.checked)}
+                      />
+                    }
                     label={
                       <Typography variant="body2" fontWeight={500}>
                         I have read and accept the cancellation and refund

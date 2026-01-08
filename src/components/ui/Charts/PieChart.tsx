@@ -7,12 +7,6 @@ type ChartItem = {
 };
 
 export default function CustomPieChart({ data }: { data: ChartItem[] }) {
-  // const data = [
-  //   { label: "Mexico", value: 400, color: "#0088FE" },
-  //   { label: "US", value: 300, color: "#00C49F" },
-  //   { label: "Colombia", value: 300, color: "#FFBB28" },
-  //   { label: "Egypt", value: 200, color: "#FF8042" },
-  // ];
 
   const settings = {
     margin: { right: 5 },
@@ -21,8 +15,8 @@ export default function CustomPieChart({ data }: { data: ChartItem[] }) {
   };
   return (
     <Box width={"100%"}>
-      <Typography align="center" marginBottom={2}>
-        Count of Documents by Country
+      <Typography align="center" marginBottom={5} fontWeight={800}>
+        Country-Based Document Volume
       </Typography>
       <PieChart
         series={[

@@ -281,8 +281,8 @@ const SideDrawer = () => {
             <div
               style={{
                 position: "relative",
-                width: open ? 150 : 50,
-                height: open ? 60 : 30, // Adjust height to match actual aspect ratio
+                width: open ? 77 : 50,
+                height: open ? 50 : 30, // Adjust height to match actual aspect ratio
               }}
             >
               <Image

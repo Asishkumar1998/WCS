@@ -202,6 +202,12 @@ export default function ValidatedFileUpload({
               Allowed: {allowedTypes.map((t) => t.toUpperCase()).join(", ")} |
               Max size: {maxSizeMB} MB
             </Typography>
+            <Typography
+              variant="caption"
+              sx={{ color: "primary.main", display: "bolck" }}
+            >
+              Only 1 file can be uploaded at a time
+            </Typography>
             {/* {label !== "Upload File" ? (
               <Typography
                 variant="caption"

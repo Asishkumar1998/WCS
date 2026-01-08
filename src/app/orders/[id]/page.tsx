@@ -440,6 +440,10 @@ export default function OrdersPage() {
       {}
     );
 
+    if (userId) {
+      (payload as any).userId = userId;
+    }
+
     if (country) {
       (payload as any).countryId =
         country.value ?? country.countryId ?? country;
