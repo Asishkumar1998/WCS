@@ -719,7 +719,7 @@ export default function OrdersPage() {
           </Box>
 
           <Typography variant="h6" fontWeight={600} gutterBottom>
-            No orders found
+            No orders match your current filters
           </Typography>
 
           <Typography
@@ -727,16 +727,32 @@ export default function OrdersPage() {
             color="text.secondary"
             sx={{ maxWidth: 420, mx: "auto", mb: 3 }}
           >
-            You don’t have any orders yet. Once you place an order, it will
-            appear here along with tracking and document details.
+            Try changing or clearing the filters to see available orders.
           </Typography>
 
           <Button
-            variant="contained"
+            variant="outlined"
             size="medium"
-            onClick={() => router.push("/")}
+            onClick={() => {
+              setFilters({
+                orderId: "",
+                docId: "",
+                docTypeId: null,
+                customerRef: "",
+                po: "",
+                countryId: null,
+                countryTypeId: null,
+                orderStatusId: null,
+                fromDate: dayjs().subtract(90, "day"),
+                toDate: dayjs(),
+                userId: Number(userId),
+                pageNumber: 1,
+                rowsPerPage: 10,
+              });
+              setCountry(null);
+            }}
           >
-            Create New Order
+            Clear Filters
           </Button>
         </Paper>
       ) : (

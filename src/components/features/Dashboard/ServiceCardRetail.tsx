@@ -19,12 +19,12 @@ const RetailServiceCard = ({
       onClick={onClick}
       sx={{
         height: "100%",
-        // minHeight: 160,
         cursor: "pointer",
         borderRadius: 2,
         border: "1px solid #e0e0e0",
         transition: "all 0.25s ease",
         backgroundColor: "#fff",
+        width: "-webkit-fill-available",
 
         "&:hover": {
           transform: "translateY(-4px)",
@@ -35,12 +35,10 @@ const RetailServiceCard = ({
     >
       <CardContent
         sx={{
-          height: "150px",
-          p: 3,
+          p: 2,
           display: "flex",
           alignItems: "flex-start",
           alignContent: "center",
-          width: "400px",
         }}
       >
         {/* Icon */}
@@ -48,12 +46,12 @@ const RetailServiceCard = ({
           sx={{
             width: 56,
             height: 56,
-            mr: 2.5,
+            mr: 2,
             bgcolor: "#f5f5f5",
             flexShrink: 0,
           }}
         >
-          <Image src={icon} alt={title} height={36} width={36} />
+          <Image src={icon} alt={title} height={50} width={50} />
         </Avatar>
 
         {/* Text */}

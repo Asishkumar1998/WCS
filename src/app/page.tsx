@@ -115,13 +115,13 @@ export default function HomePage() {
   ) : (
     <Container maxWidth="xl" sx={{ px: 0, py: 2 }}>
       <Box sx={{ flexGrow: 1, pt: 3, mt: "64px" }}>
-        <Grid container spacing={4}>
+        <Grid container spacing={3}>
           {/* Services: 3 x 2 */}
           <Grid container spacing={3}>
             {DashboardServices.map((service, idx) => (
               <Grid
                 key={idx}
-                size={{ xs: 12, sm: 6, md: 4 }}
+                size={{ xs: 12, sm: 6, md: 6 }}
                 sx={{ display: "flex" }}
               >
                 <RetailServiceCard
