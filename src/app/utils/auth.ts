@@ -1,4 +1,4 @@
-const LOGIN_TTL = 30 * 60 * 1000; // 30 mins
+const LOGIN_TTL = 90 * 60 * 1000;
 
 export const getAuth = () => {
   if (typeof window === "undefined") return null;
