@@ -1,5 +1,6 @@
 import { NewsItem } from "@/types";
 import { Card, CardContent, Box, Typography, Divider } from "@mui/material";
+import dayjs from "dayjs";
 
 const NewsSection = ({ news }: { news: NewsItem[] }) => {
   return (
@@ -41,7 +42,7 @@ const NewsSection = ({ news }: { news: NewsItem[] }) => {
                 {item.title.rendered}
               </Typography>
               <Typography variant="body2" color="secondary.main">
-                {item.modified}
+                {dayjs(item.modified).format("MMM D, YYYY")}
               </Typography>
             </Box>
             {index < news.length - 1 && <Divider sx={{ mb: 2 }} />}
