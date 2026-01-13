@@ -160,7 +160,7 @@ export default function VisaServiceForm() {
   };
 
   useEffect(() => {
-    if(!userId) return;
+    if (!userId) return;
     init();
   }, [userId]);
 
@@ -303,7 +303,7 @@ export default function VisaServiceForm() {
   };
 
   if (checkingCart) {
-    return null; // or spinner
+    return null;
   }
 
   return (
@@ -346,8 +346,9 @@ export default function VisaServiceForm() {
         {/* Destination Country */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <CountrySelect
-            label="Destination Country for Visa *"
+            label="Destination Country for Visa"
             value={destinationCountry}
+            required
             onChange={setDestinationCountry}
           />
         </Grid>
@@ -355,8 +356,9 @@ export default function VisaServiceForm() {
         {/* Visa Type */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <Dropdown
-            label="Type of Visa *"
+            label="Type of Visa"
             options={visaTypeOptions}
+            required
             value={selectedVisaType.value}
             onChange={handleVisaTypeChange}
           />
@@ -365,8 +367,9 @@ export default function VisaServiceForm() {
         {/* Passport Type */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <Dropdown
-            label="Type of Passport *"
+            label="Type of Passport"
             options={passportTypeOptions}
+            required
             value={selectedPassportType.value}
             onChange={handlePassportTypeChange}
           />
@@ -375,8 +378,9 @@ export default function VisaServiceForm() {
         {/* Origin Country */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <CountrySelect
-            label="Origin Country of Passport *"
+            label="Origin Country of Passport"
             value={originCountry}
+            required
             onChange={setOriginCountry}
           />
         </Grid>
@@ -386,23 +390,35 @@ export default function VisaServiceForm() {
           <Grid container spacing={2}>
             <Grid size={{ xs: 6, sm: 6 }}>
               <InputField
-                label="Given Name *"
+                label="Given Name"
                 value={form.applicantGivenName}
+                required
                 onChange={(e) =>
                   setForm((prev) => ({
                     ...prev,
                     applicantGivenName: e.target.value,
                   }))
                 }
+                sx={{
+                  "& .MuiFormLabel-asterisk": {
+                    color: "red",
+                  },
+                }}
               />
             </Grid>
             <Grid size={{ xs: 6, sm: 6 }}>
               <InputField
-                label="Surname *"
+                label="Surname"
                 value={form.lastName}
+                required
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, lastName: e.target.value }))
                 }
+                sx={{
+                  "& .MuiFormLabel-asterisk": {
+                    color: "red",
+                  },
+                }}
               />
             </Grid>
             {/* <Grid size={{ xs: 6, sm: 3 }}>
@@ -417,20 +433,27 @@ export default function VisaServiceForm() {
         {/* Passport Number */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <InputField
-            label="Passport Number *"
+            label="Passport Number"
             value={form.passportNumber}
+            required
             onChange={(e) =>
               setForm((prev) => ({ ...prev, passportNumber: e.target.value }))
             }
+            sx={{
+              "& .MuiFormLabel-asterisk": {
+                color: "red",
+              },
+            }}
           />
         </Grid>
 
         {/* Dates */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <DateInput
-            label="Date of Issue *"
+            label="Date of Issue"
             maxDate={dayjs()}
             value={form.passportIssuanceDate}
+            required
             onChange={(value) =>
               setForm((prev) => ({ ...prev, passportIssuanceDate: value }))
             }
@@ -438,9 +461,10 @@ export default function VisaServiceForm() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
           <DateInput
-            label="Passport Validity (good until) *"
+            label="Passport Validity (good until)"
             minDate={dayjs()}
             value={form.passportValidity}
+            required
             onChange={(value) =>
               setForm((prev) => ({ ...prev, passportValidity: value }))
             }
@@ -450,9 +474,10 @@ export default function VisaServiceForm() {
         {/* State of Residence */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <Dropdown
-            label="Applicant State of Residence *"
+            label="Applicant State of Residence"
             options={stateOptions}
             value={selectedState.value}
+            required
             onChange={handleStateChange}
           />
         </Grid>
@@ -460,9 +485,10 @@ export default function VisaServiceForm() {
         {/* Entry Type */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <Dropdown
-            label="Number of Entry/IES *"
+            label="Number of Entry/IES"
             options={entries}
             value={entryType}
+            required
             onChange={handleEntryChange}
           />
         </Grid>
@@ -470,10 +496,11 @@ export default function VisaServiceForm() {
         {/* Departure + Expedited */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <DateInput
-            label="Date of Departure from U.S *"
+            label="Date of Departure from U.S"
             minDate={form.passportIssuanceDate ?? undefined}
             maxDate={form.passportValidity ?? undefined}
             value={form.dateOfDeparture}
+            required
             onChange={(value) =>
               setForm((prev) => ({
                 ...prev,

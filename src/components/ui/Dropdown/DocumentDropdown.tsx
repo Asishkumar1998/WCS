@@ -33,9 +33,10 @@ interface BaseDropdownProps {
   country: Country;
   multiple?: boolean;
   open?: boolean;
+  required?: boolean;
   onOpen?: () => void;
   onClose?: () => void;
-  disabled?: boolean; // ✅ new prop
+  disabled?: boolean;
 }
 
 interface SingleDropdownProps extends BaseDropdownProps {
@@ -62,9 +63,10 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
   onChange,
   multiple = false,
   open,
+  required = false,
   onOpen,
   onClose,
-  disabled = false, // default false
+  disabled = false,
 }) => {
   const { documentTypes } = useSelector((state: RootState) => state.formsData);
   const [filteredDocs, setFilteredDocs] = useState<DocType[]>([]);
@@ -132,7 +134,16 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
             {...params}
             label={label}
             variant="outlined"
+            required={required}
             disabled={disabled}
+            InputLabelProps={{
+              ...params.InputLabelProps,
+              sx: {
+                "& .MuiFormLabel-asterisk": {
+                  color: "red",
+                },
+              },
+            }}
           />
         )}
         disableClearable={!multiple}

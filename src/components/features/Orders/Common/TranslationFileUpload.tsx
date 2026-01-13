@@ -31,10 +31,21 @@ export const FileUploadBox = ({
     onSelectFile?.(file);
   };
   return (
-    <FormControl fullWidth variant="outlined" sx={staticBorderSx}>
-      <InputLabel shrink>
+    <FormControl
+      fullWidth
+      variant="outlined"
+      sx={staticBorderSx}
+      required={required}
+    >
+      <InputLabel
+        shrink
+        sx={{
+          "& .MuiFormLabel-asterisk": {
+            color: "red",
+          },
+        }}
+      >
         {label}
-        {required ? " *" : ""}
       </InputLabel>
 
       <OutlinedInput

@@ -182,6 +182,7 @@ export default function NotaryServiceForm() {
   const addToCart = async () => {
     const success = await submitOrder();
     if (success) {
+      showSnackbar("Document added to Cart", "success");
       resetForm();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -251,7 +252,8 @@ export default function NotaryServiceForm() {
           {/* Country */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <CountrySelect
-              label="Select Country *"
+              label="Select Country"
+              required
               value={country}
               onChange={setCountry}
             />
@@ -260,9 +262,10 @@ export default function NotaryServiceForm() {
           {/* Document */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <DocumentDropdown
-              label="Select Document *"
+              label="Select Document"
               country={country}
               value={document}
+              required
               onChange={handleDocumentSelect}
               open={dropdownOpen}
               onOpen={() => setDropdownOpen(true)}

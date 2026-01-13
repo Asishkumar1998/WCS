@@ -12,8 +12,9 @@ import CheckBoxIcon from "@mui/icons-material/CheckBox";
 interface BaseDropdownProps {
   label: string;
   options: string[];
-  multiple?: boolean; // ✅ choose single or multiple
-  disabled?: boolean; // ✅ new prop
+  multiple?: boolean;
+  disabled?: boolean;
+  required?: boolean;
 }
 
 interface SingleDropdownProps extends BaseDropdownProps {
@@ -38,8 +39,9 @@ const Dropdown: React.FC<DropdownProps> = ({
   options,
   value,
   onChange,
+  required = false,
   multiple = false,
-  disabled = false, // default false
+  disabled = false,
 }) => {
   return (
     <FormControl fullWidth>
@@ -67,7 +69,9 @@ const Dropdown: React.FC<DropdownProps> = ({
               <ListItemText primary={option} />
             </li>
           ) : (
-            <li key={key} {...rest}>{option}</li>
+            <li key={key} {...rest}>
+              {option}
+            </li>
           );
         }}
         renderInput={(params) => (
@@ -76,6 +80,15 @@ const Dropdown: React.FC<DropdownProps> = ({
             label={label}
             variant="outlined"
             disabled={disabled}
+            required={required}
+            InputLabelProps={{
+              ...params.InputLabelProps,
+              sx: {
+                "& .MuiFormLabel-asterisk": {
+                  color: "red",
+                },
+              },
+            }}
           />
         )}
         disableClearable={!multiple}

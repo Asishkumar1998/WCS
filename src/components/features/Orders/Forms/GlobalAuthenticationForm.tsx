@@ -155,6 +155,19 @@ export default function GlobalAuthenticationForm() {
   };
 
   const handleSubmit = async () => {
+    if(!origin){
+      showSnackbar("Origin Country required", "error");
+      return;
+    }
+    if(!destination){
+      showSnackbar("Destination Country required", "error");
+      return;
+    }
+    if(!pagesCount){
+      showSnackbar("Number of Documents required", "error");
+      return;  
+    }
+
     try {
       const payload = {
         customerId: customerId,
@@ -241,7 +254,8 @@ export default function GlobalAuthenticationForm() {
         {/* Origin + Destination */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <CountrySelect
-            label="Origin Country *"
+            label="Origin Country"
+            required
             value={origin}
             onChange={setOrigin}
           />
@@ -249,7 +263,8 @@ export default function GlobalAuthenticationForm() {
 
         <Grid size={{ xs: 12, sm: 6 }}>
           <CountrySelect
-            label="Destination Country *"
+            label="Destination Country"
+            required
             value={destination}
             onChange={setDestination}
           />
@@ -258,10 +273,18 @@ export default function GlobalAuthenticationForm() {
         {/* Number of Pages (Numeric Input) */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <InputField
-            label="Number of Pages *"
-            placeholder="Enter number of pages"
+            label="Number of Documents"
+            placeholder="Enter number of documents"
             type="number"
             value={pagesCount}
+            required
+            InputLabelProps={{
+              sx: {
+                "& .MuiFormLabel-asterisk": {
+                  color: "red",
+                },
+              },
+            }}
             onChange={(e) => handlePagesChange(e.target.value)}
             inputProps={{
               min: 1,
@@ -310,7 +333,7 @@ export default function GlobalAuthenticationForm() {
                     <Grid container spacing={2}>
                       <Grid size={{ xs: 12, md: 5.5 }}>
                         <Grid container spacing={2}>
-                          <Grid size={{ xs: 12 }}>
+                          {/* <Grid size={{ xs: 12 }}>
                             <InputField
                               label="Description"
                               value={doc.description}
@@ -322,7 +345,7 @@ export default function GlobalAuthenticationForm() {
                                 )
                               }
                             />
-                          </Grid>
+                          </Grid> */}
 
                           <Grid size={{ xs: 12 }}>
                             <InputField

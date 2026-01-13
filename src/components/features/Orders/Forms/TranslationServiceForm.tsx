@@ -209,17 +209,19 @@ export default function TranslationServiceForm() {
         {/* Original + Translated Language */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <Dropdown
-            label="Original Language *"
+            label="Original Language"
             options={languageOptions}
             value={originalLang}
+            required
             onChange={handleOriginalLangChange}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
           <Dropdown
-            label="Translated Language *"
+            label="Translated Language"
             options={translateLanguageOptions}
             value={translatedLang}
+            required
             onChange={handleTranslatedLangChange}
             disabled={originalLang !== "English"}
           />

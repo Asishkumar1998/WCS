@@ -64,8 +64,18 @@ export default function DocumentUpload({
         px: 2,
         py: 1.5,
       }}
+      required
     >
-      <InputLabel shrink>Upload Document *</InputLabel>
+      <InputLabel
+        shrink
+        sx={{
+          "& .MuiFormLabel-asterisk": {
+            color: "red",
+          },
+        }}
+      >
+        Upload Document
+      </InputLabel>
 
       <Box
         sx={{

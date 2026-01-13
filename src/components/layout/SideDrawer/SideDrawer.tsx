@@ -321,7 +321,7 @@ const SideDrawer = () => {
             }}
           >
             <Link
-              href="/signout"
+              href=""
               passHref
               style={{
                 textDecoration: "none",
@@ -357,7 +357,8 @@ const SideDrawer = () => {
             <Tooltip title="Sign Out" placement="right">
               <IconButton
                 component={Link}
-                href="/account/profile"
+                onClick={() => logoutUser()}
+                href=""
                 sx={{ color: "#fff" }}
               >
                 <Logout />

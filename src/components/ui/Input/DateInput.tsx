@@ -8,6 +8,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 interface DateInputProps {
   label: string;
   value?: any;
+  required?: boolean;
   onChange?: (date: any) => void;
   disablePast?: boolean;
   disableFuture?: boolean;
@@ -19,6 +20,7 @@ interface DateInputProps {
 const DateInput: React.FC<DateInputProps> = ({
   label,
   value,
+  required = false,
   onChange,
   disablePast = false,
   disableFuture = false,
@@ -39,12 +41,16 @@ const DateInput: React.FC<DateInputProps> = ({
         disabled={disabled}
         slotProps={{
           textField: {
+            required,
             fullWidth: true,
             variant: "outlined",
-            margin: "none", // ✅ matches your InputField
+            margin: "none",
             sx: {
               "& .MuiInputBase-root": {
-                height: "56px", // ✅ same height as TextField/Dropdown
+                height: "56px",
+              },
+              "& .MuiFormLabel-asterisk": {
+                color: "red",
               },
             },
           } as any,
