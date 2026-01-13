@@ -104,8 +104,11 @@ export default function TranslationServiceForm() {
         if (type === "attachments") setAttachments(data);
         else if (type === "coverLetter") setCoverLetter(data);
         else if (type === "shippingLabel") setShippingLabel(data);
+
+        showSnackbar("Document uploaded successfully", "success");
       } catch (err) {
         console.log(err);
+        showSnackbar("Error while uploading document", "error");
       }
     }
   }

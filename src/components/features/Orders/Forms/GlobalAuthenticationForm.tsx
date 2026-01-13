@@ -131,6 +131,7 @@ export default function GlobalAuthenticationForm() {
           i === index ? { ...doc, attachments: response } : doc
         )
       );
+      showSnackbar("Document uploaded successfully", "success");
     } catch (err) {
       showSnackbar("Failed to upload file.", "error");
       console.error(err);

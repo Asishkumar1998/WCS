@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Button,
   Grid,
@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Tooltip,
 } from "@mui/material";
 import InputField from "@/components/ui/Input/Input";
 import FormLayout from "@/components/ui/Forms/FormLayout";
@@ -45,6 +46,8 @@ import {
 } from "../Common/USApostillePayload";
 import { updateOrder } from "@/services/paymentService";
 import { getAuth } from "@/app/utils/auth";
+import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
+import validateUSApostilleForm from "../Common/validateUSForm";
 
 const STOP_DOCS_HAGUE_COUNTRIES = [6, 15, 28, 29, 30, 31, 35, 36];
 const STOP_DOCS_NON_HAGUE_COUNTRIES = [6, 12, 28, 29, 30, 31, 35, 36];
@@ -71,13 +74,9 @@ export default function USAppostileAndLegalizationForm({
   });
   const [disabled, setDisabled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [preSubmissionDetailsAvailable, setPreSubmissionDetailsAvailable] =
-    useState(false);
   const [infoCardVisible, setInfoCardVisible] = useState(false);
   const [additionalServicesState, setAdditionalServicesState] =
     useState(AdditionalServices);
-  const [summaryData, setSummaryData] = useState<Record<string, any>>({});
-  const [isNotarized, setIsNotarized] = useState("");
   const [additionalQuestions, setAdditionalQuestions] = useState<any>([]);
   const [uploadedDoc, setUploadedDoc] = useState(null);
   const [basePayload, setBasePayload] = useState<any>(null);
@@ -86,6 +85,25 @@ export default function USAppostileAndLegalizationForm({
   const { showSnackbar } = useSnackbar();
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const lastUploadedRef = useRef<string | null>(null);
+  const [formResetKey, setFormResetKey] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const resetForm = () => {
+    setCountry(null);
+    setDocument(null);
+    setAdditionalServices([]);
+    setAdditionalServicesState([...AdditionalServices]);
+    setAdditionalQuestions([]);
+    setUploadedDoc(null);
+    setDisabled(false);
+    setDropdownOpen(false);
+    setInfoCardVisible(false);
+    setModal({ open: false, type: "warning", message: "" });
+    setShowCartConflict(false);
+
+    setFormResetKey((prev) => prev + 1);
+  };
 
   useEffect(() => {
     const auth = getAuth();
@@ -258,12 +276,20 @@ export default function USAppostileAndLegalizationForm({
     const file: File | null = data?.uploadedFile;
     if (!file) return;
 
+    const fileKey = `${file.name}-${file.size}`;
+
+    if (lastUploadedRef.current === fileKey) {
+      return;
+    }
+
+    lastUploadedRef.current = fileKey;
+
     if (file) {
       try {
         const formData = new FormData();
         formData.append("file_0", file);
         const data = await uploadFile(formData);
-        // showSnackbar("Document uploaded successfully", "success");
+        showSnackbar("Document uploaded successfully", "success");
         setUploadedDoc(data);
       } catch (err) {
         console.log(err);
@@ -272,9 +298,20 @@ export default function USAppostileAndLegalizationForm({
     }
   };
 
-  const submitOrder = async () => {
-    if (!country || !document || !uploadedDoc)
-      return showSnackbar("Please complete all required fields", "error");
+  const submitOrder = async (): Promise<boolean> => {
+    const { isValid, error } = validateUSApostilleForm({
+      country,
+      document,
+      uploadedDoc,
+      additionalQuestions,
+    });
+
+    if (!isValid) {
+      showSnackbar(error, "error");
+      return false;
+    }
+
+    setIsSubmitting(true);
 
     let payload;
     try {
@@ -309,11 +346,27 @@ export default function USAppostileAndLegalizationForm({
         });
         await updateOrder(payload.orderId, payload);
       }
-      window.location.href = "/cart?service=us-authentication";
+      return true;
     } catch (error) {
       showSnackbar("Failed to submit order", "error");
       console.error(error);
+      return false;
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const addToCart = async () => {
+    const success = await submitOrder();
+    if (success) {
+      resetForm();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const proceedToCart = async () => {
+    const success = await submitOrder();
+    if (success) window.location.href = "/cart?service=us-authentication";
   };
 
   // Get the previous cart order details.
@@ -352,13 +405,19 @@ export default function USAppostileAndLegalizationForm({
       getCartOrder();
     }
     fetchStates();
-  }, [customerId]);
+  }, [customerId, formResetKey]);
 
   useEffect(() => {
     additionalQuestions.find((q: any) => q.questionId === 1)?.answer === "No"
       ? setShowCartConflict(true)
       : null;
   }, [additionalQuestions]);
+
+  const getServiceTooltip = (service: string) => {
+    if (service === "Post-Scan") return "Scan of Legalized Document";
+    if (service === "Pre-Scan") return "Scan of Original Document";
+    return null;
+  };
 
   if (loading) return <Loader />;
 
@@ -392,11 +451,15 @@ export default function USAppostileAndLegalizationForm({
           </Button>
         </DialogActions>
       </Dialog>
+      <OverlayLoader open={isSubmitting} message="Submitting your order..." />
       <FormLayout
+        key={formResetKey}
         title="U.S. Apostilles and Legalizations"
         country={country}
         document={document}
-        onProceed={submitOrder}
+        onProceed={proceedToCart}
+        onCart={addToCart}
+        display={true}
       >
         <Grid alignItems="stretch" container spacing={2}>
           {/* Country */}
@@ -499,26 +562,60 @@ export default function USAppostileAndLegalizationForm({
                         },
                       }}
                     >
-                      {additionalServicesState.map((service) => (
-                        <FormControlLabel
-                          key={service}
-                          control={
-                            <Checkbox
-                              checked={additionalServices.includes(service)}
-                              onChange={(e) => {
-                                const checked = e.target.checked;
-                                setAdditionalServices((prev) =>
-                                  checked
-                                    ? [...prev, service]
-                                    : prev.filter((s) => s !== service)
-                                );
-                              }}
-                              disabled={disabled}
-                            />
-                          }
-                          label={service}
-                        />
-                      ))}
+                      {additionalServicesState.map((service) => {
+                        const tooltipText = getServiceTooltip(service);
+                        const checkboxLabel = (
+                          <FormControlLabel
+                            key={service}
+                            control={
+                              <Checkbox
+                                checked={additionalServices.includes(service)}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  setAdditionalServices((prev) =>
+                                    checked
+                                      ? [...prev, service]
+                                      : prev.filter((s) => s !== service)
+                                  );
+                                }}
+                                disabled={disabled}
+                              />
+                            }
+                            label={service}
+                          />
+                        );
+                        // <FormControlLabel
+                        //   key={service}
+                        //   control={
+                        //     <Checkbox
+                        //       checked={additionalServices.includes(service)}
+                        //       onChange={(e) => {
+                        //         const checked = e.target.checked;
+                        //         setAdditionalServices((prev) =>
+                        //           checked
+                        //             ? [...prev, service]
+                        //             : prev.filter((s) => s !== service)
+                        //         );
+                        //       }}
+                        //       disabled={disabled}
+                        //     />
+                        //   }
+                        //   label={service}
+                        // />
+                        return tooltipText ? (
+                          <Tooltip
+                            key={service}
+                            title={tooltipText}
+                            arrow
+                            placement="top"
+                          >
+                            {/* span is required because Tooltip needs a single DOM element */}
+                            <span>{checkboxLabel}</span>
+                          </Tooltip>
+                        ) : (
+                          checkboxLabel
+                        );
+                      })}
                     </FormGroup>
                   </Box>
                 )}

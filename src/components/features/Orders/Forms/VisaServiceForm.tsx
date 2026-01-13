@@ -146,7 +146,7 @@ export default function VisaServiceForm() {
         return <div>Invalid service selected.</div>;
       }
       const payload = {
-        userId : userId,
+        userId: userId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);
@@ -160,8 +160,9 @@ export default function VisaServiceForm() {
   };
 
   useEffect(() => {
+    if(!userId) return;
     init();
-  }, []);
+  }, [userId]);
 
   const visaTypeOptions = visaType.map((l) => l.lookupName);
   const passportTypeOptions = passportType.map((l) => l.lookupName);
@@ -235,8 +236,10 @@ export default function VisaServiceForm() {
 
         const data = await uploadVisaFile(formData);
         setUploadedDocumentId(data.data[0].documentId);
+        showSnackbar("Document uploaded successfully", "success");
       } catch (err) {
         console.log(err);
+        showSnackbar("Error while uploading document", "error");
       }
     }
   }
