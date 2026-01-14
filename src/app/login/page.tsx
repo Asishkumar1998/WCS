@@ -12,12 +12,12 @@ import {
 } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import ReCAPTCHA from "react-google-recaptcha";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { loginUser } from "../utils/authSerivce";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import { getCustomerId } from "@/services/userService";
+import ReCAPTCHA from "@/components/features/Orders/Common/ClientRecaptcha";
 
 const CustomerLogin = () => {
   const router = useRouter();

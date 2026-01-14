@@ -195,6 +195,19 @@ export const AdditionalQuestions = ({
                                 )}
                               />
                             </FormControl>
+                          ) : id === 12 ? (
+                            <FormControl fullWidth size="small">
+                              <OutlinedInput
+                                value={answers[id] ?? ""}
+                                onChange={(e) =>
+                                  setPreferences(id, e.target.value)
+                                }
+                                sx={{
+                                  height: 32,
+                                  fontSize: "0.9rem",
+                                }}
+                              />
+                            </FormControl>
                           ) : (
                             /* All Other Questions → Radios */
                             <RadioGroup

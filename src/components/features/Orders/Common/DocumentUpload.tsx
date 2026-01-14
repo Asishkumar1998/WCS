@@ -101,7 +101,11 @@ export default function DocumentUpload({
           <FormControlLabel
             value="proceedWithAttached"
             control={<Radio size="small" />}
-            label="Process Attached Documents"
+            label={
+              country?.countryId === 195
+                ? "Upload un-notarized document (document will be notarized by WCS and certified by MD Secretary of State)"
+                : "Process Attached Documents"
+            }
           />
 
           {nestedSelection === "proceedWithAttached" && (
@@ -120,7 +124,7 @@ export default function DocumentUpload({
             value="originalMailedNested"
             control={<Radio size="small" />}
             label={
-              country?.countryShortName === "Vietnam"
+              country?.countryId === 195
                 ? "Mail Original Documents to WCS office (after notarization & state certification)"
                 : "Mail Original Documents to WCS office"
             }

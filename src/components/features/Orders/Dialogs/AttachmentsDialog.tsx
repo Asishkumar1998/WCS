@@ -155,6 +155,7 @@ export default function AttachmentsDialog({
     setConversationAttachments(response);
   };
   useEffect(() => {
+    if(!orderId) return;
     fetchConversationAttachments();
   }, [orderId]);
 

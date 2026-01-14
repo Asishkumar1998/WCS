@@ -298,6 +298,13 @@ export default function USAppostileAndLegalizationForm({
     }
   };
 
+  const numberOfProducts =
+    country?.countryId === 130
+      ? Number(
+          additionalQuestions.find((q: any) => q.questionId === 12)?.answer
+        ) || null
+      : null;
+
   const submitOrder = async (): Promise<boolean> => {
     const { isValid, error } = validateUSApostilleForm({
       country,
@@ -332,6 +339,7 @@ export default function USAppostileAndLegalizationForm({
             "Yes"
               ? true
               : false,
+          numberOfProducts,
         });
         await createUSApostilleOrder(payload);
         showSnackbar("Order created successfully", "success");
@@ -343,6 +351,7 @@ export default function USAppostileAndLegalizationForm({
           additionalServices,
           uploadedDoc,
           docTypeId,
+          numberOfProducts,
         });
         await updateOrder(payload.orderId, payload);
       }
@@ -587,24 +596,6 @@ export default function USAppostileAndLegalizationForm({
                             label={service}
                           />
                         );
-                        // <FormControlLabel
-                        //   key={service}
-                        //   control={
-                        //     <Checkbox
-                        //       checked={additionalServices.includes(service)}
-                        //       onChange={(e) => {
-                        //         const checked = e.target.checked;
-                        //         setAdditionalServices((prev) =>
-                        //           checked
-                        //             ? [...prev, service]
-                        //             : prev.filter((s) => s !== service)
-                        //         );
-                        //       }}
-                        //       disabled={disabled}
-                        //     />
-                        //   }
-                        //   label={service}
-                        // />
                         return tooltipText ? (
                           <Tooltip
                             key={service}
@@ -612,7 +603,6 @@ export default function USAppostileAndLegalizationForm({
                             arrow
                             placement="top"
                           >
-                            {/* span is required because Tooltip needs a single DOM element */}
                             <span>{checkboxLabel}</span>
                           </Tooltip>
                         ) : (

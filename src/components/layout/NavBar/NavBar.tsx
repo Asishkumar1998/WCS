@@ -53,10 +53,6 @@ export default function Navbar() {
     }
   };
 
-  const logOut = () => {
-    logoutUser();
-    router.replace("/login");
-  };
 
   return (
     <AppBar
@@ -134,7 +130,7 @@ export default function Navbar() {
               <MenuItem onClick={navigateToChangePassword}>
                 Change Password
               </MenuItem>
-              <MenuItem onClick={logOut}>Logout</MenuItem>
+              <MenuItem onClick={() => logoutUser()}>Logout</MenuItem>
             </Menu>
           </Box>
         </Box>

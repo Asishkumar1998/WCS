@@ -14,6 +14,7 @@ import {
   useMediaQuery,
   Theme,
   tooltipClasses,
+  ListItemButton,
 } from "@mui/material";
 import {
   Home,
@@ -320,9 +321,7 @@ const SideDrawer = () => {
               justifyContent: "space-between",
             }}
           >
-            <Link
-              href=""
-              passHref
+            <ListItemButton
               style={{
                 textDecoration: "none",
                 color: "inherit",
@@ -336,7 +335,7 @@ const SideDrawer = () => {
                 <Logout />
               </ListItemIcon>
               <ListItemText primary="Sign Out" />
-            </Link>
+            </ListItemButton>
 
             <IconButton
               onClick={() => dispatch(toggleDrawer())}
@@ -356,9 +355,7 @@ const SideDrawer = () => {
           >
             <Tooltip title="Sign Out" placement="right">
               <IconButton
-                component={Link}
                 onClick={() => logoutUser()}
-                href=""
                 sx={{ color: "#fff" }}
               >
                 <Logout />
