@@ -59,11 +59,9 @@ export default function DocumentUpload({
     <FormControl
       fullWidth
       sx={{
-        border: "1px solid #C7C9CD",
         borderRadius: 1,
-        px: 2,
-        py: 1.5,
       }}
+      variant="outlined"
       required
     >
       <InputLabel
@@ -76,83 +74,98 @@ export default function DocumentUpload({
       >
         Upload Document
       </InputLabel>
-
-      <Box
-        sx={{
-          mt: 3,
-          display: "flex",
-          flexDirection: "column",
-          gap: 1.5,
-        }}
-      >
-        {/* File Upload */}
-        <ValidatedFileUpload
-          label="Choose file"
-          fileNameProp={fileName}
-          onChange={handleFileChange}
-        />
-
-        {/* Nested Options */}
-        <RadioGroup
-          value={nestedSelection}
-          onChange={(e) => setNestedSelection(e.target.value as any)}
-        >
-          {/* Attached */}
-          <FormControlLabel
-            value="proceedWithAttached"
-            control={<Radio size="small" />}
-            label={
-              country?.countryId === 195
-                ? "Upload un-notarized document (document will be notarized by WCS and certified by MD Secretary of State)"
-                : "Process Attached Documents"
-            }
-          />
-
-          {nestedSelection === "proceedWithAttached" && (
-            <TextField
-              label="Add Number of Pages"
-              type="number"
-              value={numPages}
-              onChange={(e) => setNumPages(e.target.value)}
-              size="small"
-              sx={{ width: { xs: "100%", sm: "60%" } }}
+      <OutlinedInput
+        notched
+        label="Upload Document"
+        inputComponent={() => (
+          <Box
+            sx={{
+              mt: 3,
+              px: 2,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1.5,
+              width: "100%",
+            }}
+          >
+            {/* File Upload */}
+            <ValidatedFileUpload
+              label="Choose file"
+              fileNameProp={fileName}
+              onChange={handleFileChange}
             />
-          )}
 
-          {/* Original Mailed */}
-          <FormControlLabel
-            value="originalMailedNested"
-            control={<Radio size="small" />}
-            label={
-              country?.countryId === 195
-                ? "Mail Original Documents to WCS office (after notarization & state certification)"
-                : "Mail Original Documents to WCS office"
-            }
-          />
-
-          {nestedSelection === "originalMailedNested" && (
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              <TextField
-                label="Tracking number to WCS"
-                value={trackingNumberNested}
-                onChange={(e) => setTrackingNumberNested(e.target.value)}
-                size="small"
-                sx={{ flex: 1 }}
+            {/* Nested Options */}
+            <RadioGroup
+              value={nestedSelection}
+              onChange={(e) => setNestedSelection(e.target.value as any)}
+            >
+              {/* Attached */}
+              <FormControlLabel
+                value="proceedWithAttached"
+                control={<Radio size="small" />}
+                label={
+                  country?.countryId === 195
+                    ? "Upload un-notarized document (document will be notarized by WCS and certified by MD Secretary of State)"
+                    : "Process Attached Documents"
+                }
               />
 
-              <Autocomplete
-                options={couriers}
-                value={courierNested}
-                onChange={(_, value) => setCourierNested(value)}
-                renderInput={(params) => (
-                  <TextField {...params} label="Courier" size="small" />
-                )}
-                sx={{ flex: 1, minWidth: 160 }}
+              {nestedSelection === "proceedWithAttached" && (
+                <TextField
+                  label="Add Number of Pages"
+                  type="number"
+                  value={numPages}
+                  inputProps={{ min: 0 }}
+                  onChange={(e) => setNumPages(e.target.value)}
+                  size="small"
+                  sx={{ width: { xs: "100%", sm: "60%" } }}
+                />
+              )}
+
+              {/* Original Mailed */}
+              <FormControlLabel
+                value="originalMailedNested"
+                control={<Radio size="small" />}
+                label={
+                  country?.countryId === 195
+                    ? "Mail Original Documents to WCS office (after notarization & state certification)"
+                    : "Mail Original Documents to WCS office"
+                }
               />
-            </Box>
-          )}
-        </RadioGroup>
-      </Box>
+
+              {nestedSelection === "originalMailedNested" && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    flexWrap: "wrap",
+                    marginBottom: 2,
+                  }}
+                >
+                  <TextField
+                    label="Tracking number to WCS"
+                    value={trackingNumberNested}
+                    onChange={(e) => setTrackingNumberNested(e.target.value)}
+                    size="small"
+                    sx={{ flex: 1 }}
+                  />
+
+                  <Autocomplete
+                    options={couriers}
+                    value={courierNested}
+                    onChange={(_, value) => setCourierNested(value)}
+                    renderInput={(params) => (
+                      <TextField {...params} label="Courier" size="small" />
+                    )}
+                    sx={{ flex: 1, minWidth: 160 }}
+                  />
+                </Box>
+              )}
+            </RadioGroup>
+          </Box>
+        )}
+      />
     </FormControl>
   );
 }

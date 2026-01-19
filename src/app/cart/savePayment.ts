@@ -126,5 +126,6 @@ export const savePayment = async (options: any) => {
         responseObj.success = false;
         responseObj.message = "Error processing post-payment steps";
         console.error(err);
+        return responseObj;
     }
 };
