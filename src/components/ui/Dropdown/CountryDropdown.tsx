@@ -22,6 +22,7 @@ interface CountrySelectProps {
   value: Country | Country[] | null;
   onChange: (value: Country | Country[] | null) => void;
   style?: React.CSSProperties;
+  disabledCountryIds?: number[];
 }
 
 // Custom filter to include both short and full names
@@ -38,6 +39,7 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
   value = null,
   onChange,
   style = {},
+  disabledCountryIds,
 }) => {
   const { countries } = useSelector((state: RootState) => state.formsData);
 
@@ -55,8 +57,57 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
         openOnFocus
         ListboxProps={{ style: { maxHeight: 320 } }}
         sx={{ ...style }}
+        getOptionDisabled={(option) =>
+          disabledCountryIds?.includes(option.countryId) ?? false
+        }
+        // renderOption={(props, option, { selected }) => {
+        //   const { key, ...optionProps } = props;
+        //   return (
+        //     <li key={key} {...optionProps}>
+        //       <Box
+        //         sx={{
+        //           display: "flex",
+        //           alignItems: "center",
+        //           gap: 1,
+        //           width: "100%",
+        //           px: 1.25,
+        //           py: 0.75,
+        //           borderBottom: "1px solid rgba(0,0,0,0.06)",
+        //           "&:last-of-type": { borderBottom: "none" },
+        //           "&:hover": { backgroundColor: "#f7f7fb" },
+        //         }}
+        //       >
+        //         {multiple && (
+        //           <Checkbox
+        //             checked={selected}
+        //             size="small"
+        //             sx={{ ml: -0.5 }}
+        //             tabIndex={-1}
+        //           />
+        //         )}
+        //         <Avatar
+        //           src={
+        //             option.genC2ACode
+        //               ? `https://flagcdn.com/w20/${option.genC2ACode.toLowerCase()}.png`
+        //               : "/images/placeholder-flag.png"
+        //           }
+        //           alt={option.countryShortName}
+        //           sx={{ width: 24, height: 18, borderRadius: "3px" }}
+        //           variant="square"
+        //         />
+        //         <Box component="span" sx={{ ml: 0.5, fontSize: "0.95rem" }}>
+        //           {option.countryShortName}
+        //         </Box>
+        //       </Box>
+        //     </li>
+        //   );
+        // }}
         renderOption={(props, option, { selected }) => {
           const { key, ...optionProps } = props;
+
+          const isDisabled =
+            disabledCountryIds?.includes(option.countryId) ?? false;
+
           return (
             <li key={key} {...optionProps}>
               <Box
@@ -68,18 +119,21 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
                   px: 1.25,
                   py: 0.75,
                   borderBottom: "1px solid rgba(0,0,0,0.06)",
+                  opacity: isDisabled ? 0.5 : 1,
+                  pointerEvents: isDisabled ? "none" : "auto",
                   "&:last-of-type": { borderBottom: "none" },
-                  "&:hover": { backgroundColor: "#f7f7fb" },
                 }}
               >
                 {multiple && (
                   <Checkbox
                     checked={selected}
+                    disabled={isDisabled}
                     size="small"
                     sx={{ ml: -0.5 }}
                     tabIndex={-1}
                   />
                 )}
+
                 <Avatar
                   src={
                     option.genC2ACode
@@ -90,6 +144,7 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
                   sx={{ width: 24, height: 18, borderRadius: "3px" }}
                   variant="square"
                 />
+
                 <Box component="span" sx={{ ml: 0.5, fontSize: "0.95rem" }}>
                   {option.countryShortName}
                 </Box>

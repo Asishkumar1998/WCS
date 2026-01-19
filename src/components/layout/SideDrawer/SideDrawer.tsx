@@ -70,11 +70,11 @@ const navItems = [
       { text: "Dispatch Service", href: "/orders/new/dispatch-service" },
     ],
   },
-  // {
-  //   text: "Bulk Ordering",
-  //   icon: <LibraryAdd />,
-  //   href: "/orders/bulk-ordering",
-  // },
+  {
+    text: "Bulk Ordering",
+    icon: <LibraryAdd />,
+    href: "/orders/bulk-ordering",
+  },
   {
     text: "FAQ",
     icon: <Info />,

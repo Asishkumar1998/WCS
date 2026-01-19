@@ -7,6 +7,7 @@ import { InfoOutlined } from "@mui/icons-material";
 import BulkOrderingFormTypeOne from "@/components/features/Orders/Forms/BulkOrderingFormTypeOne";
 import BulkOrderingFormTypeTwo from "@/components/features/Orders/Forms/BulkOrderingFormTypeTwo";
 import BulkOrderingSidebar from "@/components/features/Orders/Sidebars/BulkOrderingSidebar";
+import BulkOrderingFormTypeThree from "@/components/features/Orders/Forms/BulkOrderingFormTypeThree";
 
 interface TabInfo {
   label: string;
@@ -26,6 +27,12 @@ const tabOptions: TabInfo[] = [
     value: "type2",
     description:
       "Used for submitting multiple documents for a single country.",
+  },
+  {
+    label: "Multiple Documents, Multiple Countries",
+    value: "type3",
+    description:
+      "Used for submitting multiple documents for multiple country.",
   },
 ];
 
@@ -84,6 +91,9 @@ export default function NewOrderPage() {
           </TabPanel>
           <TabPanel value={type} index={1}>
             <BulkOrderingFormTypeTwo />
+          </TabPanel>
+          <TabPanel value={type} index={2}>
+            <BulkOrderingFormTypeThree />
           </TabPanel>
         </Grid>
 

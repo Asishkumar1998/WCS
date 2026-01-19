@@ -30,7 +30,7 @@ export interface DocType {
 
 interface BaseDropdownProps {
   label: string;
-  country: Country;
+  country?: Country;
   multiple?: boolean;
   open?: boolean;
   required?: boolean;

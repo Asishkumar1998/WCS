@@ -21,7 +21,7 @@ export default function DocumentUpload({
   country,
   onChange,
 }: {
-  country: any;
+  country?: any;
   onChange?: (data: any) => void;
 }) {
   const [nestedSelection, setNestedSelection] = useState<

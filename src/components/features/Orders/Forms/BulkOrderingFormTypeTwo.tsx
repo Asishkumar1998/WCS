@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -16,43 +16,64 @@ import {
   InputLabel,
   OutlinedInput,
   Box,
+  Alert,
 } from "@mui/material";
 import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import InputField from "@/components/ui/Input/Input";
-import FileUploadField from "@/components/ui/Input/FileInput";
 import FormLayout from "@/components/ui/Forms/FormLayout";
 import { AdditionalServices, Services } from "@/dataset/constants/constants";
 import CountrySelect from "@/components/ui/Dropdown/CountryDropdown";
+import DocumentUpload from "../Common/DocumentUpload";
+import { useSelector } from "react-redux";
+import { RootState } from "@/app/store/store";
+import AdditionalQuestions from "../Common/AdditionalQuestions";
+import { getStates } from "@/services/formsService";
 
-const mockDocuments = ["Passport", "Certificate", "License"];
-const payments = ["Credit Card", "PayPal", "Bank Transfer"];
+interface DocumentType {
+  docTypeId: number;
+  docTypeName: string;
+  attachmentRequired: boolean;
+  physicalRequired: boolean;
+}
 
 interface DocumentEntry {
+  docTypeId: number;
   type: string;
+  attachmentRequired: boolean;
+  physicalRequired: boolean;
   file: File | null;
   reference: string;
 }
 
 export default function BulkOrderingFormTypeTwo() {
   const [country, setCountry] = useState<any>(null);
-  const [documents, setDocuments] = useState<string[]>([]);
-  const [service, setService] = useState("");
+  const [documents, setDocuments] = useState<number[]>([]);
   const [additionalServices, setAdditionalServices] = useState<string[]>([]);
-  const [payment, setPayment] = useState("");
+  const [additionalQuestions, setAdditionalQuestions] = useState<any>([]);
+  const [states, setStates] = useState<any>();
 
   const [docEntries, setDocEntries] = useState<DocumentEntry[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [additionalServicesState, setAdditionalServicesState] =
     useState(AdditionalServices);
   const [disabled, setDisabled] = useState(false);
+  const { documentTypes } = useSelector((state: RootState) => state.formsData);
+  const documentOptions = documentTypes.map((d: DocumentType) => d.docTypeName);
 
   // When docs are chosen in dropdown and user clicks upload
   const openDialogForDocs = () => {
-    const entries = documents.map((doc) => ({
-      type: doc,
-      file: null,
-      reference: "",
-    }));
+    const entries: DocumentEntry[] = documents
+      .map((id) => documentTypes.find((d) => d.docTypeId === id))
+      .filter((doc): doc is DocumentType => !!doc)
+      .map((doc) => ({
+        docTypeId: doc.docTypeId,
+        type: doc.docTypeName,
+        attachmentRequired: doc.attachmentRequired,
+        physicalRequired: doc.physicalRequired,
+        file: null,
+        reference: "",
+      }));
+
     setDocEntries(entries);
     setDialogOpen(true);
   };
@@ -69,6 +90,19 @@ export default function BulkOrderingFormTypeTwo() {
     setDocEntries(updated);
   };
 
+  const fetchStates = async () => {
+    try {
+      const response = await getStates();
+      setStates(response);
+    } catch (e) {
+      console.log("Failed to fetch states.", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchStates();
+  }, []);
+
   return (
     <FormLayout title="Bulk Ordering - Add multiple documents for a single country.">
       <Grid container spacing={2}>
@@ -83,12 +117,43 @@ export default function BulkOrderingFormTypeTwo() {
 
         {/* Document Types */}
         <Grid size={{ xs: 12, sm: 6 }}>
+          {/* <Dropdown
+            label="Select Documents"
+            options={documentOptions}
+            value={documents as any}
+            onChange={(v: DocumentType[]) => setDocuments(v)}
+            multiple
+          /> */}
           <Dropdown
             label="Select Documents"
-            options={mockDocuments}
-            value={documents as any}
-            onChange={(v: any) => setDocuments(v)}
+            options={documentOptions}
+            value={documents
+              .map(
+                (id) =>
+                  documentTypes.find((d) => d.docTypeId === id)?.docTypeName
+              )
+              .filter(Boolean)}
+            onChange={(selectedNames: string[]) => {
+              const selectedIds = selectedNames
+                .map(
+                  (name) =>
+                    documentTypes.find((d) => d.docTypeName === name)?.docTypeId
+                )
+                .filter((id): id is number => typeof id === "number");
+
+              setDocuments(selectedIds);
+            }}
             multiple
+          />
+        </Grid>
+
+        {/* Additional Details (with floating label) */}
+        <Grid size={{ xs: 12, md: 12, sm: 6 }}>
+          <AdditionalQuestions
+            country={country}
+            states={states}
+            setAdditionalPreferences={setAdditionalQuestions}
+            // resetQuestionId={showCartConflict ? 1 : null}
           />
         </Grid>
 
@@ -219,7 +284,7 @@ export default function BulkOrderingFormTypeTwo() {
               }}
             />
           </FormControl>
-        </Grid> 
+        </Grid>
 
         {/* Additional Comments */}
         <Grid
@@ -245,16 +310,6 @@ export default function BulkOrderingFormTypeTwo() {
             }}
           />
         </Grid>
-
-        {/* Payment */}
-        {/* <Grid size={{ xs: 12 }}>
-          <Dropdown
-            label="Payment Method *"
-            options={payments}
-            value={payment}
-            onChange={setPayment}
-          />
-        </Grid> */}
       </Grid>
 
       {/* Popup for uploading + references */}
@@ -300,8 +355,7 @@ export default function BulkOrderingFormTypeTwo() {
 
                   {/* Upload + Reference Side by Side */}
                   <Grid size={{ xs: 12, sm: 6 }}>
-                    <FileUploadField
-                      label="Upload File"
+                    <DocumentUpload
                       onChange={(file) => handleFileChange(index, file)}
                     />
                   </Grid>
