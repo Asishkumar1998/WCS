@@ -36,6 +36,7 @@ import DocumentDropdown, {
 import DocumentUpload from "../Common/DocumentUpload";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
+import MultiDocumentUpload from "../Common/MultiDocumentUpload";
 
 const mockDocuments = ["Passport", "Certificate", "License"];
 
@@ -252,7 +253,7 @@ export default function BulkOrderingFormTypeThree() {
                   </Grid>
 
                   <Grid size={{ xs: 12, sm: 6 }}>
-                    <DocumentUpload
+                    {/* <DocumentUpload
                       onChange={(file) =>
                         setUploads((prev) => ({
                           ...prev,
@@ -265,7 +266,8 @@ export default function BulkOrderingFormTypeThree() {
                           },
                         }))
                       }
-                    />
+                    /> */}
+                    <MultiDocumentUpload />
                   </Grid>
 
                   {/* Additional Services - single line on desktop, wraps only on mobile */}

@@ -28,6 +28,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import AdditionalQuestions from "../Common/AdditionalQuestions";
 import { getStates } from "@/services/formsService";
+import MultiDocumentUpload from "../Common/MultiDocumentUpload";
 
 interface DocumentType {
   docTypeId: number;
@@ -355,9 +356,10 @@ export default function BulkOrderingFormTypeTwo() {
 
                   {/* Upload + Reference Side by Side */}
                   <Grid size={{ xs: 12, sm: 6 }}>
-                    <DocumentUpload
+                    {/* <DocumentUpload
                       onChange={(file) => handleFileChange(index, file)}
-                    />
+                    /> */}
+                    <MultiDocumentUpload />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <InputField
