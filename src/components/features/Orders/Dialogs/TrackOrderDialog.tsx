@@ -34,6 +34,7 @@ export default function TrackOrderDialog({
   const [stopsByDoc, setStopsByDoc] = useState<Record<number, any[]>>({});
   const [stops, setStops] = useState<any>([]);
 
+  console.log("stopsByDoc ------> ", stopsByDoc);
   const getStops = async () => {
     const response = await getAllStops();
     setStops(response);
@@ -44,7 +45,7 @@ export default function TrackOrderDialog({
   }, [open]);
 
   const stopsMap = Object.fromEntries(
-    stops.map((s: any) => [s.stopId, s.stopName])
+    stops.map((s: any) => [s.stopId, s.stopName]),
   );
 
   useEffect(() => {
@@ -56,8 +57,8 @@ export default function TrackOrderDialog({
     const ids: number[] = Array.isArray(docIds)
       ? (docIds as any[]).map((d) => Number(d))
       : typeof docIds === "string"
-      ? (docIds as string).split(",").map((s) => Number(s.trim()))
-      : [Number(docIds)];
+        ? (docIds as string).split(",").map((s) => Number(s.trim()))
+        : [Number(docIds)];
 
     let cancelled = false;
     (async () => {
@@ -72,7 +73,7 @@ export default function TrackOrderDialog({
             } catch {
               return { id, files: [] };
             }
-          })
+          }),
         );
 
         if (cancelled) return;
@@ -183,7 +184,7 @@ export default function TrackOrderDialog({
 
               const dynamicSteps = files.map((details: any) => ({
                 label: stopsMap[details.stopId] || `Stop ${details.stopNumber}`, // Will be replaced with API call later
-                date: details.createdAt,
+                date: "",
                 description: details.processDays
                   ? `Est. Processing time: ${details.processDays} days`
                   : "",
@@ -196,7 +197,7 @@ export default function TrackOrderDialog({
 
               const finalStep = {
                 label: "Shipped / Completed",
-                date: files[0]?.estReceiveBackDate || "",
+                date: files.at(-1)?.estReceiveBackDate || "",
                 description: "",
                 completed: false,
                 isBase: true,
@@ -206,7 +207,7 @@ export default function TrackOrderDialog({
 
               // Calculate active step (first incomplete step)
               const activeStepIndex = allSteps.findIndex(
-                (step) => !step.completed
+                (step) => !step.completed,
               );
               // If all completed, show as complete (activeStep = allSteps.length)
               const activeStep =
