@@ -88,6 +88,7 @@ export default function USAppostileAndLegalizationForm({
   const lastUploadedRef = useRef<string | null>(null);
   const [formResetKey, setFormResetKey] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [numberOfPages, setNumberOfPages] = useState();
 
   const resetForm = () => {
     setCountry(null);
@@ -273,6 +274,7 @@ export default function USAppostileAndLegalizationForm({
   }, [additionalServices]);
 
   const handleDocumentUpload = async (data: any) => {
+    setNumberOfPages(data?.numPages);
     const file: File | null = data?.uploadedFile;
     if (!file) return;
 
@@ -340,6 +342,7 @@ export default function USAppostileAndLegalizationForm({
               ? true
               : false,
           numberOfProducts,
+          numberOfPages,
         });
         await createUSApostilleOrder(payload);
         showSnackbar("Order created successfully", "success");
@@ -352,6 +355,7 @@ export default function USAppostileAndLegalizationForm({
           uploadedDoc,
           docTypeId,
           numberOfProducts,
+          numberOfPages
         });
         await updateOrder(payload.orderId, payload);
       }

@@ -23,6 +23,7 @@ function buildUSApostillePayload({
   originState,
   nusaccRequired,
   numberOfProducts,
+  numberOfPages,
 }: {
   countryId: any;
   docCategoryId: any;
@@ -32,6 +33,7 @@ function buildUSApostillePayload({
   originState: any;
   nusaccRequired: any;
   numberOfProducts: any;
+  numberOfPages: any;
 }) {
   const userId = getAuthValue("userId");
   const customerId = getAuthValue("customerId");
@@ -55,6 +57,8 @@ function buildUSApostillePayload({
             isCopy: false,
             isSoSDone: 652,
             isDoSDone: 652,
+            noOfPages: numberOfPages,
+            noOfPhotoCopyPages: numberOfPages,
             noOfProducts: numberOfProducts,
             isSoftCopyGiven: 651,
             attachments: uploadedDoc,
@@ -82,6 +86,7 @@ type buildUSApostillePayloadFromExistingOrder = {
   uploadedDoc: any;
   docTypeId: any;
   numberOfProducts: any;
+  numberOfPages: any;
 };
 
 const buildUSApostillePayloadFromExistingOrder = ({
@@ -92,6 +97,7 @@ const buildUSApostillePayloadFromExistingOrder = ({
   uploadedDoc,
   docTypeId,
   numberOfProducts,
+  numberOfPages,
 }: {
   basePayload: any;
   countryId: any;
@@ -100,6 +106,7 @@ const buildUSApostillePayloadFromExistingOrder = ({
   uploadedDoc: any;
   docTypeId: any;
   numberOfProducts: any;
+  numberOfPages: any;
 }) => {
   if (!basePayload) return basePayload;
   const selectedCountryId = countryId;
@@ -116,6 +123,8 @@ const buildUSApostillePayloadFromExistingOrder = ({
     isCopy: false,
     isSoSDone: 652,
     isDoSDone: 652,
+    noOfPages: numberOfPages,
+    noOfPhotoCopyPages: numberOfPages,
     noOfProducts: numberOfProducts,
     isSoftCopyGiven: 651,
     attachments: uploadedDoc,
