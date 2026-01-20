@@ -75,3 +75,8 @@ export const getRegion = async () => {
   const response = await axiosInstance.get("regions/{id}");
   return response.data;
 }
+
+export const restoreFee = async (payload: any) => {
+    const response = await axiosInstance.post("docFees/restoreFees", payload);
+    return response.data;
+};

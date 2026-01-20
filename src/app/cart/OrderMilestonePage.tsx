@@ -50,6 +50,7 @@ import {
   getRegion,
   getRegionAddress,
   getRegionAddresses,
+  restoreFee,
   shippingDetailsUpload,
   shippingLabelUpload,
   updateRegionAddress,
@@ -250,7 +251,6 @@ export default function OrderMilestonePage() {
     }
   };
 
-
   const dispatch = useDispatch<AppDispatch>();
   const sharedFormData = useSelector((state: RootState) => state.formsData);
 
@@ -375,7 +375,7 @@ export default function OrderMilestonePage() {
     }
   };
 
-  const totalAmount = allDocs
+  let totalAmount = allDocs
     .reduce((sum: number, d: any) => {
       const docTotal = (d.docFees ?? []).reduce(
         (fSum: number, f: any) =>
@@ -449,6 +449,13 @@ export default function OrderMilestonePage() {
       setLoading(false);
     }
   };
+
+  const hasFedex60Fee = allDocs.some((doc: any) =>
+    doc.docFees?.some((fee: any) => fee.feeTypeId === 33),
+  );
+
+  if (checked.option === "courier" && !hasFedex60Fee)
+    totalAmount = (Number(totalAmount) + 100).toFixed(2);
 
   const getCustomerDetails = async () => {
     const customerDetails = await getCustomer(String(customerId));
@@ -616,6 +623,22 @@ export default function OrderMilestonePage() {
     }
 
     try {
+      if (!hasFedex60Fee && checked.option === "courier") {
+        const payload = allDocs[0];
+        const updatedPayload = {
+          ...payload,
+          docFees: [
+            ...(payload.docFees ?? []),
+            {
+              docFeeName: "FEDEX RETURN FEE",
+              feeAmount: 100,
+              feeTypeId: 33,
+              invoicedAmount: 100,
+            },
+          ],
+        };
+        await restoreFee(updatedPayload);
+      }
       const paymentCard = {
         ...card,
         orderId: orderDetails?.orderId,
@@ -1008,7 +1031,7 @@ export default function OrderMilestonePage() {
             <Grid container spacing={3}>
               {/* ===== LEFT COLUMN - Documents ===== */}
               <Grid size={{ xs: 12, md: 7 }}>
-                {allDocs.map((doc: any) => (
+                {allDocs.map((doc: any, docIndex: number) => (
                   <Card
                     key={doc.docId}
                     sx={{
@@ -1203,22 +1226,45 @@ export default function OrderMilestonePage() {
                             </ListItem>
                           );
                         })}
+                        {checked.option === "courier" &&
+                          docIndex === 0 &&
+                          !hasFedex60Fee && (
+                            <ListItem>
+                              <ListItemText primary="Fedex Return Fee" />
+                              <Typography>$100.00</Typography>
+                            </ListItem>
+                          )}
                         <Divider />
                         <ListItem>
                           <ListItemText
                             primary="Total"
                             primaryTypographyProps={{ fontWeight: 700 }}
                           />
-                          <Typography fontWeight={700}>
-                            $
-                            {doc.docFees
-                              .reduce(
-                                (a: any, b: any) =>
-                                  a + b.feeAmount * b.quantity,
-                                0,
-                              )
-                              .toFixed(2)}
-                          </Typography>
+                          {checked.option === "courier" && docIndex === 0 ? (
+                            <Typography fontWeight={700}>
+                              $
+                              {(
+                                Number(
+                                  doc.docFees.reduce(
+                                    (a: any, b: any) =>
+                                      a + b.feeAmount * b.quantity,
+                                    0,
+                                  ),
+                                ) + 100
+                              ).toFixed(2)}
+                            </Typography>
+                          ) : (
+                            <Typography fontWeight={700}>
+                              $
+                              {doc.docFees
+                                .reduce(
+                                  (a: any, b: any) =>
+                                    a + b.feeAmount * b.quantity,
+                                  0,
+                                )
+                                .toFixed(2)}
+                            </Typography>
+                          )}
                         </ListItem>
                       </List>
                     </CardContent>
