@@ -70,3 +70,8 @@ export const getRegionAddress = async (regionAddressId: number) => {
   const response = await axiosInstance.get(`regionAddresses/${regionAddressId}`);
   return response.data;
 }
+
+export const getRegion = async () => {
+  const response = await axiosInstance.get("regions/{id}");
+  return response.data;
+}

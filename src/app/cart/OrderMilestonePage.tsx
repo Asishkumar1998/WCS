@@ -47,6 +47,7 @@ import {
   getFeeTypes,
   getOrderDetails,
   getOrderIdOfCart,
+  getRegion,
   getRegionAddress,
   getRegionAddresses,
   shippingDetailsUpload,
@@ -83,26 +84,6 @@ import { getAuth } from "../utils/auth";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../store/store";
 import { fetchFormsSharedData } from "../store/features/formsSlice";
-
-const StepIconRoot = styled("div")<{
-  ownerState: { active?: boolean; completed?: boolean };
-}>(({ theme, ownerState }) => ({
-  backgroundColor: ownerState.active
-    ? theme.palette.primary.main
-    : ownerState.completed
-      ? theme.palette.success.main
-      : theme.palette.grey[300],
-  color: "#fff",
-  display: "flex",
-  borderRadius: "50%",
-  width: 32,
-  height: 32,
-  justifyContent: "center",
-  alignItems: "center",
-  boxShadow: ownerState.active
-    ? `0 0 8px ${theme.palette.primary.main}`
-    : "none",
-}));
 
 interface CardDetails {
   amount: number | null;
@@ -171,6 +152,7 @@ const initialForm = {
   phoneNumber: "",
   customerId: "",
   emailId: "",
+  regionName: "",
 };
 
 export default function OrderMilestonePage() {
@@ -188,7 +170,7 @@ export default function OrderMilestonePage() {
   const [feeTypes, setFeeTypes] = useState<any>();
   const [docTypes, setDocTypes] = useState<any>();
   const [translationAttachment, setTranslationAttachment] = useState<any>();
-  const [orderInCart, setOrderInCart] = useState<boolean>(false);
+  const [orderInCart, setOrderInCart] = useState<boolean>();
   const [customer, setCustomer] = useState<any>();
   const [user, setUser] = useState<any>();
   const isFirstRender = useRef(true);
@@ -200,6 +182,9 @@ export default function OrderMilestonePage() {
   const [expiryError, setExpiryError] = useState<string>("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState<number | null>(null);
+  const [addressErrors, setAddressErrors] = useState<Record<string, string>>(
+    {},
+  );
 
   const [checked, setChecked] = useState<{
     option: string | null;
@@ -245,6 +230,7 @@ export default function OrderMilestonePage() {
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [allRegions, setAllRegions] = useState<any>();
 
   useEffect(() => {
     const auth = getAuth();
@@ -254,6 +240,16 @@ export default function OrderMilestonePage() {
       setCustomerId(auth.customerId);
     }
   }, []);
+
+  const getRegions = async () => {
+    try {
+      const response = await getRegion();
+      setAllRegions(response);
+    } catch (e) {
+      console.log("Error in getRegion: ", e);
+    }
+  };
+
 
   const dispatch = useDispatch<AppDispatch>();
   const sharedFormData = useSelector((state: RootState) => state.formsData);
@@ -274,17 +270,53 @@ export default function OrderMilestonePage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const validateAddressForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!country) errors.country = "Country is required";
+    if (!form.contactName.trim())
+      errors.contactName = "Contact name is required";
+    if (!form.address.trim()) errors.address = "Address is required";
+    if (!form.city.trim()) errors.city = "City is required";
+    if (!form.postalCode.trim()) errors.postalCode = "Postal code is required";
+    if (!form.phoneNumber.trim())
+      errors.phoneNumber = "Phone number is required";
+
+    setAddressErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleAdd = async () => {
-    console.log(form);
-    await addRegionAddress(form);
-    setShowExistingAddress(false);
+    if (!validateAddressForm()) {
+      showSnackbar("Please fill all required fields", "error");
+      return;
+    }
+
+    try {
+      debugger;
+      const { regionName, ...payload } = form;
+      if (customerId) payload.customerId = customerId;
+      console.log(payload);
+      const response = await addRegionAddress(payload);
+      if (response) {
+        setChecked((prev) => ({
+          ...prev,
+          regionAddressId: Number(response[0]?.regionAddressId),
+        }));
+        setRegion(response[0]);
+      }
+      showSnackbar("Address added successfully", "success");
+      setShowExistingAddress(false);
+      setAddressErrors({});
+      setForm(initialForm);
+      setCountry(null);
+      setOpenDialog(false);
+    } catch (error) {
+      showSnackbar("Failed to add address", "error");
+    }
   };
 
   const confirmDeleteDocument = async () => {
-    // if (!window.confirm("Are you sure you want to delete this document?")) {
-    //   return;
-    // }
-
     if (!docToDelete) return;
 
     try {
@@ -357,6 +389,7 @@ export default function OrderMilestonePage() {
 
   const getCartOrder = async () => {
     try {
+      setLoading(true);
       const basePayload = CART_SERVICE_MAP[service];
       if (!basePayload) {
         return <div>Invalid service selected.</div>;
@@ -412,6 +445,8 @@ export default function OrderMilestonePage() {
     } catch (error) {
       console.error("Error in getCartOrder:", error);
       setAllDocs([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -426,6 +461,7 @@ export default function OrderMilestonePage() {
     if (customerId) {
       getCartOrder();
       getCustomerDetails();
+      getRegions();
     }
   }, [customerId]);
 
@@ -591,7 +627,7 @@ export default function OrderMilestonePage() {
       setCard(paymentCard);
       let response;
       if (paymentType == "card") {
-        paymentCard.amount = Number(totalAmount) + ( totalAmount * 0.035);
+        paymentCard.amount = Number(totalAmount) + totalAmount * 0.035;
         response = await savePayment(paymentCard);
       } else {
         response = await updateOrder(orderDetails?.orderId, {
@@ -663,6 +699,10 @@ export default function OrderMilestonePage() {
   };
 
   const submitShippingDetails = async () => {
+    if (checked.option === "") {
+      showSnackbar("Please select Shipping Label/Return Instructions", "error");
+      return;
+    }
     try {
       const payload = {
         useUserCourier: shippingDetails.useUserCourier,
@@ -1581,11 +1621,22 @@ export default function OrderMilestonePage() {
                 <Grid container spacing={2} mt={2}>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <CountrySelect
-                      label="Select Country *"
+                      label="Select Country"
                       value={country}
+                      required
                       onChange={(value: any) => {
                         setCountry(value);
-                        form.country = value?.countryName ?? "";
+                        // form.country = value?.countryName ?? "";
+                        const matchedRegion = allRegions.find(
+                          (r: any) => r.regionId === value?.regionId,
+                        );
+                        setForm((prev) => ({
+                          ...prev,
+                          country: value?.countryName ?? "",
+                          regionId: matchedRegion?.regionId ?? "",
+                          regionName: matchedRegion?.name ?? "",
+                        }));
+                        setAddressErrors((prev) => ({ ...prev, country: "" }));
                       }}
                     />
                   </Grid>
@@ -1594,8 +1645,13 @@ export default function OrderMilestonePage() {
                       label="Region"
                       fullWidth
                       size="medium"
-                      value={form.region}
-                      onChange={(e) => handleChange("region", e.target.value)}
+                      value={form.regionName}
+                      InputProps={{
+                        readOnly: true,
+                      }}
+                      sx={{
+                        backgroundColor: "#f9fafb",
+                      }}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
@@ -1604,9 +1660,15 @@ export default function OrderMilestonePage() {
                       fullWidth
                       size="medium"
                       value={form.contactName}
-                      onChange={(e) =>
-                        handleChange("contactName", e.target.value)
-                      }
+                      error={Boolean(addressErrors.contactName)}
+                      helperText={addressErrors.contactName}
+                      onChange={(e) => {
+                        handleChange("contactName", e.target.value);
+                        setAddressErrors((prev) => ({
+                          ...prev,
+                          contactName: "",
+                        }));
+                      }}
                       required
                     />
                   </Grid>
@@ -1627,7 +1689,12 @@ export default function OrderMilestonePage() {
                       multiline
                       rows={2}
                       value={form.address}
-                      onChange={(e) => handleChange("address", e.target.value)}
+                      error={Boolean(addressErrors.address)}
+                      helperText={addressErrors.address}
+                      onChange={(e) => {
+                        handleChange("address", e.target.value);
+                        setAddressErrors((prev) => ({ ...prev, address: "" }));
+                      }}
                       required
                     />
                   </Grid>
@@ -1637,7 +1704,12 @@ export default function OrderMilestonePage() {
                       fullWidth
                       size="medium"
                       value={form.city}
-                      onChange={(e) => handleChange("city", e.target.value)}
+                      error={Boolean(addressErrors.city)}
+                      helperText={addressErrors.city}
+                      onChange={(e) => {
+                        handleChange("city", e.target.value);
+                        setAddressErrors((prev) => ({ ...prev, city: "" }));
+                      }}
                       required
                     />
                   </Grid>
@@ -1656,9 +1728,15 @@ export default function OrderMilestonePage() {
                       fullWidth
                       size="medium"
                       value={form.postalCode}
-                      onChange={(e) =>
-                        handleChange("postalCode", e.target.value)
-                      }
+                      error={Boolean(addressErrors.postalCode)}
+                      helperText={addressErrors.postalCode}
+                      onChange={(e) => {
+                        handleChange("postalCode", e.target.value);
+                        setAddressErrors((prev) => ({
+                          ...prev,
+                          postalCode: "",
+                        }));
+                      }}
                       required
                     />
                   </Grid>
@@ -1668,9 +1746,15 @@ export default function OrderMilestonePage() {
                       fullWidth
                       size="medium"
                       value={form.phoneNumber}
-                      onChange={(e) =>
-                        handleChange("phoneNumber", e.target.value)
-                      }
+                      error={Boolean(addressErrors.phoneNumber)}
+                      helperText={addressErrors.phoneNumber}
+                      onChange={(e) => {
+                        handleChange("phoneNumber", e.target.value);
+                        setAddressErrors((prev) => ({
+                          ...prev,
+                          phoneNumber: "",
+                        }));
+                      }}
                       required
                     />
                   </Grid>
@@ -1698,7 +1782,7 @@ export default function OrderMilestonePage() {
               )}
             </Modal>
           </Box>
-        ) : (
+        ) : orderInCart !== undefined ? (
           <Box
             display="flex"
             flexDirection="column"
@@ -1736,6 +1820,8 @@ export default function OrderMilestonePage() {
               Add Documents
             </Button>
           </Box>
+        ) : (
+          ""
         )}
       </Box>
       <Dialog
