@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import {
-  SelectChangeEvent,
   Grid,
   FormGroup,
   FormControlLabel,
@@ -69,6 +68,7 @@ export default function NotaryServiceForm() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [formResetKey, setFormResetKey] = useState(0);
+  const [uploadDocValues, setUploadDocValues] = useState<any>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resetForm = () => {
@@ -92,6 +92,7 @@ export default function NotaryServiceForm() {
   }, []);
 
   const handleDocumentUpload = async (data: any) => {
+    setUploadDocValues(data);
     setNumberOfPages(data?.numPages);
 
     const file: File | null = data?.uploadedFile;
@@ -124,6 +125,15 @@ export default function NotaryServiceForm() {
       showSnackbar("Please Select Document", "error");
       return false;
     }
+    if(uploadDocValues.nestedSelection === null){
+      showSnackbar("Please Select Document Upload options", "error");
+      return false;
+    }
+    if(uploadDocValues.nestedSelection === "proceedWithAttached" && uploadDocValues.uploadedFile === null ){
+      showSnackbar("Please Upload Document", "error");
+      return false;
+    }
+
     setIsSubmitting(true);
     let payload;
     try {
@@ -339,26 +349,6 @@ export default function NotaryServiceForm() {
                         },
                       }}
                     >
-                      {/* {additionalServicesState.map((service) => (
-                      <FormControlLabel
-                        key={service}
-                        control={
-                          <Checkbox
-                            checked={additionalServices.includes(service)}
-                            onChange={(e) => {
-                              const checked = e.target.checked;
-                              setAdditionalServices((prev) =>
-                                checked
-                                  ? [...prev, service]
-                                  : prev.filter((s) => s !== service)
-                              );
-                            }}
-                            disabled={disabled}
-                          />
-                        }
-                        label={service}
-                      />
-                    ))} */}
                       {additionalServicesState.map((service) => {
                         const tooltipText = getServiceTooltip(service);
                         const checkboxLabel = (

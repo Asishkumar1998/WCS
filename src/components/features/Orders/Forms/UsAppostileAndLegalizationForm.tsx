@@ -89,6 +89,7 @@ export default function USAppostileAndLegalizationForm({
   const [formResetKey, setFormResetKey] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [numberOfPages, setNumberOfPages] = useState();
+  const [uploadDocValues, setUploadDocValues] = useState<any>();
 
   const resetForm = () => {
     setCountry(null);
@@ -274,6 +275,7 @@ export default function USAppostileAndLegalizationForm({
   }, [additionalServices]);
 
   const handleDocumentUpload = async (data: any) => {
+    setUploadDocValues(data);
     setNumberOfPages(data?.numPages);
     const file: File | null = data?.uploadedFile;
     if (!file) return;
@@ -303,7 +305,7 @@ export default function USAppostileAndLegalizationForm({
   const numberOfProducts =
     country?.countryId === 130
       ? Number(
-          additionalQuestions.find((q: any) => q.questionId === 12)?.answer
+          additionalQuestions.find((q: any) => q.questionId === 12)?.answer,
         ) || null
       : null;
 
@@ -311,8 +313,8 @@ export default function USAppostileAndLegalizationForm({
     const { isValid, error } = validateUSApostilleForm({
       country,
       document,
-      uploadedDoc,
       additionalQuestions,
+      uploadDocValues
     });
 
     if (!isValid) {
@@ -355,7 +357,7 @@ export default function USAppostileAndLegalizationForm({
           uploadedDoc,
           docTypeId,
           numberOfProducts,
-          numberOfPages
+          numberOfPages,
         });
         await updateOrder(payload.orderId, payload);
       }
@@ -456,7 +458,7 @@ export default function USAppostileAndLegalizationForm({
             variant="outlined"
             onClick={() => {
               setAdditionalQuestions((prev: any) =>
-                prev.filter((item: any) => item.questionId !== 1)
+                prev.filter((item: any) => item.questionId !== 1),
               );
               setShowCartConflict(false);
             }}
@@ -495,8 +497,8 @@ export default function USAppostileAndLegalizationForm({
                 country?.countryTypeId == 502
                   ? "Legalization"
                   : country?.countryTypeId == 501
-                  ? "Apostille"
-                  : ""
+                    ? "Apostille"
+                    : ""
               }
               slotProps={{
                 input: {
@@ -591,7 +593,7 @@ export default function USAppostileAndLegalizationForm({
                                   setAdditionalServices((prev) =>
                                     checked
                                       ? [...prev, service]
-                                      : prev.filter((s) => s !== service)
+                                      : prev.filter((s) => s !== service),
                                   );
                                 }}
                                 disabled={disabled}

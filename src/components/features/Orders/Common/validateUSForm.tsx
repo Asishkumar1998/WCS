@@ -8,8 +8,8 @@ type ValidationResult = {
 type Params = {
   country: any;
   document: any;
-  uploadedDoc: any;
   additionalQuestions: { questionId: number; answer: any }[];
+  uploadDocValues: any;
 };
 
 const OPTIONAL_QUESTION_IDS = [1, 8];
@@ -17,8 +17,8 @@ const OPTIONAL_QUESTION_IDS = [1, 8];
 const validateUSApostilleForm = ({
   country,
   document,
-  uploadedDoc,
   additionalQuestions,
+  uploadDocValues,
 }: Params): ValidationResult => {
   if (!country) {
     return { isValid: false, error: "Country is required" };
@@ -26,6 +26,15 @@ const validateUSApostilleForm = ({
 
   if (!document) {
     return { isValid: false, error: "Document is required" };
+  }
+  if (uploadDocValues.nestedSelection === null) {
+    return { isValid: false, error: "Please Select Document Upload options" };
+  }
+  if (
+    uploadDocValues.nestedSelection === "proceedWithAttached" &&
+    uploadDocValues.uploadedFile === null
+  ) {
+    return { isValid: false, error: "Please Upload Document" };
   }
 
   // 🔥 CORE FIX
@@ -40,7 +49,7 @@ const validateUSApostilleForm = ({
         q.questionId === qId &&
         q.answer !== undefined &&
         q.answer !== null &&
-        q.answer !== ""
+        q.answer !== "",
     );
 
     if (!answered) {
@@ -50,11 +59,6 @@ const validateUSApostilleForm = ({
       };
     }
   }
-  
-  if (!uploadedDoc) {
-    return { isValid: false, error: "Please upload the document" };
-  }
-
 
   return { isValid: true, error: "" };
 };

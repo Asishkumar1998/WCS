@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import {
-  SelectChangeEvent,
   Grid,
   FormGroup,
   FormControlLabel,
@@ -61,6 +60,7 @@ export default function DispatchServiceForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showSnackbar } = useSnackbar();
   const lastUploadedRef = useRef<string | null>(null);
+  const [uploadDocValues, setUploadDocValues] = useState<any>();
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -86,13 +86,8 @@ export default function DispatchServiceForm() {
     }
   }, []);
 
-  const handleDropdownChange =
-    (setter: React.Dispatch<React.SetStateAction<string>>) =>
-    (event: SelectChangeEvent<string>) => {
-      setter(event.target.value);
-    };
-
   const handleDocumentUpload = async (data: any) => {
+    setUploadDocValues(data);
     setNumberOfPages(data?.numberOfPages);
     const file = data?.uploadedFile;
     if (!file) return;
@@ -125,6 +120,18 @@ export default function DispatchServiceForm() {
       showSnackbar("Please Select Document", "error");
       return false;
     }
+    if (uploadDocValues.nestedSelection === null) {
+      showSnackbar("Please Select Document Upload options", "error");
+      return false;
+    }
+    if (
+      uploadDocValues.nestedSelection === "proceedWithAttached" &&
+      uploadDocValues.uploadedFile === null
+    ) {
+      showSnackbar("Please Upload Document", "error");
+      return false;
+    }
+
     setIsSubmitting(true);
     let payload;
     try {
@@ -193,7 +200,6 @@ export default function DispatchServiceForm() {
         const response = await getOrderDetails({ orderId: orderId });
         const orderData = response[0];
         setBasePayload(orderData);
-        console.log("orderData ---------> ", orderData);
       }
     } catch (error) {
       console.error("Error in getCartOrder:", error);
@@ -319,26 +325,6 @@ export default function DispatchServiceForm() {
                         },
                       }}
                     >
-                      {/* {additionalServicesState.map((service) => (
-                      <FormControlLabel
-                        key={service}
-                        control={
-                          <Checkbox
-                            checked={additionalServices.includes(service)}
-                            onChange={(e) => {
-                              const checked = e.target.checked;
-                              setAdditionalServices((prev) =>
-                                checked
-                                  ? [...prev, service]
-                                  : prev.filter((s) => s !== service)
-                              );
-                            }}
-                            disabled={disabled}
-                          />
-                        }
-                        label={service}
-                      />
-                    ))} */}
                       {additionalServicesState.map((service) => {
                         const tooltipText = getServiceTooltip(service);
                         const checkboxLabel = (
@@ -352,7 +338,7 @@ export default function DispatchServiceForm() {
                                   setAdditionalServices((prev) =>
                                     checked
                                       ? [...prev, service]
-                                      : prev.filter((s) => s !== service)
+                                      : prev.filter((s) => s !== service),
                                   );
                                 }}
                                 disabled={disabled}
