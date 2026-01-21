@@ -138,7 +138,7 @@ const MyConversations = () => {
 
                   <Stack alignItems="flex-end">
                     <Typography variant="body2" color="text.secondary">
-                      {new Date(item.createdAt).toLocaleString("en-IN", {
+                      {new Date(item.createdAt + "Z").toLocaleString("en-IN", {
                         day: "2-digit",
                         month: "short",
                         year: "numeric",

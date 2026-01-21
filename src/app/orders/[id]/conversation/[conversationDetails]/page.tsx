@@ -38,7 +38,7 @@ export default function ConversationPage() {
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-
+ 
   useEffect(() => {
     const auth = getAuth();
 
@@ -232,7 +232,7 @@ export default function ConversationPage() {
                         variant="caption"
                         sx={{ display: "block", textAlign: "right", mt: 1 }}
                       >
-                        {new Date(msg.createdAt).toLocaleString()}
+                        {new Date(msg.createdAt + "Z").toLocaleString()}
                       </Typography>
                     </Paper>
                   </Box>
