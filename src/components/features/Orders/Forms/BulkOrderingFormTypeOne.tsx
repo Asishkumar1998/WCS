@@ -112,6 +112,7 @@ export default function BulkOrderingFormTypeOne() {
             disabledCountryIds={[
               3, 53, 82, 88, 93, 97, 130, 144, 196, 199, 205,
             ]}
+            required
           />
         </Grid>
 

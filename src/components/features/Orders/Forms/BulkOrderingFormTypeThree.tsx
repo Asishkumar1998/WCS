@@ -142,16 +142,18 @@ export default function BulkOrderingFormTypeThree() {
             disabledCountryIds={[
               3, 53, 82, 88, 93, 97, 130, 144, 196, 199, 205,
             ]}
+            required
           />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6 }}>
           <Dropdown
-            label="Select Documents *"
+            label="Select or Type Document"
             options={documentOptions}
             value={documents as any}
             onChange={(v: any) => setDocuments(v)}
             multiple
+            required
           />
         </Grid>
 

@@ -124,9 +124,10 @@ export default function BulkOrderingFormTypeTwo() {
         {/* Country */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <CountrySelect
-            label="Select Country *"
+            label="Select Country"
             value={country}
             onChange={setCountry}
+            required
           />
         </Grid>
 
@@ -140,7 +141,7 @@ export default function BulkOrderingFormTypeTwo() {
             multiple
           /> */}
           <Dropdown
-            label="Select Documents"
+            label="Select or Type Document"
             options={documentOptions}
             value={documents
               .map(
@@ -160,6 +161,7 @@ export default function BulkOrderingFormTypeTwo() {
               setDocuments(selectedIds);
             }}
             multiple
+            required
           />
         </Grid>
 
