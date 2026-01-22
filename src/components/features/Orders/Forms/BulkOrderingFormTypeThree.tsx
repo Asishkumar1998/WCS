@@ -66,13 +66,25 @@ export default function BulkOrderingFormTypeThree() {
   const [document, setDocument] = useState<DocType | null>(null);
   const [uploads, setUploads] = useState<UploadsState>({});
   const { documentTypes } = useSelector((state: RootState) => state.formsData);
-  const documentOptions = documentTypes.map((d: any) => d?.docTypeName);
 
   const [additionalServices, setAdditionalServices] = useState<string[]>([]);
   const [additionalServicesState] = useState(AdditionalServices);
   const [disabled] = useState(false);
 
-  console.log(documentOptions);
+  const PINNED_DOC_IDS = [35, 36];
+
+  const documentOptions = React.useMemo(() => {
+    const pinned = documentTypes
+      .filter((d) => PINNED_DOC_IDS.includes(d.docTypeId))
+      .map((d) => d.docTypeName);
+
+    const rest = documentTypes
+      .filter((d) => !PINNED_DOC_IDS.includes(d.docTypeId))
+      .sort((a, b) => a.docTypeName.localeCompare(b.docTypeName))
+      .map((d) => d.docTypeName);
+
+    return [...pinned, ...rest];
+  }, [documentTypes]);
 
   const toggleMapping = (country: string, doc: string) => {
     setMapping((prev) => {
@@ -332,14 +344,14 @@ export default function BulkOrderingFormTypeThree() {
                                   control={
                                     <Checkbox
                                       checked={additionalServices.includes(
-                                        service
+                                        service,
                                       )}
                                       onChange={(e) => {
                                         const checked = e.target.checked;
                                         setAdditionalServices((prev) =>
                                           checked
                                             ? [...prev, service]
-                                            : prev.filter((s) => s !== service)
+                                            : prev.filter((s) => s !== service),
                                         );
                                       }}
                                       disabled={disabled}

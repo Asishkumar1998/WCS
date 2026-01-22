@@ -59,7 +59,21 @@ export default function BulkOrderingFormTypeTwo() {
     useState(AdditionalServices);
   const [disabled, setDisabled] = useState(false);
   const { documentTypes } = useSelector((state: RootState) => state.formsData);
-  const documentOptions = documentTypes.map((d: DocumentType) => d.docTypeName);
+
+  const PINNED_DOC_IDS = [35, 36];
+
+  const documentOptions = React.useMemo(() => {
+    const pinned = documentTypes
+      .filter((d) => PINNED_DOC_IDS.includes(d.docTypeId))
+      .map((d) => d.docTypeName);
+
+    const rest = documentTypes
+      .filter((d) => !PINNED_DOC_IDS.includes(d.docTypeId))
+      .sort((a, b) => a.docTypeName.localeCompare(b.docTypeName))
+      .map((d) => d.docTypeName);
+
+    return [...pinned, ...rest];
+  }, [documentTypes]);
 
   // When docs are chosen in dropdown and user clicks upload
   const openDialogForDocs = () => {
@@ -131,14 +145,15 @@ export default function BulkOrderingFormTypeTwo() {
             value={documents
               .map(
                 (id) =>
-                  documentTypes.find((d) => d.docTypeId === id)?.docTypeName
+                  documentTypes.find((d) => d.docTypeId === id)?.docTypeName,
               )
               .filter(Boolean)}
             onChange={(selectedNames: string[]) => {
               const selectedIds = selectedNames
                 .map(
                   (name) =>
-                    documentTypes.find((d) => d.docTypeName === name)?.docTypeId
+                    documentTypes.find((d) => d.docTypeName === name)
+                      ?.docTypeId,
                 )
                 .filter((id): id is number => typeof id === "number");
 
@@ -265,7 +280,7 @@ export default function BulkOrderingFormTypeTwo() {
                               setAdditionalServices((prev) =>
                                 checked
                                   ? [...prev, service]
-                                  : prev.filter((s) => s !== service)
+                                  : prev.filter((s) => s !== service),
                               );
                             }}
                             disabled={disabled}
