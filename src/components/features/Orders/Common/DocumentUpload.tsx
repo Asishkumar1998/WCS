@@ -1,19 +1,17 @@
 import {
   Autocomplete,
   Box,
-  Button,
   FormControl,
   FormControlLabel,
-  Grid,
+  IconButton,
   InputLabel,
-  OutlinedInput,
   Radio,
   RadioGroup,
   TextField,
-  Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import ValidatedFileUpload from "./ValidatedFileUpload";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const couriers = ["FEDEX", "UPS", "USPS", "DHL", "OTHERS"];
 
@@ -55,6 +53,15 @@ export default function DocumentUpload({
     setFileName(file?.name || "");
   };
 
+  const removeFile = () => {
+    setUploadedFile(null);
+    setFileName("");
+    setNestedSelection(null);
+    setNumPages("");
+    setTrackingNumberNested("");
+    setCourierNested(null);
+  };
+
   return (
     <FormControl
       fullWidth
@@ -92,6 +99,32 @@ export default function DocumentUpload({
           fileNameProp={fileName}
           onChange={handleFileChange}
         />
+        {uploadedFile && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              px: 1,
+              py: 0.5,
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 1,
+              fontSize: 12,
+            }}
+          >
+            <Box>
+              <Box fontWeight={500}>{uploadedFile.name}</Box>
+              <Box fontSize={11} color="text.secondary">
+                {(uploadedFile.size / 1024).toFixed(1)} KB
+              </Box>
+            </Box>
+
+            <IconButton size="small" onClick={removeFile}>
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        )}
 
         {/* Nested Options */}
         <RadioGroup
@@ -117,7 +150,7 @@ export default function DocumentUpload({
               inputProps={{ min: 0 }}
               onChange={(e) => setNumPages(e.target.value)}
               size="small"
-              sx={{ width: { xs: "100%", sm: "60%" } }}
+              sx={{ width: { xs: "100%", sm: "90%" }, marginLeft: 3.5 }}
             />
           )}
 
@@ -139,25 +172,29 @@ export default function DocumentUpload({
                 gap: 1,
                 flexWrap: "wrap",
                 marginBottom: 2,
+                marginLeft: 3.5,
               }}
             >
-              <TextField
-                label="Tracking number to WCS"
-                value={trackingNumberNested}
-                onChange={(e) => setTrackingNumberNested(e.target.value)}
-                size="small"
-                sx={{ flex: 1 }}
-              />
-
-              <Autocomplete
-                options={couriers}
-                value={courierNested}
-                onChange={(_, value) => setCourierNested(value)}
-                renderInput={(params) => (
-                  <TextField {...params} label="Courier" size="small" />
-                )}
-                sx={{ flex: 1, minWidth: 160 }}
-              />
+              <Box width={"100%"}>
+                <TextField
+                  label="Tracking number to WCS"
+                  value={trackingNumberNested}
+                  onChange={(e) => setTrackingNumberNested(e.target.value)}
+                  size="small"
+                  sx={{ flex: 1, width: "100%" }}
+                />
+              </Box>
+              <Box width={"100%"}>
+                <Autocomplete
+                  options={couriers}
+                  value={courierNested}
+                  onChange={(_, value) => setCourierNested(value)}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Courier" size="small" />
+                  )}
+                  sx={{ flex: 1, minWidth: 160 }}
+                />
+              </Box>
             </Box>
           )}
         </RadioGroup>

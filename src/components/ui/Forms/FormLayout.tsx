@@ -79,11 +79,11 @@ const FormLayout: React.FC<FormLayoutProps> = ({
         >
             {display && (
             <Button variant="outlined" color="primary" onClick={onCart}>
-              Add to cart
+              Add to Cart
             </Button>
             )}
           <Button variant="contained" onClick={onProceed} color="primary">
-            Proceed to cart
+            Checkout
           </Button>
         </Grid>
       </Grid>

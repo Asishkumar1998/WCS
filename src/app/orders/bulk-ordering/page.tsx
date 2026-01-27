@@ -25,14 +25,12 @@ const tabOptions: TabInfo[] = [
   {
     label: "Single Country, Multiple Documents",
     value: "type2",
-    description:
-      "Used for submitting multiple documents for a single country.",
+    description: "Used for submitting multiple documents for a single country.",
   },
   {
     label: "Multiple Documents, Multiple Countries",
     value: "type3",
-    description:
-      "Used for submitting multiple documents for multiple country.",
+    description: "Used for submitting multiple documents for multiple country.",
   },
 ];
 
@@ -52,8 +50,10 @@ function TabPanel({
   );
 }
 
+type BulkOrderingType = 0 | 1 | 2;
+
 export default function NewOrderPage() {
-  const [type, setType] = useState(0);
+  const [type, setType] = useState<BulkOrderingType>(0);
 
   return (
     <Container maxWidth="xl" sx={{ mt: 12 }}>
@@ -99,7 +99,7 @@ export default function NewOrderPage() {
 
         {/* Right side - FAQ */}
         <Grid size={{ xs: 12, md: 4 }} sx={{ mt: 8 }}>
-          <BulkOrderingSidebar />
+          <BulkOrderingSidebar type={type} />
         </Grid>
       </Grid>
     </Container>

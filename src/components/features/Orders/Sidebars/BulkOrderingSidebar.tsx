@@ -2,22 +2,36 @@
 
 import { Typography, Divider } from "@mui/material";
 import FAQSidebarLayout from "@/components/layout/SideDrawer/FAQSideDrawerLayout";
-import FAQAccordionList from "../Accordion/FAQAccordion";
 
-const faqs = [
+const bulkOrderingText = [
   {
-    question: "How do I use the Type 1 form?",
-    answer:
-      "In Type 1, you select a single document and specify multiple destination countries. This form is best for cases where one document needs to be authenticated or legalized for several countries at once.",
+    title: "Single Document, Multiple Countries",
+    description:
+      "Select one document and choose multiple destination countries. This option is ideal when the same document needs to be authenticated or legalized for more than one country.",
   },
   {
-    question: "How do I use the Type 2 form?",
-    answer:
-      "In Type 2, you can select multiple document types and assign them to a country. For each document selected, you’ll upload the file and provide its respective customer reference.",
+    title: "Single Country, Multiple Documents",
+    description:
+      "Select multiple document types and assign them to a single country. Each document must be uploaded separately along with its corresponding customer reference.",
   },
-];
+  {
+    title: "Multiple Documents, Multiple Countries",
+    description:
+      "Choose multiple documents and multiple destination countries. Each document can be mapped to one or more countries, making this option suitable for complex bulk legalization requirements.",
+  },
+] as const;
 
-export default function BulkOrderingSidebar() {
+type BulkOrderingType = 0 | 1 | 2;
+
+interface BulkOrderingSidebarProps {
+  type?: BulkOrderingType;
+}
+
+export default function BulkOrderingSidebar({
+  type = 0,
+}: BulkOrderingSidebarProps) {
+  const content = bulkOrderingText[type];
+
   return (
     <FAQSidebarLayout>
       <Typography
@@ -29,12 +43,18 @@ export default function BulkOrderingSidebar() {
           color: "primary.main",
         }}
       >
-        WCS Express FAQ
+        Bulk Ordering Guide{" "}
       </Typography>
 
       <Divider sx={{ mb: 2 }} />
 
-      <FAQAccordionList faqs={faqs} />
+      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+        {content.title}
+      </Typography>
+
+      <Typography variant="body2" color="text.secondary">
+        {content.description}
+      </Typography>
     </FAQSidebarLayout>
   );
 }

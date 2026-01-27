@@ -22,6 +22,7 @@ import {
   TableCell,
   TableBody,
   Alert,
+  Link,
 } from "@mui/material";
 
 import FormLayout from "@/components/ui/Forms/FormLayout";
@@ -71,14 +72,16 @@ export default function BulkOrderingFormTypeThree() {
   const [additionalServicesState] = useState(AdditionalServices);
   const [disabled] = useState(false);
 
-  const PINNED_DOC_IDS = [35, 36];
+  const PINNED_DOC_IDS = [35, 78];
 
   const documentOptions = React.useMemo(() => {
-    const pinned = documentTypes
+    const filteredDocs = documentTypes.filter((d) => d.docTypeId !== 36);
+
+    const pinned = filteredDocs
       .filter((d) => PINNED_DOC_IDS.includes(d.docTypeId))
       .map((d) => d.docTypeName);
 
-    const rest = documentTypes
+    const rest = filteredDocs
       .filter((d) => !PINNED_DOC_IDS.includes(d.docTypeId))
       .sort((a, b) => a.docTypeName.localeCompare(b.docTypeName))
       .map((d) => d.docTypeName);
@@ -223,13 +226,30 @@ export default function BulkOrderingFormTypeThree() {
           />
         </Grid>
         <Grid size={{ xs: 12 }}>
-          <Alert severity="warning" sx={{ alignItems: "center" }}>
-            Bulk ordering is not supported for the following countries:
-            <Box component="span" sx={{ fontWeight: 600 }}>
-              {" "}
-              Algeria, Egypt, Iraq, Jordan, Kuwait, Lebanon, Nigeria, Qatar,
-              Yemen, Taiwan, and Kurdistan.
-            </Box>
+          <Alert severity="warning" sx={{ alignItems: "flex-start" }}>
+            <Typography variant="body2">
+              Bulk ordering is not supported for{" "}
+              <Box component="span" sx={{ fontWeight: 600 }}>
+                Algeria, Egypt, Iraq, Jordan, Kuwait, Lebanon, Nigeria, Qatar,
+                Yemen, Taiwan, and Kurdistan
+              </Box>
+              .
+            </Typography>
+
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Please submit requests via the{" "}
+              <Link
+                href="/orders/new/us-authentication"
+                sx={{
+                  fontWeight: 600,
+                  textDecoration: "underline",
+                  color: "primary.main",
+                }}
+              >
+                New order
+              </Link>{" "}
+              tab.
+            </Typography>
           </Alert>
         </Grid>
       </Grid>

@@ -90,6 +90,7 @@ export default function USAppostileAndLegalizationForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [numberOfPages, setNumberOfPages] = useState();
   const [uploadDocValues, setUploadDocValues] = useState<any>();
+  const [message, setMesage] = useState<string>("");
 
   const resetForm = () => {
     setCountry(null);
@@ -275,6 +276,9 @@ export default function USAppostileAndLegalizationForm({
   }, [additionalServices]);
 
   const handleDocumentUpload = async (data: any) => {
+    if (!data.uploadedFile) {
+      lastUploadedRef.current = null;
+    }
     setUploadDocValues(data);
     setNumberOfPages(data?.numPages);
     const file: File | null = data?.uploadedFile;
@@ -314,7 +318,7 @@ export default function USAppostileAndLegalizationForm({
       country,
       document,
       additionalQuestions,
-      uploadDocValues
+      uploadDocValues,
     });
 
     if (!isValid) {
@@ -372,6 +376,7 @@ export default function USAppostileAndLegalizationForm({
   };
 
   const addToCart = async () => {
+    setMesage("Adding to Cart...");
     const success = await submitOrder();
     if (success) {
       showSnackbar("Document added to Cart", "success");
@@ -381,6 +386,7 @@ export default function USAppostileAndLegalizationForm({
   };
 
   const proceedToCart = async () => {
+    setMesage("Processing checkout...");
     const success = await submitOrder();
     if (success) window.location.href = "/cart?service=us-authentication";
   };
@@ -467,7 +473,7 @@ export default function USAppostileAndLegalizationForm({
           </Button>
         </DialogActions>
       </Dialog>
-      <OverlayLoader open={isSubmitting} message="Submitting your order..." />
+      <OverlayLoader open={isSubmitting} message={message} />
       <FormLayout
         key={formResetKey}
         title="U.S. Apostilles and Legalizations"

@@ -37,6 +37,7 @@ interface BaseDropdownProps {
   onOpen?: () => void;
   onClose?: () => void;
   disabled?: boolean;
+  isBulkOrder?: boolean;
 }
 
 interface SingleDropdownProps extends BaseDropdownProps {
@@ -67,6 +68,7 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
   onOpen,
   onClose,
   disabled = false,
+  isBulkOrder = false,
 }) => {
   const { documentTypes } = useSelector((state: RootState) => state.formsData);
   const [filteredDocs, setFilteredDocs] = useState<DocType[]>([]);
@@ -88,16 +90,30 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
     const sortByName = (docs: DocType[]) =>
       [...docs].sort((a, b) => a.docTypeName.localeCompare(b.docTypeName));
 
-    if (!country) {
-      setFilteredDocs(sortByName(documentTypes));
-    } else if (country.isShipping === 0) {
-      setFilteredDocs(
-        sortByName(documentTypes.filter((doc) => doc.docCategoryId !== 523))
-      );
-    } else {
-      setFilteredDocs(sortByName(documentTypes));
+    let docs = documentTypes;
+
+    if (country && country.isShipping === 0) {
+      docs = docs.filter((doc) => doc.docCategoryId !== 523);
     }
-  }, [documentTypes, country]);
+
+    if (isBulkOrder) {
+      const PINNED_DOC_IDS = [35, 78];
+
+      const filteredDocs = docs.filter((d) => d.docTypeId !== 36);
+
+      const pinnedDocs = filteredDocs.filter((d) =>
+        PINNED_DOC_IDS.includes(d.docTypeId),
+      );
+
+      const remainingDocs = filteredDocs.filter(
+        (d) => !PINNED_DOC_IDS.includes(d.docTypeId),
+      );
+
+      setFilteredDocs([...pinnedDocs, ...sortByName(remainingDocs)]);
+    } else {
+      setFilteredDocs(sortByName(docs));
+    }
+  }, [documentTypes, country, isBulkOrder]);
 
   return (
     <FormControl fullWidth>

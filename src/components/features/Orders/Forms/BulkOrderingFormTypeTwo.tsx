@@ -60,14 +60,16 @@ export default function BulkOrderingFormTypeTwo() {
   const [disabled, setDisabled] = useState(false);
   const { documentTypes } = useSelector((state: RootState) => state.formsData);
 
-  const PINNED_DOC_IDS = [35, 36];
+  const PINNED_DOC_IDS = [35, 78];
 
   const documentOptions = React.useMemo(() => {
-    const pinned = documentTypes
+    const filteredDocs = documentTypes.filter((d) => d.docTypeId !== 36);
+
+    const pinned = filteredDocs
       .filter((d) => PINNED_DOC_IDS.includes(d.docTypeId))
       .map((d) => d.docTypeName);
 
-    const rest = documentTypes
+    const rest = filteredDocs
       .filter((d) => !PINNED_DOC_IDS.includes(d.docTypeId))
       .sort((a, b) => a.docTypeName.localeCompare(b.docTypeName))
       .map((d) => d.docTypeName);

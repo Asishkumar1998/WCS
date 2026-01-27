@@ -8,7 +8,6 @@ import {
   Typography,
   Alert,
   Stack,
-  Link,
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
@@ -35,10 +34,17 @@ export default function ValidatedFileUpload({
   const [error, setError] = useState("");
   const [infoMsg, setInfoMsg] = useState("");
   const inputId = useId();
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (fileNameProp && fileNameProp.trim() !== "") {
       setFileName(fileNameProp);
+    }
+    if (!fileNameProp && fileInputRef.current) {
+      fileInputRef.current.value = "";
+      setFileName("");
+      setError("");
+      setInfoMsg("");
     }
   }, [fileNameProp]);
 
@@ -51,14 +57,14 @@ export default function ValidatedFileUpload({
       setError(
         `Invalid file type. Only ${allowedTypes
           .map((t) => t.toUpperCase())
-          .join(", ")} files are allowed.`
+          .join(", ")} files are allowed.`,
       );
       return false;
     }
 
     if (!isValidSize) {
       setError(
-        `File is too large (max ${maxSizeMB} MB). Please contact WCS team for assistance.`
+        `File is too large (max ${maxSizeMB} MB). Please contact WCS team for assistance.`,
       );
       return false;
     }
@@ -92,7 +98,7 @@ export default function ValidatedFileUpload({
 
     if (files.length > 1) {
       setInfoMsg(
-        "You selected multiple files. Please use the Bulk Ordering feature for faster processing."
+        "You selected multiple files. Please use the Bulk Ordering feature for faster processing.",
       );
       handleFileChange(files[0]);
     } else {
@@ -111,7 +117,7 @@ export default function ValidatedFileUpload({
 
     if (files.length > 1) {
       setInfoMsg(
-        "You dropped multiple files. Please use the Bulk Ordering feature."
+        "You dropped multiple files. Please use the Bulk Ordering feature.",
       );
       handleFileChange(files[0]);
     } else {
@@ -136,6 +142,7 @@ export default function ValidatedFileUpload({
     >
       {/* Hidden file input */}
       <input
+        ref={fileInputRef}
         id={inputId}
         type="file"
         hidden
@@ -149,9 +156,6 @@ export default function ValidatedFileUpload({
           fullWidth
           variant="outlined"
           placeholder="Drag & drop your file here or choose manually"
-          value={
-            fileNameProp && fileNameProp.trim() !== "" ? fileNameProp : fileName
-          }
           InputProps={{
             readOnly: true,
             sx: { cursor: "default", fontWeight: fileName ? 600 : 400 },

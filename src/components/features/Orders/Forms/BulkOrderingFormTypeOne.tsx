@@ -13,6 +13,7 @@ import {
   TableBody,
   Typography,
   Alert,
+  Link,
 } from "@mui/material";
 import InputField from "@/components/ui/Input/Input";
 import FormLayout from "@/components/ui/Forms/FormLayout";
@@ -64,11 +65,6 @@ export default function BulkOrderingFormTypeOne() {
     });
   }, [countries]);
 
-  const handleDropdownChange =
-    (setter: React.Dispatch<React.SetStateAction<string>>) =>
-    (event: SelectChangeEvent<string>) => {
-      setter(event.target.value);
-    };
 
   const toggleService = (country: string, service: ServiceType) => {
     setServiceMapping((prev) => ({
@@ -92,13 +88,14 @@ export default function BulkOrderingFormTypeOne() {
         {/* Document */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <DocumentDropdown
-            label="Select Document"
+            label="Select or Type Document"
             value={document}
             required
             onChange={handleDocumentSelect}
             open={dropdownOpen}
             onOpen={() => setDropdownOpen(true)}
             onClose={() => setDropdownOpen(false)}
+            isBulkOrder={true}
           />
         </Grid>
 
@@ -172,7 +169,10 @@ export default function BulkOrderingFormTypeOne() {
         </Grid>
 
         {/* Customer Reference & Comments */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid
+          size={{ xs: 12, md: 6 }}
+          sx={{ display: "flex", flexDirection: "column", minHeight: 0 }}
+        >
           <InputField
             label="Customer Reference"
             placeholder="Enter reference number"
@@ -183,26 +183,44 @@ export default function BulkOrderingFormTypeOne() {
             placeholder="Enter comments..."
             disabled={disabled}
             multiline
-            minRows={5}
             sx={{
               marginTop: "15px",
+              flex: 1,
               "& .MuiOutlinedInput-root": {
+                height: "100%",
                 alignItems: "flex-start",
               },
               "& textarea": {
+                height: "100% !important",
                 resize: "none",
               },
             }}
           />
         </Grid>
         <Grid size={{ xs: 12 }}>
-          <Alert severity="warning" sx={{ alignItems: "center" }}>
-            Bulk ordering is not supported for the following countries:
-            <Box component="span" sx={{ fontWeight: 600 }}>
-              {" "}
-              Algeria, Egypt, Iraq, Jordan, Kuwait, Lebanon, Nigeria, Qatar,
-              Yemen, Taiwan, and Kurdistan.
-            </Box>
+          <Alert severity="warning" sx={{ alignItems: "flex-start" }}>
+            <Typography variant="body2">
+              Bulk ordering is not supported for{" "}
+              <Box component="span" sx={{ fontWeight: 600 }}>
+                Algeria, Egypt, Iraq, Jordan, Kuwait, Lebanon, Nigeria, Qatar,
+                Yemen, Taiwan, and Kurdistan
+              </Box>
+              .
+            </Typography>
+
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Please submit requests via the{" "}
+              <Link
+                href="/orders/new/us-authentication"
+                sx={{
+                  fontWeight: 600,
+                  textDecoration: "underline",
+                }}
+              >
+                New order
+              </Link>{" "}
+              tab.
+            </Typography>
           </Alert>
         </Grid>
       </Grid>
