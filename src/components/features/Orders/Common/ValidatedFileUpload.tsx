@@ -210,7 +210,7 @@ export default function ValidatedFileUpload({
               variant="caption"
               sx={{ color: "primary.main", display: "bolck" }}
             >
-              Only 1 file can be uploaded at a time
+               Only one file can be uploaded
             </Typography>
             {/* {label !== "Upload File" ? (
               <Typography

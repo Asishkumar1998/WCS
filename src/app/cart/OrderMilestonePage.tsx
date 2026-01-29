@@ -29,7 +29,6 @@ import {
   DialogActions,
   Dialog,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteIcon from "@mui/icons-material/Delete";
 import HomeIcon from "@mui/icons-material/Home";
@@ -85,6 +84,7 @@ import { getAuth } from "../utils/auth";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../store/store";
 import { fetchFormsSharedData } from "../store/features/formsSlice";
+import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
 
 interface CardDetails {
   amount: number | null;
@@ -183,6 +183,9 @@ export default function OrderMilestonePage() {
   const [expiryError, setExpiryError] = useState<string>("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState<number | null>(null);
+  const [nameError, setNameError] = useState<string>("");
+  const [cardNumberError, setCardNumberError] = useState<string>("");
+  const [cvvError, setCvvError] = useState<string>("");
   const [addressErrors, setAddressErrors] = useState<Record<string, string>>(
     {},
   );
@@ -232,6 +235,7 @@ export default function OrderMilestonePage() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [allRegions, setAllRegions] = useState<any>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const auth = getAuth();
@@ -293,7 +297,6 @@ export default function OrderMilestonePage() {
     }
 
     try {
-      debugger;
       const { regionName, ...payload } = form;
       if (customerId) payload.customerId = customerId;
       console.log(payload);
@@ -312,6 +315,7 @@ export default function OrderMilestonePage() {
       setCountry(null);
       setOpenDialog(false);
     } catch (error) {
+      console.log("Failed to add address: ", error);
       showSnackbar("Failed to add address", "error");
     }
   };
@@ -593,36 +597,54 @@ export default function OrderMilestonePage() {
       showSnackbar("Please select payment type", "error");
       return;
     }
+    // if (paymentType === "card") {
+    //   const expiryValidationError = validateExpiry(card.expirationDate);
+
+    //   if (!card.cardHolderName) {
+    //     showSnackbar("Cardholder name is required", "error");
+    //     return;
+    //   }
+
+    //   if (!card.cardNumber || card.cardNumber.length < 12) {
+    //     showSnackbar("Enter a valid card number", "error");
+    //     return;
+    //   }
+
+    //   if (expiryValidationError) {
+    //     setExpiryError(expiryValidationError);
+    //     showSnackbar(expiryValidationError, "error");
+    //     return;
+    //   }
+
+    //   if (
+    //     !card.cardCode ||
+    //     card.cardCode.length < 3 ||
+    //     card.cardCode.length > 5
+    //   ) {
+    //     showSnackbar("Enter a valid CVV", "error");
+    //     return;
+    //   }
+    // }
     if (paymentType === "card") {
-      const expiryValidationError = validateExpiry(card.expirationDate);
+      const nameErr = validateName(card.cardHolderName);
+      const numErr = validateCardNumber(card.cardNumber);
+      const expiryErr = validateExpiry(card.expirationDate);
+      const cvvErr = validateCVV(card.cardCode);
 
-      if (!card.cardHolderName) {
-        showSnackbar("Cardholder name is required", "error");
-        return;
-      }
+      setNameError(nameErr);
+      setCardNumberError(numErr);
+      setExpiryError(expiryErr);
+      setCvvError(cvvErr);
 
-      if (!card.cardNumber || card.cardNumber.length < 12) {
-        showSnackbar("Enter a valid card number", "error");
-        return;
-      }
-
-      if (expiryValidationError) {
-        setExpiryError(expiryValidationError);
-        showSnackbar(expiryValidationError, "error");
-        return;
-      }
-
-      if (
-        !card.cardCode ||
-        card.cardCode.length < 3 ||
-        card.cardCode.length > 5
-      ) {
-        showSnackbar("Enter a valid CVV", "error");
+      if (nameErr || numErr || expiryErr || cvvErr) {
+        showSnackbar(nameErr || numErr || expiryErr || cvvErr, "error");
         return;
       }
     }
 
     try {
+      setIsSubmitting(true);
+
       if (!hasFedex60Fee && checked.option === "courier") {
         const payload = allDocs[0];
         const updatedPayload = {
@@ -662,12 +684,14 @@ export default function OrderMilestonePage() {
           shippingAddressId: customer.shippingAddressId,
         });
       }
-      if (response.success)
+      if (response)
         window.location.href = `/confirmation?orderId=${orderDetails.orderId}`;
       else showSnackbar("Error in Payment", "error");
     } catch (e) {
       showSnackbar("Payment failed", "error");
       console.log(e);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -804,10 +828,22 @@ export default function OrderMilestonePage() {
     return ""; // ← nothing selected
   };
 
+  const validateName = (value: string) =>
+    value.trim() ? "" : "Cardholder name is required";
+
+  const validateCardNumber = (value: string) =>
+    !value || value.replace(/\s/g, "").length < 12
+      ? "Enter a valid card number"
+      : "";
+
+  const validateCVV = (value: string) =>
+    !value || value.length < 3 || value.length > 5 ? "Enter a valid CVV" : "";
+
   if (loading) return <Loader />;
 
   return (
     <>
+      <OverlayLoader open={isSubmitting} message="Processing Payment..." />
       <Box sx={{ p: 3, bgcolor: "background.default", mt: "64px" }}>
         {/* ===== Shipping Section ===== */}
         {orderInCart ? (
@@ -912,7 +948,7 @@ export default function OrderMilestonePage() {
                       }}
                     />
                   }
-                  label="Use WCS courier account"
+                  label="Create Return Label"
                 />
                 <FormControlLabel
                   value="eCopy"
@@ -1190,8 +1226,13 @@ export default function OrderMilestonePage() {
                             />
                           </ListItem>
                         ))}
+                        <Divider sx={{ my: 2 }} />
                         {/* Extra instruction if feeTypeId === 17 */}
-                        <Typography fontWeight={600} mb={2}>
+                        <Typography
+                          fontWeight={600}
+                          mb={2}
+                          sx={{ display: "flex", justifyContent: "center" }}
+                        >
                           Price Details / Cost Estimate
                         </Typography>
                         {doc.docFees?.some((f: any) => f.feeTypeId === 17) && (
@@ -1434,13 +1475,17 @@ export default function OrderMilestonePage() {
                         <TextField
                           label="Cardholder's Name"
                           value={card?.cardHolderName ?? ""}
-                          onChange={(e) =>
+                          error={Boolean(nameError)}
+                          helperText={nameError}
+                          onChange={(e) => {
+                            const value = e.target.value;
                             setCard({
                               ...card,
                               cardHolderName: (e.target as HTMLInputElement)
                                 .value,
-                            })
-                          }
+                            });
+                            setNameError(validateName(value));
+                          }}
                           fullWidth
                           size="small"
                           sx={{ mb: 2 }}
@@ -1452,12 +1497,16 @@ export default function OrderMilestonePage() {
                           size="small"
                           sx={{ mb: 2 }}
                           value={card?.cardNumber ?? ""}
-                          onChange={(e) =>
+                          error={Boolean(cardNumberError)}
+                          helperText={cardNumberError}
+                          onChange={(e) => {
                             setCard({
                               ...card,
                               cardNumber: (e.target as HTMLInputElement).value,
-                            })
-                          }
+                            });
+                            const value = e.target.value;
+                            setCardNumberError(validateCardNumber(value));
+                          }}
                           slotProps={{
                             input: {
                               endAdornment: cardTypeImg ? (
@@ -1475,18 +1524,6 @@ export default function OrderMilestonePage() {
 
                         <Grid container spacing={2}>
                           <Grid size={{ xs: 6 }}>
-                            {/* <TextField
-                            label="Expiry (MM/YY)"
-                            onChange={(e) =>
-                              setCard({
-                                ...card,
-                                expirationDate: (e.target as HTMLInputElement)
-                                  .value,
-                              })
-                            }
-                            fullWidth
-                            size="small"
-                          /> */}
                             <TextField
                               label="Expiry (MM/YY)"
                               value={card.expirationDate}
@@ -1510,13 +1547,17 @@ export default function OrderMilestonePage() {
                           <Grid size={{ xs: 6 }}>
                             <TextField
                               label="CVV"
-                              onChange={(e) =>
+                              error={Boolean(cvvError)}
+                              helperText={cvvError}
+                              onChange={(e) => {
                                 setCard({
                                   ...card,
                                   cardCode: (e.target as HTMLInputElement)
                                     .value,
-                                })
-                              }
+                                });
+                                const value = e.target.value;
+                                setCvvError(validateCVV(value));
+                              }}
                               fullWidth
                               size="small"
                             />

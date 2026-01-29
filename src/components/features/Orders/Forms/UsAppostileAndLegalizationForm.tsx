@@ -635,12 +635,13 @@ export default function USAppostileAndLegalizationForm({
           </Grid>
 
           {/* Additional Details (with floating label) */}
-          <Grid size={{ xs: 12, md: 12, sm: 6 }}>
+          <Grid size={{ xs: 12, md: 12, sm: 12 }}>
             <AdditionalQuestions
               country={country}
               states={states}
               setAdditionalPreferences={setAdditionalQuestions}
               resetQuestionId={showCartConflict ? 1 : null}
+              docCategoryId={document?.docCategoryId}
             />
           </Grid>
 

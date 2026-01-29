@@ -21,9 +21,9 @@ import { getOrderIdOfCart } from "@/services/cartServices";
 import { CART_SERVICE_MAP } from "@/constants/serviceMap";
 import { deleteOrder } from "@/services/deleteService";
 import { getAuth } from "@/app/utils/auth";
+import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
 
 type DocItem = {
-  description: string;
   customerReference: string;
   attachments: any[];
 };
@@ -40,6 +40,7 @@ export default function GlobalAuthenticationForm() {
   const { showSnackbar } = useSnackbar();
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const auth = getAuth();
@@ -110,15 +111,20 @@ export default function GlobalAuthenticationForm() {
   const handleDocChange = (
     index: number,
     field: keyof DocItem,
-    value: string
+    value: string,
   ) => {
     setDocuments((prev) =>
-      prev.map((doc, i) => (i === index ? { ...doc, [field]: value } : doc))
+      prev.map((doc, i) => (i === index ? { ...doc, [field]: value } : doc)),
     );
   };
 
   async function uploadAndStore(file: any, index: number) {
-    if (!file) return;
+    if (!file) {
+      setDocuments((prev) =>
+        prev.map((doc, i) => (i === index ? { ...doc, attachments: [] } : doc)),
+      );
+      return;
+    }
 
     try {
       const formData = new FormData();
@@ -128,8 +134,8 @@ export default function GlobalAuthenticationForm() {
 
       setDocuments((prev) =>
         prev.map((doc, i) =>
-          i === index ? { ...doc, attachments: response } : doc
-        )
+          i === index ? { ...doc, attachments: response } : doc,
+        ),
       );
       showSnackbar("Document uploaded successfully", "success");
     } catch (err) {
@@ -142,7 +148,6 @@ export default function GlobalAuthenticationForm() {
     return documents.map((doc) => ({
       orderOriginId: 611,
       barcode: "",
-      description: doc.description,
       countryId: destination?.countryId,
       attachments: doc.attachments ?? [],
       isUSOrigin: false,
@@ -155,18 +160,27 @@ export default function GlobalAuthenticationForm() {
   };
 
   const handleSubmit = async () => {
-    if(!origin){
+    const hasMissingUploads = documents.some(
+      (doc) => !doc.attachments || doc.attachments.length === 0,
+    );
+    if (!origin) {
       showSnackbar("Origin Country required", "error");
       return;
     }
-    if(!destination){
+    if (!destination) {
       showSnackbar("Destination Country required", "error");
       return;
     }
-    if(!pagesCount){
+    if (!pagesCount) {
       showSnackbar("Number of Documents required", "error");
-      return;  
+      return;
     }
+    if (hasMissingUploads) {
+      showSnackbar("Please upload document for all document entries", "error");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const payload = {
@@ -187,30 +201,23 @@ export default function GlobalAuthenticationForm() {
     } catch (error) {
       showSnackbar("Failed to add document to cart", "error");
       console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const getDocumentStatus = (doc: DocItem) => {
-    const hasDescription = doc.description.trim() !== "";
-    const hasCustomerRef = doc.customerReference.trim() !== "";
     const hasUpload = doc.attachments.length > 0;
-
-    if (!hasDescription || !hasCustomerRef) {
-      return {
-        label: "Pending",
-        color: "text.secondary",
-      };
-    }
 
     if (!hasUpload) {
       return {
-        label: "Pending Upload",
+        label: "Upload Pending",
         color: "warning.main",
       };
     }
 
     return {
-      label: "Completed",
+      label: "Upload Completed",
       color: "success.main",
     };
   };
@@ -250,6 +257,7 @@ export default function GlobalAuthenticationForm() {
           </Button>
         </DialogActions>
       </Dialog>
+      <OverlayLoader open={isSubmitting} message="Processing Checkout..." />
       <FormLayout title="Global Authentication" onProceed={handleSubmit}>
         {/* Origin + Destination */}
         <Grid size={{ xs: 12, sm: 6 }}>
@@ -355,7 +363,7 @@ export default function GlobalAuthenticationForm() {
                                 handleDocChange(
                                   index,
                                   "customerReference",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                             />
@@ -366,6 +374,7 @@ export default function GlobalAuthenticationForm() {
                       <Grid size={{ xs: 12, md: 6.5 }}>
                         <FileUploadBox
                           label="Upload File"
+                          fileName={doc.attachments?.[0]?.fileName || ""}
                           onSelectFile={(file) => uploadAndStore(file, index)}
                         />
                       </Grid>

@@ -1,6 +1,12 @@
-import { Box, FormControl, InputLabel, OutlinedInput } from "@mui/material";
+import {
+  Box,
+  FormControl,
+  IconButton,
+  InputLabel,
+  OutlinedInput,
+} from "@mui/material";
 import ValidatedFileUpload from "./ValidatedFileUpload";
-import { useState } from "react";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const staticBorderSx = {
   "& .MuiOutlinedInput-root": {
@@ -19,17 +25,21 @@ const staticBorderSx = {
 export const FileUploadBox = ({
   label,
   required = false,
+  fileName,
   onSelectFile,
 }: {
   label: string;
   required?: boolean;
+  fileName?: string
   onSelectFile?: (file: File | null) => void;
 }) => {
-  const [fileName, setFileName] = useState("");
   const handleSelectFile = (file: File | null) => {
-    setFileName(file?.name || "");
     onSelectFile?.(file);
   };
+  const removeFile = () => {
+    onSelectFile?.(null);
+  };
+
   return (
     <FormControl
       fullWidth
@@ -69,6 +79,30 @@ export const FileUploadBox = ({
                 fileNameProp={fileName}
                 onChange={handleSelectFile}
               />
+              {fileName && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    px: 1,
+                    py: 0.5,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    fontSize: 12,
+                    mt: 1,
+                  }}
+                >
+                  <Box>
+                    <Box fontWeight={500}>{fileName}</Box>
+                  </Box>
+
+                  <IconButton size="small" onClick={removeFile}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              )}
             </Box>
           </Box>
         )}

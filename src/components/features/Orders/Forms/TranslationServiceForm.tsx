@@ -25,6 +25,7 @@ import { CART_SERVICE_MAP } from "@/constants/serviceMap";
 import { deleteOrder } from "@/services/deleteService";
 import buildTranslationPayload from "../Common/TranslationPayload";
 import { getAuth } from "@/app/utils/auth";
+import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
 
 type Lang = {
   lookupId: number;
@@ -45,6 +46,7 @@ export default function TranslationServiceForm() {
   const [basePayload, setBasePayload] = useState<any>(null);
   const [showCartConflict, setShowCartConflict] = useState(false);
   const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -92,7 +94,12 @@ export default function TranslationServiceForm() {
       : ["English"];
 
   async function uploadAndStore(file: any, type: any) {
-    if (!file) return;
+    if (!file) {
+      if (type === "attachments") setAttachments(undefined);
+      else if (type === "coverLetter") setCoverLetter(undefined);
+      else if (type === "shippingLabel") setShippingLabel(undefined);
+      return;
+    }
 
     if (file) {
       try {
@@ -121,6 +128,7 @@ export default function TranslationServiceForm() {
     ) {
       showSnackbar("Please complete all required fields", "error");
     } else {
+      setIsSubmitting(true);
       try {
         const payload = buildTranslationPayload({
           originalLangId,
@@ -134,6 +142,8 @@ export default function TranslationServiceForm() {
       } catch (error) {
         showSnackbar("Failed to submit order", "error");
         console.error(error);
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -169,7 +179,7 @@ export default function TranslationServiceForm() {
       getCartOrder();
     }
   }, [customerId]);
-
+  
   return (
     <>
       <Dialog open={showCartConflict} disableEscapeKeyDown onClose={() => {}}>
@@ -205,6 +215,7 @@ export default function TranslationServiceForm() {
           </Button>
         </DialogActions>
       </Dialog>
+      <OverlayLoader open={isSubmitting} message="Processing Checkout..." />
       <FormLayout title="Translation Service" onProceed={submitOrder}>
         {/* Original + Translated Language */}
         <Grid size={{ xs: 12, sm: 6 }}>
@@ -232,6 +243,7 @@ export default function TranslationServiceForm() {
             label="Add Documents"
             required
             onSelectFile={(file) => uploadAndStore(file, "attachments")}
+            fileName={attachments?.[0]?.documentName || ""}
           />
         </Grid>
 
@@ -239,6 +251,7 @@ export default function TranslationServiceForm() {
           <FileUploadBox
             label="Add Cover Letter"
             onSelectFile={(file) => uploadAndStore(file, "coverLetter")}
+            fileName={coverLetter?.[0]?.documentName || ""}
           />
         </Grid>
 
@@ -246,6 +259,7 @@ export default function TranslationServiceForm() {
           <FileUploadBox
             label="Add Shipping Label"
             onSelectFile={(file) => uploadAndStore(file, "shippingLabel")}
+            fileName={shippingLabel?.[0]?.documentName || ""}
           />
         </Grid>
 

@@ -1,3 +1,4 @@
+import Dropdown from "@/components/ui/Dropdown/Dropdown";
 import ToolTip from "@/components/ui/Tooltip/Tooltip";
 import ADDITIONAL_QUESTION_COUNTRY_MAP from "@/dataset/additionalQuesWithCountryMap";
 import { ADDITIONAL_QUESTIONS } from "@/dataset/constants/constants";
@@ -28,7 +29,11 @@ export const AdditionalQuestions = ({
   states,
   setAdditionalPreferences,
   resetQuestionId,
-}: AdditionalQuestionsComponent & { resetQuestionId?: number | null }) => {
+  docCategoryId,
+}: AdditionalQuestionsComponent & {
+  resetQuestionId?: number | null;
+  docCategoryId?: number | null;
+}) => {
   const [answers, setAnswers] = useState<Record<number, string>>({});
 
   const resolvedQuestions = useMemo(() => {
@@ -38,11 +43,11 @@ export const AdditionalQuestions = ({
       id,
       text: (ADDITIONAL_QUESTIONS[id].text ?? "(missing question)").replace(
         /<countryName>/g,
-        country?.countryShortName ?? ""
+        country?.countryShortName ?? "",
       ),
       subText: (ADDITIONAL_QUESTIONS[id].subText || "").replace(
         /<countryName>/g,
-        country?.countryShortName ?? ""
+        country?.countryShortName ?? "",
       ),
     }));
   }, [country?.countryId, country?.countryShortName]);
@@ -71,6 +76,8 @@ export const AdditionalQuestions = ({
     }
   }, [resetQuestionId]);
 
+  const stateOptions = useMemo(() => states?.map((s) => s.stateName), [states]);
+  if (docCategoryId !== 522) return null;
   if (!resolvedQuestions.length) return null;
 
   return (
@@ -91,7 +98,7 @@ export const AdditionalQuestions = ({
                       subText,
                       id,
                     }: { text: string; subText: string; id: number },
-                    index: number
+                    index: number,
                   ) => {
                     const options = INPUT_MAP[id] ?? ["Yes", "No"];
 
@@ -153,48 +160,70 @@ export const AdditionalQuestions = ({
                         >
                           {id === 1 ? null : id === 2 ? (
                             /* Question 2 → State Dropdown */
-                            <FormControl
-                              fullWidth
-                              size="small"
-                              sx={{ alignItems: "flex-end" }}
-                            >
-                              <OutlinedInput
-                                label="Select State"
-                                value={answers[id] ?? ""}
-                                onChange={(e: any) =>
-                                  setPreferences(id, e.target.value)
+                            // <FormControl
+                            //   fullWidth
+                            //   size="small"
+                            //   sx={{ alignItems: "flex-end" }}
+                            // >
+                            //   <OutlinedInput
+                            //     label="Select State"
+                            //     value={answers[id] ?? ""}
+                            //     onChange={(e: any) =>
+                            //       setPreferences(id, e.target.value)
+                            //     }
+                            //     style={{
+                            //       width: "73%",
+                            //     }}
+                            //     inputComponent={() => (
+                            //       <select
+                            //         title="Select State"
+                            //         value={answers[id] ?? ""}
+                            //         onChange={(e) =>
+                            //           setPreferences(id, e.target.value)
+                            //         }
+                            //         style={{
+                            //           width: "100%",
+                            //           height: 32,
+                            //           borderRadius: 4,
+                            //         }}
+                            //       >
+                            //         <option value="" disabled>
+                            //           Select State
+                            //         </option>
+                            //         {states.map((state) => (
+                            //           <option
+                            //             key={state.stateId}
+                            //             value={state.stateId}
+                            //           >
+                            //             {state.stateName}
+                            //           </option>
+                            //         ))}
+                            //       </select>
+                            //     )}
+                            //   />
+                            // </FormControl>
+                            <Dropdown
+                              label="Select State"
+                              options={stateOptions}
+                              value={
+                                states.find(
+                                  (s) =>
+                                    String(s.stateId) === String(answers[id]),
+                                )?.stateName || ""
+                              }
+                              onChange={(selectedName: string) => {
+                                const selectedState = states.find(
+                                  (s) => s.stateName === selectedName,
+                                );
+                                if (selectedState) {
+                                  setPreferences(
+                                    id,
+                                    String(selectedState.stateId),
+                                  );
                                 }
-                                style={{
-                                  width: "73%",
-                                }}
-                                inputComponent={() => (
-                                  <select
-                                    title="Select State"
-                                    value={answers[id] ?? ""}
-                                    onChange={(e) =>
-                                      setPreferences(id, e.target.value)
-                                    }
-                                    style={{
-                                      width: "100%",
-                                      height: 32,
-                                      borderRadius: 4,
-                                    }}
-                                  >
-                                    <option value="" disabled>
-                                      Select State
-                                    </option>
-                                    {states.map((state) => (
-                                      <option
-                                        key={state.stateId}
-                                        value={state.stateId}
-                                      >
-                                        {state.stateName}
-                                      </option>
-                                    ))}
-                                  </select>
-                                )}
-                              />
-                            </FormControl>
+                              }}
+                              required
+                            />
                           ) : id === 12 ? (
                             <FormControl fullWidth size="small">
                               <OutlinedInput
@@ -250,7 +279,7 @@ export const AdditionalQuestions = ({
                         </Box>
                       </Box>
                     );
-                  }
+                  },
                 )}
               </Box>
             )}

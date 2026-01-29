@@ -23,6 +23,7 @@ interface CountrySelectProps {
   onChange: (value: Country | Country[] | null) => void;
   style?: React.CSSProperties;
   disabledCountryIds?: number[];
+  pinnedCountryIds?: number[];
 }
 
 // Custom filter to include both short and full names
@@ -40,14 +41,29 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
   onChange,
   style = {},
   disabledCountryIds,
+  pinnedCountryIds = [],
 }) => {
   const { countries } = useSelector((state: RootState) => state.formsData);
+
+  const sortedCountries = React.useMemo(() => {
+    if (!pinnedCountryIds.length) return countries;
+
+    const pinned = countries.filter((c) =>
+      pinnedCountryIds.includes(c.countryId),
+    );
+
+    const rest = countries.filter(
+      (c) => !pinnedCountryIds.includes(c.countryId),
+    );
+
+    return [...pinned, ...rest];
+  }, [countries, pinnedCountryIds]);
 
   return (
     <FormControl fullWidth={fullWidth}>
       <Autocomplete
         multiple={multiple}
-        options={countries}
+        options={sortedCountries}
         getOptionLabel={(option) => option.countryShortName || ""}
         filterOptions={(options, params) => filter(options, params)}
         value={value as any}

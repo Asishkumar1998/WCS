@@ -33,6 +33,7 @@ import { getOrderIdOfCart } from "@/services/cartServices";
 import { deleteOrder } from "@/services/deleteService";
 import { FileUploadBox } from "../Common/TranslationFileUpload";
 import { getAuth } from "@/app/utils/auth";
+import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
 
 const entries = ["Single Entry", "Double Entry", "Multiple Entry"];
 
@@ -115,6 +116,8 @@ export default function VisaServiceForm() {
   const [showCartConflict, setShowCartConflict] = useState(false);
   const [checkingCart, setCheckingCart] = useState(true);
   const [uploadedDocumentId, setUploadedDocumentId] = useState();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fileName, setFileName] = useState("");
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -220,7 +223,7 @@ export default function VisaServiceForm() {
 
   const isAtLeastSixMonths = (
     issueDate: Dayjs | null,
-    validityDate: Dayjs | null
+    validityDate: Dayjs | null,
   ) => {
     if (!issueDate || !validityDate) return true;
     return validityDate.diff(issueDate, "month") >= 6;
@@ -235,6 +238,7 @@ export default function VisaServiceForm() {
         formData.append("file_0", file);
 
         const data = await uploadVisaFile(formData);
+        setFileName(file.name)
         setUploadedDocumentId(data.data[0].documentId);
         showSnackbar("Document uploaded successfully", "success");
       } catch (err) {
@@ -252,7 +256,7 @@ export default function VisaServiceForm() {
     ) {
       showSnackbar(
         "Passport validity must be at least 6 months from date of issue",
-        "error"
+        "error",
       );
     }
   }, [form.passportIssuanceDate, form.passportValidity]);
@@ -276,30 +280,37 @@ export default function VisaServiceForm() {
     ) {
       showSnackbar(
         "Passport validity must be at least 6 months from date of issue",
-        "error"
+        "error",
       );
       return;
     }
 
-    const payload = buildVisaPayload({
-      customerId: customerId,
-      userId: userId,
-      country: destinationCountry?.countryId,
-      form,
-    });
-    const response = await postTranslationOrder(payload);
+    setIsSubmitting(true);
+    try {
+      const payload = buildVisaPayload({
+        customerId: customerId,
+        userId: userId,
+        country: destinationCountry?.countryId,
+        form,
+      });
+      const response = await postTranslationOrder(payload);
 
-    const documentUploadPayload = [
-      {
-        docId: response[0].dockets[0].docs[0].docId,
-        documentId: uploadedDocumentId,
-        orderId: response[0].orderId,
-        uploadedBy: userId,
-      },
-    ];
-    await addVisaDocument(documentUploadPayload);
-    showSnackbar("Document submitted successfully", "success");
-    window.location.href = "/cart?service=visa-service";
+      const documentUploadPayload = [
+        {
+          docId: response[0].dockets[0].docs[0].docId,
+          documentId: uploadedDocumentId,
+          orderId: response[0].orderId,
+          uploadedBy: userId,
+        },
+      ];
+      await addVisaDocument(documentUploadPayload);
+      showSnackbar("Document submitted successfully", "success");
+      window.location.href = "/cart?service=visa-service";
+    } catch (error) {
+      showSnackbar("Failed to add document to cart", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (checkingCart) {
@@ -341,7 +352,7 @@ export default function VisaServiceForm() {
           </Button>
         </DialogActions>
       </Dialog>
-
+      <OverlayLoader open={isSubmitting} message="Processing Checkout..." />
       <FormLayout title="Visa Service" onProceed={submitOrder}>
         {/* Destination Country */}
         <Grid size={{ xs: 12, sm: 6 }}>
@@ -382,6 +393,7 @@ export default function VisaServiceForm() {
             value={originCountry}
             required
             onChange={setOriginCountry}
+            pinnedCountryIds={[190]}
           />
         </Grid>
 
@@ -516,6 +528,7 @@ export default function VisaServiceForm() {
             label="Add Documents"
             required
             onSelectFile={(file) => uploadAndStore(file)}
+            fileName={fileName || ""}
           />
         </Grid>
 
