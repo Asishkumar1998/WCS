@@ -51,7 +51,7 @@ type Form = {
   typeOfPassport: number;
   typeOfVisa: number;
   passportValidity: Dayjs | null;
-  NumberOfEntries: number;
+  NumberOfEntries: number | null;
   state: number;
   dateOfDeparture: Dayjs | null;
   originCountryOfPassPort: string;
@@ -72,7 +72,7 @@ const initialForm: Form = {
   typeOfPassport: 0,
   typeOfVisa: 0,
   passportValidity: null,
-  NumberOfEntries: 1,
+  NumberOfEntries: null,
   state: 0,
   dateOfDeparture: null,
   originCountryOfPassPort: "",
@@ -271,6 +271,11 @@ export default function VisaServiceForm() {
     if (!isValid) {
       showSnackbar(error, "error");
       return;
+    }
+
+    if(!uploadedDocumentId){
+      showSnackbar("Add Documents is required", "error");
+      return
     }
 
     if (

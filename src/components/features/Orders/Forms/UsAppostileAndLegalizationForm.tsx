@@ -91,6 +91,8 @@ export default function USAppostileAndLegalizationForm({
   const [numberOfPages, setNumberOfPages] = useState();
   const [uploadDocValues, setUploadDocValues] = useState<any>();
   const [message, setMesage] = useState<string>("");
+  const [customerReference, setCustomerReference] = useState<any>();
+  const [additionalComments, setAdditionalComments] = useState<any>();
 
   const resetForm = () => {
     setCountry(null);
@@ -349,6 +351,8 @@ export default function USAppostileAndLegalizationForm({
               : false,
           numberOfProducts,
           numberOfPages,
+          customerReference,
+          additionalComments,
         });
         await createUSApostilleOrder(payload);
         showSnackbar("Order created successfully", "success");
@@ -362,6 +366,8 @@ export default function USAppostileAndLegalizationForm({
           docTypeId,
           numberOfProducts,
           numberOfPages,
+          customerReference,
+          additionalComments,
         });
         await updateOrder(payload.orderId, payload);
       }
@@ -666,6 +672,7 @@ export default function USAppostileAndLegalizationForm({
               disabled={disabled}
               multiline
               minRows={9}
+              onChange={(e) => setAdditionalComments(e.target.value)}
               sx={{
                 height: "100%",
                 "& .MuiOutlinedInput-root": {
@@ -691,6 +698,7 @@ export default function USAppostileAndLegalizationForm({
               label="Customer Reference"
               placeholder="Enter reference number"
               disabled={disabled}
+              onChange={(e) => setCustomerReference(e.target.value)}
             />
           </Grid>
         </Grid>

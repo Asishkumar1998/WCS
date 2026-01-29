@@ -262,7 +262,7 @@ export default function OrdersPage() {
 
   const toggleExpand = (id: number) => {
     setExpanded((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
 
@@ -330,15 +330,15 @@ export default function OrdersPage() {
     };
 
     const countryMapById = Object.fromEntries(
-      countries.map((c) => [c.countryId, c])
+      countries.map((c) => [c.countryId, c]),
     );
 
     const stopMapById = Object.fromEntries(
-      stops.map((s: any) => [s.stopId, s])
+      stops.map((s: any) => [s.stopId, s]),
     );
 
     const docTypeMapById = Object.fromEntries(
-      docTypes.map((d: any) => [d.lookupId, d])
+      docTypes.map((d: any) => [d.lookupId, d]),
     );
 
     const payload = await buildPrintCoverPayload(
@@ -346,7 +346,7 @@ export default function OrdersPage() {
       countryMapById,
       stopMapById,
       docTypeMapById,
-      userData
+      userData,
     );
 
     await generatePDF(payload, "download");
@@ -386,7 +386,7 @@ export default function OrdersPage() {
         }
         return acc;
       },
-      {}
+      {},
     );
 
     if (userId) {
@@ -419,7 +419,7 @@ export default function OrdersPage() {
   };
 
   const handleRowsPerPageChange = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setFilters((prev) => ({
       ...prev,
@@ -437,7 +437,7 @@ export default function OrdersPage() {
         }
         return acc;
       },
-      {}
+      {},
     );
 
     if (userId) {
@@ -585,8 +585,8 @@ export default function OrdersPage() {
                 filters.countryTypeId === 501
                   ? "Hague"
                   : filters.countryTypeId === 502
-                  ? "Non Hague"
-                  : ""
+                    ? "Non Hague"
+                    : ""
               }
               onChange={(val) =>
                 setFilters({
@@ -798,7 +798,7 @@ export default function OrdersPage() {
                       viewTrackDetails(
                         e,
                         order.orderId,
-                        order.docs.map((d) => d.docId)
+                        order.docs.map((d) => d.docId),
                       );
                     }}
                     size="small"
@@ -813,7 +813,7 @@ export default function OrdersPage() {
                       viewAttachments(
                         e,
                         order.orderId,
-                        order.docs.map((d) => d.docId)
+                        order.docs.map((d) => d.docId),
                       );
                     }}
                     size="small"
@@ -883,14 +883,14 @@ export default function OrdersPage() {
                           (c: any) =>
                             c.countryId === doc.countryId ||
                             c.id === doc.countryId ||
-                            c.value === doc.countryId
+                            c.value === doc.countryId,
                         )?.countryShortName ??
                           doc.countryShortName ??
                           ""}
                       </TableCell>
                       <TableCell>
                         {countries.find(
-                          (c: any) => c.countryId === doc.countryId
+                          (c: any) => c.countryId === doc.countryId,
                         )?.countryTypeId === 501
                           ? "Hague"
                           : "Non Hague"}
@@ -901,7 +901,13 @@ export default function OrdersPage() {
                       </TableCell>
                       <TableCell>{doc.internalReference}</TableCell>
                       <TableCell>{doc.invoiceReference}</TableCell>
-                      <TableCell>{doc.orderDate}</TableCell>
+                      <TableCell>
+                        {new Date(doc.orderCreatedAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                        })}
+                      </TableCell>
                       <TableCell>{doc.estDateOfCompletion}</TableCell>
                       <TableCell>
                         {DOC_STATES[doc.docStatusId] || doc.docStatusId}

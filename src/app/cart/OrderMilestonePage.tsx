@@ -437,6 +437,15 @@ export default function OrderMilestonePage() {
       });
       setAllDocs(flattenedDocs);
 
+      if (orderData[0]?.useUserCourier === true) {
+        setFileName(
+          flattenedDocs[0].oosShippingDetail
+            ?.slice(-1)[0]
+            ?.shippingLabel?.blobName?.split("_")
+            .pop(),
+        );
+      }
+
       if (!response) {
         console.error("No order detail returned");
         setAllDocs([]);
@@ -584,9 +593,10 @@ export default function OrderMilestonePage() {
       orderDetails.labelByMail === false &&
       orderDetails.useUserCourier === false &&
       orderDetails.pickupOrDropOff === false &&
+      orderDetails.regionId === 0 &&
       submitShipping === false
     ) {
-      showSnackbar("Please submit shipping details first.", "error");
+      showSnackbar("Please save Shipping details first.", "error");
       return;
     }
     if (!isPolicyAccepted) {
@@ -811,7 +821,9 @@ export default function OrderMilestonePage() {
         formData.append("file_0", file);
         const data = await uploadFile(formData);
         setUploadFileData(data[0]);
+        showSnackbar("Successfully Upload Return Shipping Label", "success");
       } catch (err) {
+        showSnackbar("Failed to Upload Return Shipping Label", "error");
         console.log(err);
       }
     }
@@ -996,6 +1008,28 @@ export default function OrderMilestonePage() {
                             />
                           </Box>
                         </Typography>
+                        {fileName && (
+                          <Box
+                            mt={2}
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                          >
+                            <Box textAlign="left">
+                              <Box fontWeight={500}>{fileName}</Box>
+                            </Box>
+
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                setUploadFileData("");
+                                setFileName("");
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        )}
                       </Box>
                     </Box>
                   )}
