@@ -870,31 +870,33 @@ export default function OrderMilestonePage() {
                 //   pr: 1,
                 // }}
                 >
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    startIcon={<AddCircleOutlineIcon />}
-                    onClick={() =>
-                      (window.location.href = `/orders/new/${service}`)
-                    }
-                    sx={{
-                      borderRadius: 0,
-                      mb: 3,
-                      height: 48,
-                      textTransform: "none",
-                      fontWeight: 600,
-                      borderWidth: 2,
-                      borderColor: "primary.main",
-                      color: "primary.main",
-                      backgroundColor: "#f5f9ff",
-                      "&:hover": {
-                        backgroundColor: "#e3f2fd",
-                        borderColor: "primary.dark",
-                      },
-                    }}
-                  >
-                    Add More Documents
-                  </Button>
+                  {(service === "us-authentication" || service === "notary-service" || service === "dispatch-service")&& (
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      startIcon={<AddCircleOutlineIcon />}
+                      onClick={() =>
+                        (window.location.href = `/orders/new/${service}`)
+                      }
+                      sx={{
+                        borderRadius: 0,
+                        mb: 3,
+                        height: 48,
+                        textTransform: "none",
+                        fontWeight: 600,
+                        borderWidth: 2,
+                        borderColor: "primary.main",
+                        color: "primary.main",
+                        backgroundColor: "#f5f9ff",
+                        "&:hover": {
+                          backgroundColor: "#e3f2fd",
+                          borderColor: "primary.dark",
+                        },
+                      }}
+                    >
+                      Add More Documents
+                    </Button>
+                  )}
 
                   {allDocs.map((doc: any, docIndex: number) => (
                     <Card
@@ -968,6 +970,7 @@ export default function OrderMilestonePage() {
                               alignItems: "center",
                               gap: 2,
                               backgroundColor: "#f9fafb",
+                              mb: 1
                             }}
                           >
                             <Box
@@ -1093,16 +1096,14 @@ export default function OrderMilestonePage() {
                                 />
                               </Grid>
 
-                              <Grid
-                                size={{ xs: 6 }}
-                              >
+                              <Grid size={{ xs: 6 }}>
                                 <List dense disablePadding>
                                   {doc.instructionsList.map(
                                     (i: any, index: number) => (
                                       <ListItem
                                         key={index}
                                         disablePadding
-                                        sx={{ py: 0.5 }}
+                                        sx={{ py: 0.5, px: 1 }}
                                       >
                                         <ListItemText
                                           primaryTypographyProps={{
@@ -1322,44 +1323,55 @@ export default function OrderMilestonePage() {
                             }));
                             handleShippingOptionChange(e.target.value);
                           }}
+                          sx={{display: "flex", justifyContent: "space-between"}}
                         >
-                          <FormControlLabel
-                            value="courier"
-                            control={
-                              <Radio
-                                size="small"
-                                onClick={() => {
-                                  setChecked((prev) => ({
-                                    ...prev,
-                                    option: "courier",
-                                  }));
-                                  handleShippingOptionChange("courier");
-                                  setOpenDialog(true); // ✅ ALWAYS opens
-                                }}
-                              />
-                            }
-                            label="Create Return Label"
-                          />
-                          <FormControlLabel
-                            value="eCopy"
-                            control={<Radio size="small" />}
-                            label="E-Copy Only"
-                          />
-                          <FormControlLabel
-                            value="upload"
-                            control={<Radio size="small" />}
-                            label="Upload Return Label"
-                          />
-                          <FormControlLabel
-                            value="pickup"
-                            control={<Radio size="small" />}
-                            label="Pickup"
-                          />
-                          <FormControlLabel
-                            value="mail"
-                            control={<Radio size="small" />}
-                            label="Enclose Label by mail"
-                          />
+                          <Grid size={{ xs: 6 }}>
+                            <FormControlLabel
+                              value="courier"
+                              control={
+                                <Radio
+                                  size="small"
+                                  onClick={() => {
+                                    setChecked((prev) => ({
+                                      ...prev,
+                                      option: "courier",
+                                    }));
+                                    handleShippingOptionChange("courier");
+                                    setOpenDialog(true); // ✅ ALWAYS opens
+                                  }}
+                                />
+                              }
+                              label="Create Return Label"
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 6 }}>
+                            <FormControlLabel
+                              value="eCopy"
+                              control={<Radio size="small" />}
+                              label="E-Copy Only"
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 6 }}>
+                            <FormControlLabel
+                              value="upload"
+                              control={<Radio size="small" />}
+                              label="Upload Return Label"
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 6 }}>
+                            <FormControlLabel
+                              value="pickup"
+                              control={<Radio size="small" />}
+                              label="Pickup"
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 6 }}>
+                            <FormControlLabel
+                              value="mail"
+                              control={<Radio size="small" />}
+                              label="Enclose Label by mail"
+                            />
+                          </Grid>
                         </RadioGroup>
 
                         {/* Collapsible Content */}
@@ -1541,7 +1553,7 @@ export default function OrderMilestonePage() {
                         <Typography
                           variant="subtitle2"
                           fontWeight={600}
-                          color="white"
+                          color="black"
                         >
                           Order Summary
                         </Typography>
@@ -1571,7 +1583,7 @@ export default function OrderMilestonePage() {
                         <Typography
                           variant="subtitle2"
                           fontWeight={600}
-                          color="wHite"
+                          color="black"
                         >
                           Billing Information
                         </Typography>
@@ -1839,6 +1851,7 @@ export default function OrderMilestonePage() {
               onClose={() => {
                 setOpenDialog(false);
                 setForm(initialForm);
+                setAddressErrors({});
               }}
               title="Add New WCS Courier Address"
               type="custom"

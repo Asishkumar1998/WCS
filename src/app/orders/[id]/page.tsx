@@ -141,8 +141,8 @@ interface Filters {
   orderId: string;
   docId: string;
   docTypeId: number | null;
-  customerRef: string;
-  po: string;
+  internalReference: string;
+  invoiceReference: string;
   countryId: number | null;
   countryTypeId: number | null;
   orderStatusId: number | null;
@@ -201,8 +201,8 @@ export default function OrdersPage() {
     orderId: "",
     docId: "",
     docTypeId: null,
-    customerRef: "",
-    po: "",
+    internalReference: "",
+    invoiceReference: "",
     countryId: null,
     countryTypeId: null,
     orderStatusId: null,
@@ -545,11 +545,11 @@ export default function OrdersPage() {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <InputField
               label="Customer Reference"
-              value={filters.customerRef}
+              value={filters.internalReference}
               onChange={(e) =>
                 setFilters({
                   ...filters,
-                  customerRef: (e.target as HTMLInputElement).value,
+                  internalReference: (e.target as HTMLInputElement).value,
                 })
               }
             />
@@ -558,11 +558,11 @@ export default function OrdersPage() {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <InputField
               label="PO#"
-              value={filters.po}
+              value={filters.invoiceReference}
               onChange={(e) =>
                 setFilters({
                   ...filters,
-                  po: (e.target as HTMLInputElement).value,
+                  invoiceReference: (e.target as HTMLInputElement).value,
                 })
               }
             />
@@ -652,8 +652,8 @@ export default function OrdersPage() {
                 orderId: "",
                 docId: "",
                 docTypeId: null,
-                customerRef: "",
-                po: "",
+                internalReference: "",
+                invoiceReference: "",
                 countryId: null,
                 countryTypeId: null,
                 orderStatusId: null,
@@ -742,8 +742,8 @@ export default function OrdersPage() {
                 orderId: "",
                 docId: "",
                 docTypeId: null,
-                customerRef: "",
-                po: "",
+                internalReference: "",
+                invoiceReference: "",
                 countryId: null,
                 countryTypeId: null,
                 orderStatusId: null,
