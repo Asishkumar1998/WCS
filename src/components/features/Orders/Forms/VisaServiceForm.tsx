@@ -114,10 +114,10 @@ export default function VisaServiceForm() {
   const { showSnackbar } = useSnackbar();
   const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
   const [showCartConflict, setShowCartConflict] = useState(false);
-  const [checkingCart, setCheckingCart] = useState(true);
   const [uploadedDocumentId, setUploadedDocumentId] = useState();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [message, setMessage] = useState<string>("");
+  const [loader, setLoader] = useState<boolean>(false);
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -133,6 +133,9 @@ export default function VisaServiceForm() {
 
   const init = async () => {
     try {
+      setLoader(true);
+      setMessage("Checking for existing order");
+
       const visaResponse = await getLookup({ lookupType: "TypeOfVisa" });
       setVisaType(visaResponse);
 
@@ -158,7 +161,7 @@ export default function VisaServiceForm() {
         setShowCartConflict(true);
       }
     } finally {
-      setCheckingCart(false);
+      setLoader(false);
     }
   };
 
@@ -290,7 +293,8 @@ export default function VisaServiceForm() {
       return;
     }
 
-    setIsSubmitting(true);
+    setLoader(true);
+    setMessage("Processing Checkout...");
     try {
       const payload = buildVisaPayload({
         customerId: customerId,
@@ -314,13 +318,9 @@ export default function VisaServiceForm() {
     } catch (error) {
       showSnackbar("Failed to add document to cart", "error");
     } finally {
-      setIsSubmitting(false);
+      setLoader(false);
     }
   };
-
-  if (checkingCart) {
-    return null;
-  }
 
   return (
     <>
@@ -357,7 +357,7 @@ export default function VisaServiceForm() {
           </Button>
         </DialogActions>
       </Dialog>
-      <OverlayLoader open={isSubmitting} message="Processing Checkout..." />
+      <OverlayLoader open={loader} message={message} />
       <FormLayout title="Visa Service" onProceed={submitOrder}>
         {/* Destination Country */}
         <Grid size={{ xs: 12, sm: 6 }}>

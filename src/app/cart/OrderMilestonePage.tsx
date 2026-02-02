@@ -607,34 +607,6 @@ export default function OrderMilestonePage() {
       showSnackbar("Please select payment type", "error");
       return;
     }
-    // if (paymentType === "card") {
-    //   const expiryValidationError = validateExpiry(card.expirationDate);
-
-    //   if (!card.cardHolderName) {
-    //     showSnackbar("Cardholder name is required", "error");
-    //     return;
-    //   }
-
-    //   if (!card.cardNumber || card.cardNumber.length < 12) {
-    //     showSnackbar("Enter a valid card number", "error");
-    //     return;
-    //   }
-
-    //   if (expiryValidationError) {
-    //     setExpiryError(expiryValidationError);
-    //     showSnackbar(expiryValidationError, "error");
-    //     return;
-    //   }
-
-    //   if (
-    //     !card.cardCode ||
-    //     card.cardCode.length < 3 ||
-    //     card.cardCode.length > 5
-    //   ) {
-    //     showSnackbar("Enter a valid CVV", "error");
-    //     return;
-    //   }
-    // }
     if (paymentType === "card") {
       const nameErr = validateName(card.cardHolderName);
       const numErr = validateCardNumber(card.cardNumber);
@@ -694,9 +666,12 @@ export default function OrderMilestonePage() {
           shippingAddressId: customer.shippingAddressId,
         });
       }
-      if (response)
+      if (response.success != false)
         window.location.href = `/confirmation?orderId=${orderDetails.orderId}`;
-      else showSnackbar("Error in Payment", "error");
+      else {
+        console.log(response);
+        showSnackbar(`${response.message}`, "error");
+      }
     } catch (e) {
       showSnackbar("Payment failed", "error");
       console.log(e);
@@ -870,7 +845,9 @@ export default function OrderMilestonePage() {
                 //   pr: 1,
                 // }}
                 >
-                  {(service === "us-authentication" || service === "notary-service" || service === "dispatch-service")&& (
+                  {(service === "us-authentication" ||
+                    service === "notary-service" ||
+                    service === "dispatch-service") && (
                     <Button
                       variant="outlined"
                       fullWidth
@@ -970,7 +947,7 @@ export default function OrderMilestonePage() {
                               alignItems: "center",
                               gap: 2,
                               backgroundColor: "#f9fafb",
-                              mb: 1
+                              mb: 1,
                             }}
                           >
                             <Box
@@ -1323,7 +1300,10 @@ export default function OrderMilestonePage() {
                             }));
                             handleShippingOptionChange(e.target.value);
                           }}
-                          sx={{display: "flex", justifyContent: "space-between"}}
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
                         >
                           <Grid size={{ xs: 6 }}>
                             <FormControlLabel
@@ -2079,6 +2059,35 @@ export default function OrderMilestonePage() {
                       value={form.phoneNumber}
                       error={Boolean(addressErrors.phoneNumber)}
                       helperText={addressErrors.phoneNumber}
+                      inputProps={{
+                        inputMode: "tel",
+                      }}
+                      onKeyDown={(e) => {
+                        const allowedControlKeys = [
+                          "Backspace",
+                          "Delete",
+                          "ArrowLeft",
+                          "ArrowRight",
+                          "Tab",
+                          "Home",
+                          "End",
+                        ];
+
+                        const allowedCharRegex = /^[0-9+()]$/;
+
+                        if (allowedControlKeys.includes(e.key)) return;
+
+                        if (!allowedCharRegex.test(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onPaste={(e) => {
+                        const pastedText = e.clipboardData.getData("text");
+
+                        if (!/^[0-9+()]*$/.test(pastedText)) {
+                          e.preventDefault();
+                        }
+                      }}
                       onChange={(e) => {
                         handleChange("phoneNumber", e.target.value);
                         setAddressErrors((prev) => ({

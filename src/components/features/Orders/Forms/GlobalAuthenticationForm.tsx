@@ -40,7 +40,8 @@ export default function GlobalAuthenticationForm() {
   const { showSnackbar } = useSnackbar();
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loader, setLoader] = useState(false);
+  const [loaderMessage, setLoaderMessage] = useState<string>("");
 
   useEffect(() => {
     const auth = getAuth();
@@ -52,18 +53,27 @@ export default function GlobalAuthenticationForm() {
   }, []);
 
   const init = async () => {
-    const basePayload = CART_SERVICE_MAP["global-authentication"];
-    if (!basePayload) {
-      return <div>Invalid service selected.</div>;
-    }
-    const payload = {
-      userId: userId,
-      ...basePayload,
-    };
-    const orderId = await getOrderIdOfCart(payload);
-    if (orderId) {
-      setExistingOrderId(orderId);
-      setShowCartConflict(true);
+    try {
+      setLoader(true);
+      setLoaderMessage("Checking for an existing order");
+      const basePayload = CART_SERVICE_MAP["global-authentication"];
+      if (!basePayload) {
+        return <div>Invalid service selected.</div>;
+      }
+      const payload = {
+        userId: userId,
+        ...basePayload,
+      };
+      const orderId = await getOrderIdOfCart(payload);
+      if (orderId) {
+        setExistingOrderId(orderId);
+        setShowCartConflict(true);
+      }
+    } catch (error) {
+      showSnackbar("Failed to load existing order", "error");
+    } finally {
+      setLoader(false);
+      setLoaderMessage("");
     }
   };
 
@@ -180,7 +190,8 @@ export default function GlobalAuthenticationForm() {
       return;
     }
 
-    setIsSubmitting(true);
+    setLoader(true);
+    setLoaderMessage("Processing Checkout...");
 
     try {
       const payload = {
@@ -202,7 +213,8 @@ export default function GlobalAuthenticationForm() {
       showSnackbar("Failed to add document to cart", "error");
       console.error(error);
     } finally {
-      setIsSubmitting(false);
+      setLoader(false);
+      setLoaderMessage("");
     }
   };
 
@@ -257,7 +269,7 @@ export default function GlobalAuthenticationForm() {
           </Button>
         </DialogActions>
       </Dialog>
-      <OverlayLoader open={isSubmitting} message="Processing Checkout..." />
+      <OverlayLoader open={loader} message={loaderMessage} />
       <FormLayout title="Global Authentication" onProceed={handleSubmit}>
         {/* Origin + Destination */}
         <Grid size={{ xs: 12, sm: 6 }}>

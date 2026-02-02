@@ -46,7 +46,8 @@ export default function TranslationServiceForm() {
   const [basePayload, setBasePayload] = useState<any>(null);
   const [showCartConflict, setShowCartConflict] = useState(false);
   const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loader, setLoader] = useState(false);
+  const [loaderMessage, setLoaderMessage] = useState<string>("");
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -128,7 +129,8 @@ export default function TranslationServiceForm() {
     ) {
       showSnackbar("Please complete all required fields", "error");
     } else {
-      setIsSubmitting(true);
+      setLoader(true);
+      setLoaderMessage("Processing Checkout...");
       try {
         const payload = buildTranslationPayload({
           originalLangId,
@@ -143,7 +145,8 @@ export default function TranslationServiceForm() {
         showSnackbar("Failed to submit order", "error");
         console.error(error);
       } finally {
-        setIsSubmitting(false);
+        setLoader(false);
+        setLoaderMessage("");
       }
     }
   };
@@ -151,6 +154,8 @@ export default function TranslationServiceForm() {
   // Get the previous cart order details.
   const getCartOrder = async () => {
     try {
+      setLoader(true);
+      setLoaderMessage("Checking for an existing order");
       const basePayload = CART_SERVICE_MAP["translation-service"];
       if (!basePayload) {
         return <div>Invalid service selected.</div>;
@@ -171,6 +176,9 @@ export default function TranslationServiceForm() {
       }
     } catch (error) {
       console.error("Error in getCartOrder:", error);
+    }finally {
+      setLoader(false);
+      setLoaderMessage("");
     }
   };
 
@@ -215,7 +223,7 @@ export default function TranslationServiceForm() {
           </Button>
         </DialogActions>
       </Dialog>
-      <OverlayLoader open={isSubmitting} message="Processing Checkout..." />
+      <OverlayLoader open={loader} message={loaderMessage} />
       <FormLayout title="Translation Service" onProceed={submitOrder}>
         {/* Original + Translated Language */}
         <Grid size={{ xs: 12, sm: 6 }}>
