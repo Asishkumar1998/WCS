@@ -366,6 +366,7 @@ export default function OrderMilestonePage() {
       await deleteDoc(docToDelete);
       if (allDocs.length == 1) {
         await deleteCartOrder(orderDetails.orderId);
+        setOrderInCart(false);
       }
       showSnackbar("Document deleted successfully", "success");
       getCartOrder();

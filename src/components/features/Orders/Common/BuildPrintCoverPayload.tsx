@@ -18,7 +18,7 @@ export const buildPrintCoverPayload = async (
   userData: any
 ) => {
   const docs = order?.dockets?.flatMap((d: any) => d.docs ?? []) ?? [];
-  
+
   let region: any = undefined;
   if (order.regionId != 0) {
     const regionResponse = await getRegionAddress(order.regionNote);
@@ -89,7 +89,7 @@ export const buildPrintCoverPayload = async (
       isScan: doc.isScan,
       isPostScan: doc.isPostScan,
 
-      internalReference: doc.internalReference,
+      internalReference: order.orderType == 1102 ? doc.visa[0].customerReference : doc.internalReference,
       invoiceReference: doc.invoiceReference,
 
       stops:

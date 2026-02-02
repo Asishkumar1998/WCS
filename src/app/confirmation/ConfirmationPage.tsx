@@ -361,7 +361,7 @@ const OrderConfirmation = () => {
                         Contact: {doc.contactNo}
                       </Typography>
                       <Typography variant="body2">
-                        Reference: {doc.internalReference || "-"}
+                        Reference: {allOrders[0].orderType === 1102 ? doc.visa[0].customerReference :  doc.internalReference || "-"}
                       </Typography>
                     </Box>
                   </Box>
