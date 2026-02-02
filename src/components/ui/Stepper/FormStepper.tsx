@@ -29,19 +29,38 @@ interface StatusStepperProps {
 }
 
 // ===== Custom Connector =====
+// const CustomConnector = styled(StepConnector)(({ theme }) => ({
+//   [`&.${stepConnectorClasses.alternativeLabel}`]: { top: 22 },
+//   [`& .${stepConnectorClasses.line}`]: {
+//     height: 3,
+//     border: 0,
+//     backgroundColor: theme.palette.divider,
+//     borderRadius: 1,
+//   },
+//   [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line}`]: {
+//     backgroundColor: theme.palette.primary.main,
+//   },
+//   [`&.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
+//     backgroundColor: theme.palette.success.main,
+//   },
+// }));
 const CustomConnector = styled(StepConnector)(({ theme }) => ({
-  [`&.${stepConnectorClasses.alternativeLabel}`]: { top: 22 },
+  [`&.${stepConnectorClasses.alternativeLabel}`]: {
+    top: 22,
+  },
+  [`&.${stepConnectorClasses.vertical}`]: {
+    marginLeft: 16,
+  },
   [`& .${stepConnectorClasses.line}`]: {
-    height: 3,
-    border: 0,
-    backgroundColor: theme.palette.divider,
-    borderRadius: 1,
+    borderColor: theme.palette.divider,
+    borderLeftWidth: 3,
+    minHeight: 24,
   },
   [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line}`]: {
-    backgroundColor: theme.palette.primary.main,
+    borderColor: theme.palette.primary.main,
   },
   [`&.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
-    backgroundColor: theme.palette.success.main,
+    borderColor: theme.palette.success.main,
   },
 }));
 
@@ -52,8 +71,8 @@ const StepIconRoot = styled("div")<{
   backgroundColor: ownerState.active
     ? theme.palette.primary.main
     : ownerState.completed
-    ? theme.palette.success.main
-    : theme.palette.grey[300],
+      ? theme.palette.success.main
+      : theme.palette.grey[300],
   color: "#fff",
   display: "flex",
   borderRadius: "50%",
@@ -117,9 +136,10 @@ export default function StatusStepper({
 
       {/* Stepper */}
       <Stepper
-        alternativeLabel
+        // alternativeLabel
         activeStep={activeStep}
         connector={<CustomConnector />}
+        orientation="vertical"
       >
         {steps.map((step, idx) => (
           <Step key={idx}>
