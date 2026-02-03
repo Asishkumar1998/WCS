@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import ValidatedFileUpload from "./ValidatedFileUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
+import React from "react";
 
 const staticBorderSx = {
   "& .MuiOutlinedInput-root": {
@@ -21,6 +22,76 @@ const staticBorderSx = {
     },
   },
 };
+
+const UploadInputContent = ({
+  fileName,
+  onSelectFile,
+  onRemoveFile,
+}: {
+  fileName?: string;
+  onSelectFile?: (file: File | null) => void;
+  onRemoveFile?: () => void;
+}) => (
+  <Box
+    sx={{
+      px: 2,
+      py: 1.5,
+      display: "flex",
+      flexDirection: "column",
+      gap: 1.5,
+      borderRadius: "8px",
+      width: "100%",
+    }}
+  >
+    <Box sx={{ mb: 1 }}>
+      <ValidatedFileUpload
+        label="Upload File"
+        fileNameProp={fileName}
+        onChange={onSelectFile}
+      />
+      {fileName && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            px: 1,
+            py: 0.5,
+            border: "1px solid",
+            borderColor: "divider",
+            borderRadius: 1,
+            fontSize: 12,
+            mt: 1,
+          }}
+        >
+          <Box>
+            <Box fontWeight={500}>{fileName}</Box>
+          </Box>
+
+          <IconButton size="small" onClick={onRemoveFile}>
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      )}
+    </Box>
+  </Box>
+);
+
+const UploadInputComponent = React.forwardRef<
+  HTMLDivElement,
+  {
+    fileName?: string;
+    onSelectFile?: (file: File | null) => void;
+    onRemoveFile?: () => void;
+  }
+>(({ fileName, onSelectFile, onRemoveFile }, _ref) => (
+  <UploadInputContent
+    fileName={fileName}
+    onSelectFile={onSelectFile}
+    onRemoveFile={onRemoveFile}
+  />
+));
+UploadInputComponent.displayName = "UploadInputComponent";
 
 export const FileUploadBox = ({
   label,
@@ -61,51 +132,12 @@ export const FileUploadBox = ({
       <OutlinedInput
         notched
         label={label}
-        inputComponent={() => (
-          <Box
-            sx={{
-              px: 2,
-              py: 1.5,
-              display: "flex",
-              flexDirection: "column",
-              gap: 1.5,
-              borderRadius: "8px",
-              width: "100%",
-            }}
-          >
-            <Box sx={{ mb: 1 }}>
-              <ValidatedFileUpload
-                label="Upload File"
-                fileNameProp={fileName}
-                onChange={handleSelectFile}
-              />
-              {fileName && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    px: 1,
-                    py: 0.5,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    borderRadius: 1,
-                    fontSize: 12,
-                    mt: 1,
-                  }}
-                >
-                  <Box>
-                    <Box fontWeight={500}>{fileName}</Box>
-                  </Box>
-
-                  <IconButton size="small" onClick={removeFile}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              )}
-            </Box>
-          </Box>
-        )}
+        inputComponent={UploadInputComponent as any}
+        inputProps={{
+          fileName,
+          onSelectFile: handleSelectFile,
+          onRemoveFile: removeFile,
+        }}
       />
     </FormControl>
   );

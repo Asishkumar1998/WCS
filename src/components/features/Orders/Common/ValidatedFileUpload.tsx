@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useId, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   TextField,
   Button,
@@ -33,7 +33,6 @@ export default function ValidatedFileUpload({
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
   const [infoMsg, setInfoMsg] = useState("");
-  const inputId = useId();
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -106,7 +105,12 @@ export default function ValidatedFileUpload({
     }
   };
 
-  const openFilePicker = () => document.getElementById(inputId)?.click();
+  const openFilePicker = () => {
+    if (!fileInputRef.current) return;
+    // Clear the value so selecting the same file still triggers onChange.
+    fileInputRef.current.value = "";
+    fileInputRef.current.click();
+  };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -143,7 +147,6 @@ export default function ValidatedFileUpload({
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
-        id={inputId}
         type="file"
         hidden
         onChange={handleInputChange}
