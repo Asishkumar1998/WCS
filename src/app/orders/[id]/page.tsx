@@ -378,6 +378,16 @@ export default function OrdersPage() {
     }
   }, [filters.pageNumber, filters.rowsPerPage, userId]);
 
+  useEffect(() => {
+    if (!data?.orders) return;
+
+    if (expanded.length === 0) {
+      setExpanded([]);
+    } else if (expanded.length > 0) {
+      setExpanded(data.orders.map((o) => o.orderId));
+    }
+  }, [data]);
+
   const displayData = async () => {
     const payload: Partial<Filters> = Object.entries(filters).reduce(
       (acc, [key, value]) => {
@@ -902,11 +912,14 @@ export default function OrdersPage() {
                       <TableCell>{doc.internalReference}</TableCell>
                       <TableCell>{doc.invoiceReference}</TableCell>
                       <TableCell>
-                        {new Date(doc.orderCreatedAt).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                        })}
+                        {new Date(doc.orderCreatedAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                          },
+                        )}
                       </TableCell>
                       <TableCell>{doc.estDateOfCompletion}</TableCell>
                       <TableCell>
