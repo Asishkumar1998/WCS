@@ -64,6 +64,12 @@ export const getBill = async (payload: any) => {
   return response.data;
 };
 
+export const getInvoice = async (sageInvoiceReferenceNumber: any) => {
+  const response = await axiosInstance.get(`invoices/GetSageInvoice?invoiceId=${sageInvoiceReferenceNumber}`);
+  return response.data;
+};
+
+
 export const postTranslationOrder = async (payload: any) => {
   const response = await axiosInstance.post("orders/", payload);
   return response.data;

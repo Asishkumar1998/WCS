@@ -34,7 +34,6 @@ export default function TrackOrderDialog({
   const [stopsByDoc, setStopsByDoc] = useState<Record<number, any[]>>({});
   const [stops, setStops] = useState<any>([]);
 
-  console.log("stopsByDoc ------> ", stopsByDoc);
   const getStops = async () => {
     const response = await getAllStops();
     setStops(response);

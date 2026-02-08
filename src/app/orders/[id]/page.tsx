@@ -40,6 +40,7 @@ import {
   exportDataToExcel,
   getBill,
   getDisplayData,
+  getInvoice,
   getLookup,
 } from "@/services/formsService";
 import { countries } from "@/dataset/countries";
@@ -52,6 +53,9 @@ import { getOrder } from "@/services/cartServices";
 import { getCustomer, getUser } from "@/services/userService";
 import Loader from "@/components/ui/Loader/Loader";
 import { getAuth } from "@/app/utils/auth";
+import { generateExactInvoicePDF } from "@/app/utils/generateInvoicePDF";
+import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
+import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 
 //Below are the Interfaces to handle the API response
 interface Instruction {
@@ -222,7 +226,10 @@ export default function OrdersPage() {
   const [stops, setStops] = useState<any>();
   const [loading, setLoading] = useState<boolean>(false);
   const [noOrderMessage, setNoOrderMessage] = useState<boolean>(false);
+  const [loader, setLoader] = useState(false);
+  const [loaderMessage, setLoaderMessage] = useState<string>("");
   const allOrderIds = data?.orders?.map((o) => o.orderId) ?? [];
+  const { showSnackbar } = useSnackbar();
   const allExpanded =
     expanded.length === allOrderIds.length && allOrderIds.length > 0;
   const { id } = useParams();
@@ -274,45 +281,54 @@ export default function OrdersPage() {
     }
   };
 
-  // const viewConversation = (e: any) => {
-  //   e.stopPropagation();
-  //   e.preventDefault();
-  //   setConversationDrawerOpen(true);
-  // };
-
-  const trackOrder = (e: any) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setTrackOpen(true);
-  };
-
   const viewInvoice = async (orderId: number) => {
-    const newTab = window.open("", "_blank");
+    const order = data?.orders.filter((o) => o.orderId === orderId);
+    if (order && order[0].sageInvoiceReferenceNumber) {
+      setLoader(true);
+      setLoaderMessage("Fetching Sage Invoice...");
 
-    if (!newTab) {
-      alert("Popup blocked! Please allow popups for this site.");
-      return;
-    }
+      try {
+        const invoiceData = await getInvoice(
+          order[0].sageInvoiceReferenceNumber,
+        );
+        generateExactInvoicePDF(
+          invoiceData,
+          order[0].sageInvoiceReferenceNumber,
+        );
+      } catch (error) {
+        showSnackbar("Failed to Fetch Invoice", "error");
+      } finally {
+        setLoader(false);
+        setLoaderMessage("");
+      }
+    } else {
+      const newTab = window.open("", "_blank");
 
-    try {
-      const base64Data = await getBill({ orderId });
-
-      // Decode base64 string to binary
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
-
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      if (!newTab) {
+        alert("Popup blocked! Please allow popups for this site.");
+        return;
       }
 
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
+      try {
+        const base64Data = await getBill({ orderId });
 
-      newTab.location.href = url;
-    } catch (err) {
-      console.error("Failed to fetch invoice PDF:", err);
-      newTab.close();
+        // Decode base64 string to binary
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+
+        newTab.location.href = url;
+      } catch (err) {
+        console.error("Failed to fetch invoice PDF:", err);
+        newTab.close();
+      }
     }
   };
 
@@ -495,466 +511,476 @@ export default function OrdersPage() {
   if (loading) return <Loader />;
 
   return (
-    <Box sx={{ p: 3, mt: "64px" }}>
-      {/* Search & Reports */}
-      <Paper
-        sx={{
-          height: "100%",
-          border: "1px solid #e0e0e0",
-          mb: 2,
-          p: 2,
-          boxShadow: 0,
-        }}
-      >
-        <Typography variant="h6" fontWeight="bold" gutterBottom>
-          Search and Reports
-        </Typography>
-
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <InputField
-              label="Order Id"
-              value={filters.orderId}
-              onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  orderId: (e.target as HTMLInputElement).value,
-                })
-              }
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <InputField
-              label="Doc Id"
-              value={filters.docId}
-              onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  docId: (e.target as HTMLInputElement).value,
-                })
-              }
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Dropdown
-              label="Select Doc Type"
-              options={DOC_TYPE_OPTIONS.map((o) => o.label)}
-              value={
-                DOC_TYPE_OPTIONS.find((o) => o.id === filters.docTypeId)
-                  ?.label ?? ""
-              }
-              onChange={(val) =>
-                setFilters({
-                  ...filters,
-                  docTypeId:
-                    DOC_TYPE_OPTIONS.find((o) => o.label === val)?.id ?? 0,
-                })
-              }
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <InputField
-              label="Customer Reference"
-              value={filters.internalReference}
-              onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  internalReference: (e.target as HTMLInputElement).value,
-                })
-              }
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <InputField
-              label="PO#"
-              value={filters.invoiceReference}
-              onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  invoiceReference: (e.target as HTMLInputElement).value,
-                })
-              }
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <CountrySelect
-              label="Select Country"
-              value={country}
-              onChange={handleCountrySelect}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Dropdown
-              label="Select Country Type"
-              options={["Hague", "Non Hague"]}
-              // display the text label in the dropdown, map it to numeric id in state
-              value={
-                filters.countryTypeId === 501
-                  ? "Hague"
-                  : filters.countryTypeId === 502
-                    ? "Non Hague"
-                    : ""
-              }
-              onChange={(val) =>
-                setFilters({
-                  ...filters,
-                  countryTypeId:
-                    val === "Hague" ? 501 : val === "Non Hague" ? 502 : 0,
-                })
-              }
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Dropdown
-              label="Select Order Status"
-              options={ORDER_STATUS_OPTIONS.map((o) => o.label)}
-              value={
-                ORDER_STATUS_OPTIONS.find((o) => o.id === filters.orderStatusId)
-                  ?.label ?? ""
-              }
-              onChange={(val) =>
-                setFilters({
-                  ...filters,
-                  orderStatusId:
-                    ORDER_STATUS_OPTIONS.find((o) => o.label === val)?.id ?? 0,
-                })
-              }
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <DateInput
-              label="From Date"
-              value={filters.fromDate}
-              onChange={(val) => setFilters({ ...filters, fromDate: val })}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <DateInput
-              label="To Date"
-              value={filters.toDate}
-              onChange={(val) => setFilters({ ...filters, toDate: val })}
-            />
-          </Grid>
-        </Grid>
-
-        {/* ✅ Buttons bottom right */}
-        <Stack direction="row" spacing={2} justifyContent="flex-end" mt={2}>
-          <Button
-            variant="contained"
-            onClick={() => {
-              filters.pageNumber = 1;
-              filters.rowsPerPage = 10;
-              displayData();
-            }}
-          >
-            Search
-          </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={() => {
-              setFilters({
-                orderId: "",
-                docId: "",
-                docTypeId: null,
-                internalReference: "",
-                invoiceReference: "",
-                countryId: null,
-                countryTypeId: null,
-                orderStatusId: null,
-                fromDate: dayjs().subtract(90, "day"),
-                toDate: dayjs(),
-                userId: Number(userId),
-                pageNumber: 1,
-                rowsPerPage: 10,
-              });
-              setCountry(null);
-            }}
-          >
-            Reset
-          </Button>
-          <Button variant="outlined" color="success" onClick={exportToExcel}>
-            Export Report to Excel
-          </Button>
-        </Stack>
-      </Paper>
-      {/* Page Header */}
-      <Grid container justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h5" fontWeight="bold">
-          My Orders
-        </Typography>
-        <Grid display="flex" flexDirection="row">
-          {data && (
-            <TablePagination
-              component="div"
-              count={data?.totalRows || 0}
-              page={filters.pageNumber - 1} // MUI is 0-based
-              onPageChange={handlePageChange}
-              rowsPerPage={filters.rowsPerPage}
-              onRowsPerPageChange={handleRowsPerPageChange}
-            />
-          )}
-          <Button
-            variant="outlined"
-            startIcon={allExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />}
-            onClick={toggleExpandAll}
-          >
-            {allExpanded ? "Collapse All" : "Expand All"}
-          </Button>
-        </Grid>
-      </Grid>
-      {noOrderMessage ? (
+    <>
+      <OverlayLoader open={loader} message={loaderMessage} />
+      <Box sx={{ p: 3, mt: "64px" }}>
+        {/* Search & Reports */}
         <Paper
-          elevation={0}
           sx={{
-            p: 6,
-            mt: 4,
-            textAlign: "center",
-            border: "1px dashed",
-            borderColor: "divider",
-            borderRadius: 3,
-            backgroundColor: "background.paper",
+            height: "100%",
+            border: "1px solid #e0e0e0",
+            mb: 2,
+            p: 2,
+            boxShadow: 0,
           }}
         >
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              mb: 2,
-              color: "text.secondary",
-            }}
-          >
-            <InboxIcon sx={{ fontSize: 56 }} />
-          </Box>
-
-          <Typography variant="h6" fontWeight={600} gutterBottom>
-            No orders match your current filters
+          <Typography variant="h6" fontWeight="bold" gutterBottom>
+            Search and Reports
           </Typography>
 
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ maxWidth: 420, mx: "auto", mb: 3 }}
-          >
-            Try changing or clearing the filters to see available orders.
-          </Typography>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <InputField
+                label="Order Id"
+                value={filters.orderId}
+                onChange={(e) =>
+                  setFilters({
+                    ...filters,
+                    orderId: (e.target as HTMLInputElement).value,
+                  })
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <InputField
+                label="Doc Id"
+                value={filters.docId}
+                onChange={(e) =>
+                  setFilters({
+                    ...filters,
+                    docId: (e.target as HTMLInputElement).value,
+                  })
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Dropdown
+                label="Select Doc Type"
+                options={DOC_TYPE_OPTIONS.map((o) => o.label)}
+                value={
+                  DOC_TYPE_OPTIONS.find((o) => o.id === filters.docTypeId)
+                    ?.label ?? ""
+                }
+                onChange={(val) =>
+                  setFilters({
+                    ...filters,
+                    docTypeId:
+                      DOC_TYPE_OPTIONS.find((o) => o.label === val)?.id ?? 0,
+                  })
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <InputField
+                label="Customer Reference"
+                value={filters.internalReference}
+                onChange={(e) =>
+                  setFilters({
+                    ...filters,
+                    internalReference: (e.target as HTMLInputElement).value,
+                  })
+                }
+              />
+            </Grid>
 
-          <Button
-            variant="outlined"
-            size="medium"
-            onClick={() => {
-              setFilters({
-                orderId: "",
-                docId: "",
-                docTypeId: null,
-                internalReference: "",
-                invoiceReference: "",
-                countryId: null,
-                countryTypeId: null,
-                orderStatusId: null,
-                fromDate: dayjs().subtract(90, "day"),
-                toDate: dayjs(),
-                userId: Number(userId),
-                pageNumber: 1,
-                rowsPerPage: 10,
-              });
-              setCountry(null);
-            }}
-          >
-            Clear Filters
-          </Button>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <InputField
+                label="PO#"
+                value={filters.invoiceReference}
+                onChange={(e) =>
+                  setFilters({
+                    ...filters,
+                    invoiceReference: (e.target as HTMLInputElement).value,
+                  })
+                }
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <CountrySelect
+                label="Select Country"
+                value={country}
+                onChange={handleCountrySelect}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Dropdown
+                label="Select Country Type"
+                options={["Hague", "Non Hague"]}
+                // display the text label in the dropdown, map it to numeric id in state
+                value={
+                  filters.countryTypeId === 501
+                    ? "Hague"
+                    : filters.countryTypeId === 502
+                      ? "Non Hague"
+                      : ""
+                }
+                onChange={(val) =>
+                  setFilters({
+                    ...filters,
+                    countryTypeId:
+                      val === "Hague" ? 501 : val === "Non Hague" ? 502 : 0,
+                  })
+                }
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Dropdown
+                label="Select Order Status"
+                options={ORDER_STATUS_OPTIONS.map((o) => o.label)}
+                value={
+                  ORDER_STATUS_OPTIONS.find(
+                    (o) => o.id === filters.orderStatusId,
+                  )?.label ?? ""
+                }
+                onChange={(val) =>
+                  setFilters({
+                    ...filters,
+                    orderStatusId:
+                      ORDER_STATUS_OPTIONS.find((o) => o.label === val)?.id ??
+                      0,
+                  })
+                }
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <DateInput
+                label="From Date"
+                value={filters.fromDate}
+                onChange={(val) => setFilters({ ...filters, fromDate: val })}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <DateInput
+                label="To Date"
+                value={filters.toDate}
+                onChange={(val) => setFilters({ ...filters, toDate: val })}
+              />
+            </Grid>
+          </Grid>
+
+          {/* ✅ Buttons bottom right */}
+          <Stack direction="row" spacing={2} justifyContent="flex-end" mt={2}>
+            <Button
+              variant="contained"
+              onClick={() => {
+                filters.pageNumber = 1;
+                filters.rowsPerPage = 10;
+                displayData();
+              }}
+            >
+              Search
+            </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={() => {
+                setFilters({
+                  orderId: "",
+                  docId: "",
+                  docTypeId: null,
+                  internalReference: "",
+                  invoiceReference: "",
+                  countryId: null,
+                  countryTypeId: null,
+                  orderStatusId: null,
+                  fromDate: dayjs().subtract(90, "day"),
+                  toDate: dayjs(),
+                  userId: Number(userId),
+                  pageNumber: 1,
+                  rowsPerPage: 10,
+                });
+                setCountry(null);
+              }}
+            >
+              Reset
+            </Button>
+            <Button variant="outlined" color="success" onClick={exportToExcel}>
+              Export Report to Excel
+            </Button>
+          </Stack>
         </Paper>
-      ) : (
-        data?.orders.map((order) => (
-          <Accordion
-            key={order.orderId}
-            expanded={expanded.includes(order.orderId)}
-            onChange={() => toggleExpand(order.orderId)}
+        {/* Page Header */}
+        <Grid
+          container
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
+        >
+          <Typography variant="h5" fontWeight="bold">
+            My Orders
+          </Typography>
+          <Grid display="flex" flexDirection="row">
+            {data && (
+              <TablePagination
+                component="div"
+                count={data?.totalRows || 0}
+                page={filters.pageNumber - 1} // MUI is 0-based
+                onPageChange={handlePageChange}
+                rowsPerPage={filters.rowsPerPage}
+                onRowsPerPageChange={handleRowsPerPageChange}
+              />
+            )}
+            <Button
+              variant="outlined"
+              startIcon={allExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />}
+              onClick={toggleExpandAll}
+            >
+              {allExpanded ? "Collapse All" : "Expand All"}
+            </Button>
+          </Grid>
+        </Grid>
+        {noOrderMessage ? (
+          <Paper
+            elevation={0}
             sx={{
-              mb: 2,
-              border: "1px solid #e0e0e0",
-              boxShadow: 0,
+              p: 6,
+              mt: 4,
+              textAlign: "center",
+              border: "1px dashed",
+              borderColor: "divider",
+              borderRadius: 3,
+              backgroundColor: "background.paper",
             }}
           >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Grid
-                container
-                alignItems="center"
-                justifyContent="space-between"
-                width="100%"
-              >
-                <Typography fontWeight="bold">
-                  Created: {dayjs(order.orderCreatedAt).format("MMM D, YYYY")} |
-                  Order ID: {order.orderId}
-                </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                mb: 2,
+                color: "text.secondary",
+              }}
+            >
+              <InboxIcon sx={{ fontSize: 56 }} />
+            </Box>
 
-                <Stack direction="row" spacing={1} flexWrap="wrap">
-                  <Button
-                    onClick={() => printCover(order.orderId)}
-                    size="small"
-                    startIcon={<PrintIcon />}
-                  >
-                    Print Cover
-                  </Button>
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      viewTrackDetails(
-                        e,
-                        order.orderId,
-                        order.docs.map((d) => d.docId),
-                      );
-                    }}
-                    size="small"
-                    startIcon={<LocalShippingIcon />}
-                  >
-                    Track Order
-                  </Button>
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      viewAttachments(
-                        e,
-                        order.orderId,
-                        order.docs.map((d) => d.docId),
-                      );
-                    }}
-                    size="small"
-                    startIcon={<AttachFileIcon />}
-                  >
-                    View Attachments
-                  </Button>
-                  <Button
-                    onClick={() => viewInvoice(order.orderId)}
-                    size="small"
-                    startIcon={<ReceiptIcon />}
-                  >
-                    View Invoice
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      router.push(`/orders/${order.orderId}/conversation`);
-                    }}
-                    size="small"
-                    startIcon={<ForumIcon />}
-                  >
-                    View Conversation
-                  </Button>
-                </Stack>
-              </Grid>
-            </AccordionSummary>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              No orders match your current filters
+            </Typography>
 
-            <AccordionDetails>
-              <Table size="small">
-                <TableHead sx={{ backgroundColor: "grey.100" }}>
-                  <TableRow>
-                    <TableCell>
-                      <strong>Doc Id</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong>Country Name</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong>Country Type</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong>Doc Type</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong>Customer Reference</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong>Invoice (PO) Ref</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong>Order Date</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong>Est. Date of Completion</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong>Order Status</strong>
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {order.docs.map((doc) => (
-                    <TableRow key={doc.docId}>
-                      <TableCell>{doc.docId}</TableCell>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ maxWidth: 420, mx: "auto", mb: 3 }}
+            >
+              Try changing or clearing the filters to see available orders.
+            </Typography>
+
+            <Button
+              variant="outlined"
+              size="medium"
+              onClick={() => {
+                setFilters({
+                  orderId: "",
+                  docId: "",
+                  docTypeId: null,
+                  internalReference: "",
+                  invoiceReference: "",
+                  countryId: null,
+                  countryTypeId: null,
+                  orderStatusId: null,
+                  fromDate: dayjs().subtract(90, "day"),
+                  toDate: dayjs(),
+                  userId: Number(userId),
+                  pageNumber: 1,
+                  rowsPerPage: 10,
+                });
+                setCountry(null);
+              }}
+            >
+              Clear Filters
+            </Button>
+          </Paper>
+        ) : (
+          data?.orders.map((order) => (
+            <Accordion
+              key={order.orderId}
+              expanded={expanded.includes(order.orderId)}
+              onChange={() => toggleExpand(order.orderId)}
+              sx={{
+                mb: 2,
+                border: "1px solid #e0e0e0",
+                boxShadow: 0,
+              }}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Grid
+                  container
+                  alignItems="center"
+                  justifyContent="space-between"
+                  width="100%"
+                >
+                  <Typography fontWeight="bold">
+                    Created: {dayjs(order.orderCreatedAt).format("MMM D, YYYY")}{" "}
+                    | Order ID: {order.orderId}
+                  </Typography>
+
+                  <Stack direction="row" spacing={1} flexWrap="wrap">
+                    <Button
+                      onClick={() => printCover(order.orderId)}
+                      size="small"
+                      startIcon={<PrintIcon />}
+                    >
+                      Print Cover
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        viewTrackDetails(
+                          e,
+                          order.orderId,
+                          order.docs.map((d) => d.docId),
+                        );
+                      }}
+                      size="small"
+                      startIcon={<LocalShippingIcon />}
+                    >
+                      Track Order
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        viewAttachments(
+                          e,
+                          order.orderId,
+                          order.docs.map((d) => d.docId),
+                        );
+                      }}
+                      size="small"
+                      startIcon={<AttachFileIcon />}
+                    >
+                      View Attachments
+                    </Button>
+                    <Button
+                      onClick={() => viewInvoice(order.orderId)}
+                      size="small"
+                      startIcon={<ReceiptIcon />}
+                    >
+                      View Invoice
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        router.push(`/orders/${order.orderId}/conversation`);
+                      }}
+                      size="small"
+                      startIcon={<ForumIcon />}
+                    >
+                      View Conversation
+                    </Button>
+                  </Stack>
+                </Grid>
+              </AccordionSummary>
+
+              <AccordionDetails>
+                <Table size="small">
+                  <TableHead sx={{ backgroundColor: "grey.100" }}>
+                    <TableRow>
                       <TableCell>
-                        {countries.find(
-                          (c: any) =>
-                            c.countryId === doc.countryId ||
-                            c.id === doc.countryId ||
-                            c.value === doc.countryId,
-                        )?.countryShortName ??
-                          doc.countryShortName ??
-                          ""}
+                        <strong>Doc Id</strong>
                       </TableCell>
                       <TableCell>
-                        {countries.find(
-                          (c: any) => c.countryId === doc.countryId,
-                        )?.countryTypeId === 501
-                          ? "Hague"
-                          : "Non Hague"}
+                        <strong>Country Name</strong>
                       </TableCell>
                       <TableCell>
-                        {DOCUMENT_CATEGORIES[doc.docCategoryId] ||
-                          doc.docCategoryId}
+                        <strong>Country Type</strong>
                       </TableCell>
-                      <TableCell>{doc.internalReference}</TableCell>
-                      <TableCell>{doc.invoiceReference}</TableCell>
                       <TableCell>
-                        {new Date(doc.orderCreatedAt).toLocaleDateString(
-                          "en-US",
-                          {
-                            year: "numeric",
-                            month: "2-digit",
-                            day: "2-digit",
-                          },
-                        )}
+                        <strong>Doc Type</strong>
                       </TableCell>
-                      <TableCell>{doc.estDateOfCompletion}</TableCell>
                       <TableCell>
-                        {DOC_STATES[doc.docStatusId] || doc.docStatusId}
+                        <strong>Customer Reference</strong>
+                      </TableCell>
+                      <TableCell>
+                        <strong>Invoice (PO) Ref</strong>
+                      </TableCell>
+                      <TableCell>
+                        <strong>Order Date</strong>
+                      </TableCell>
+                      <TableCell>
+                        <strong>Est. Date of Completion</strong>
+                      </TableCell>
+                      <TableCell>
+                        <strong>Order Status</strong>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </AccordionDetails>
-          </Accordion>
-        ))
-      )}
+                  </TableHead>
+                  <TableBody>
+                    {order.docs.map((doc) => (
+                      <TableRow key={doc.docId}>
+                        <TableCell>{doc.docId}</TableCell>
+                        <TableCell>
+                          {countries.find(
+                            (c: any) =>
+                              c.countryId === doc.countryId ||
+                              c.id === doc.countryId ||
+                              c.value === doc.countryId,
+                          )?.countryShortName ??
+                            doc.countryShortName ??
+                            ""}
+                        </TableCell>
+                        <TableCell>
+                          {countries.find(
+                            (c: any) => c.countryId === doc.countryId,
+                          )?.countryTypeId === 501
+                            ? "Hague"
+                            : "Non Hague"}
+                        </TableCell>
+                        <TableCell>
+                          {DOCUMENT_CATEGORIES[doc.docCategoryId] ||
+                            doc.docCategoryId}
+                        </TableCell>
+                        <TableCell>{doc.internalReference}</TableCell>
+                        <TableCell>{doc.invoiceReference}</TableCell>
+                        <TableCell>
+                          {new Date(doc.orderCreatedAt).toLocaleDateString(
+                            "en-US",
+                            {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                            },
+                          )}
+                        </TableCell>
+                        <TableCell>{doc.estDateOfCompletion}</TableCell>
+                        <TableCell>
+                          {DOC_STATES[doc.docStatusId] || doc.docStatusId}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </AccordionDetails>
+            </Accordion>
+          ))
+        )}
 
-      <ConversationDrawer
-        open={conversationDrawerOpen}
-        setOpen={setConversationDrawerOpen}
-      />
-      <TrackOrderDialog
-        open={trackOpen}
-        onClose={() => setTrackOpen(false)}
-        orderId={trackOpen ? selectedOrderId : null}
-        docIds={trackOpen ? selectedDocIds : []}
-        returnInstructions="Enclose Return Shipping Label by mail with documents"
-      />
-      <AttachmentsDialog
-        open={attachmentsOpen}
-        onClose={() => {
-          setAttachmentsOpen(false);
-          setSelectedOrderId(null);
-          setSelectedDocIds([]);
-        }}
-        orderId={attachmentsOpen ? selectedOrderId : null}
-        docIds={attachmentsOpen ? selectedDocIds : []}
-      />
-    </Box>
+        <ConversationDrawer
+          open={conversationDrawerOpen}
+          setOpen={setConversationDrawerOpen}
+        />
+        <TrackOrderDialog
+          open={trackOpen}
+          onClose={() => setTrackOpen(false)}
+          orderId={trackOpen ? selectedOrderId : null}
+          docIds={trackOpen ? selectedDocIds : []}
+          returnInstructions="Enclose Return Shipping Label by mail with documents"
+        />
+        <AttachmentsDialog
+          open={attachmentsOpen}
+          onClose={() => {
+            setAttachmentsOpen(false);
+            setSelectedOrderId(null);
+            setSelectedDocIds([]);
+          }}
+          orderId={attachmentsOpen ? selectedOrderId : null}
+          docIds={attachmentsOpen ? selectedDocIds : []}
+        />
+      </Box>
+    </>
   );
 }
