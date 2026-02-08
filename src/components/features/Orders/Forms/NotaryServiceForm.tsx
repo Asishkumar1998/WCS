@@ -70,6 +70,8 @@ export default function NotaryServiceForm() {
   const [formResetKey, setFormResetKey] = useState(0);
   const [uploadDocValues, setUploadDocValues] = useState<any>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [trackingNo, setTrackingNo] = useState<any>(null);
+  const [courierType, setCourierType] = useState<string | null>(null);
 
   const resetForm = () => {
     setCountry(null);
@@ -94,6 +96,9 @@ export default function NotaryServiceForm() {
   const handleDocumentUpload = async (data: any) => {
     setUploadDocValues(data);
     setNumberOfPages(data?.numPages);
+    if (data.trackingNumberNested !== "")
+      setTrackingNo(data.trackingNumberNested);
+    setCourierType(data.courierNested);
 
     const file: File | null = data?.uploadedFile;
     if (!file) return;
@@ -125,11 +130,14 @@ export default function NotaryServiceForm() {
       showSnackbar("Please Select Document", "error");
       return false;
     }
-    if(uploadDocValues.nestedSelection === null){
+    if (uploadDocValues.nestedSelection === null) {
       showSnackbar("Please Select Document Upload options", "error");
       return false;
     }
-    if(uploadDocValues.nestedSelection === "proceedWithAttached" && uploadDocValues.uploadedFile === null ){
+    if (
+      uploadDocValues.nestedSelection === "proceedWithAttached" &&
+      uploadDocValues.uploadedFile === null
+    ) {
       showSnackbar("Please Upload Document", "error");
       return false;
     }
@@ -146,11 +154,13 @@ export default function NotaryServiceForm() {
           attachment,
           numberOfPages,
           isNotary: true,
+          trackingNo,
+          courierType,
         });
         const response = await postTranslationOrder(payload);
         if (noOfNotarizedDoc != 0) {
           const docFeeId = response[0].dockets[0].docs[0].docFees.find(
-            (f: any) => f.feeAmount === 5
+            (f: any) => f.feeAmount === 5,
           ).docFeeId;
           await updateFeeQuantity(docFeeId, { quantity: noOfNotarizedDoc });
         }
@@ -164,17 +174,19 @@ export default function NotaryServiceForm() {
           customerReference,
           numberOfPages,
           isNotary: true,
+          trackingNo,
+          courierType,
         });
         const response = await updateOrder(payload.orderId, payload);
         const allDocsAfter = response[0].dockets.flatMap((d: any) => d.docs);
         const newDocs = allDocsAfter.filter(
-          (doc: any) => !existingDocIds.includes(doc.docId)
+          (doc: any) => !existingDocIds.includes(doc.docId),
         );
 
         if (noOfNotarizedDoc != 0) {
           const createdDoc = newDocs[0];
           const docFeeId = createdDoc.docFees.find(
-            (f: any) => f.feeAmount === 5
+            (f: any) => f.feeAmount === 5,
           ).docFeeId;
           await updateFeeQuantity(docFeeId, { quantity: noOfNotarizedDoc });
         }
@@ -362,7 +374,7 @@ export default function NotaryServiceForm() {
                                   setAdditionalServices((prev) =>
                                     checked
                                       ? [...prev, service]
-                                      : prev.filter((s) => s !== service)
+                                      : prev.filter((s) => s !== service),
                                   );
                                 }}
                                 disabled={disabled}

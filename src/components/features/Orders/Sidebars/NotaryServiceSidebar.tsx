@@ -31,14 +31,14 @@ export default function NotaryServiceSidebar() {
       >
         <List dense disablePadding>
           <ListItem sx={{ display: "list-item", pl: 2, mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="#1F2937" fontWeight={700}>
               This service provides only notary to the document (no apostille or
               embassy legalization).
             </Typography>
           </ListItem>
 
           <ListItem sx={{ display: "list-item", pl: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="#1F2937" fontWeight={700}>
               Document will be notarized and certified by the county clerk.
             </Typography>
           </ListItem>

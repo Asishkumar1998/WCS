@@ -53,6 +53,16 @@ export const SIDEBAR_CONTENT = {
     EMBASSY_COUNTRY: (countryName: string): SidebarContent => {
         const slug = countryName.toLowerCase().replace(/\s+/g, "-");
 
+        if(countryName === "Iraq") {
+            return SIDEBAR_CONTENT.IRAQ_DOC;
+        }
+        if(countryName === "Taiwan") {
+            return SIDEBAR_CONTENT.TAIWAN_DOC;
+        }
+        if(countryName === "Lebanon") {
+            return SIDEBAR_CONTENT.LEBANON_DOC;
+        }
+
         return {
             title: `Embassy Legalization - ${countryName}`,
             paragraphs: [
@@ -65,5 +75,40 @@ export const SIDEBAR_CONTENT = {
             sampleDoc: `/us-auth/samples/${slug}.jpg`,
         };
     },
-};
 
+    IRAQ_DOC: {
+        title: "Embassy Legalization - Iraq",
+        paragraphs: [
+            "The Embassy of Iraq requires that the document include the party and address of the party in Iraq.",
+            "For documents with multiple pages, they must be numbered in the following format: 1 of 3; 2 of 3; 3 of 3, in order for the embassy to accept this as one document.",
+            "Product origin must be in the U.S.",
+            "The embassy requires all supporting documents to legalize/process shipping documents: Bill of Lading, Inspection Certificate, and Insurance Policy (copies only).",
+            "If a commercial invoice also needs to be legalized, it must be legalized together with its certificate of origin, with one legalization stamp.",
+        ],
+        flag: "/us-auth/flags/iraq.jpg",
+        sampleDoc: "/us-auth/samples/iraq.jpg",
+    },
+    TAIWAN_DOC: {
+        title: "Embassy Legalization - Taiwan",
+        paragraphs: [
+            "The Embassy of Taiwan (Taipei Economic and Cultural Representative Office-TECRO) requires 2 documents for legalization of documents:",
+            "1. A Permission Letter signed by a representative of the Company authorizing WCS to submit the documents for legalization",
+            "NOTE:  The signature on this letter must be notarized",
+            "2. A copy of the Personal Identification of a person who signs the Permission Letter  Once provided to the Embassy, these documents do not have to be renewed for two (2) years",
+            "NOTE:  The Permission Letter and Personal Identification must be from the state of origin of the document",
+        ],
+        flag: "/us-auth/flags/taiwan.jpg",
+        sampleDoc: "/us-auth/samples/taiwan.jpg",
+    },
+    LEBANON_DOC: {
+        title: "Embassy Legalization - Lebanon",
+        paragraphs: [
+            "Consulate requires a Power of Attorney signed by a person in the submitting organization",
+            "Key Distinction:  The POA must be an internal document authorizing the individual to act for the Company in the submission of the document for legalization.",
+            "And, the person authorized under the POA must submit his/her personal identification (copy of driver’s license)",
+        ],
+        flag: "/us-auth/flags/lebanon.jpg",
+        sampleDoc: "/us-auth/samples/lebanon.jpg",
+    },
+
+};

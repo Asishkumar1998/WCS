@@ -61,6 +61,8 @@ export default function DispatchServiceForm() {
   const { showSnackbar } = useSnackbar();
   const lastUploadedRef = useRef<string | null>(null);
   const [uploadDocValues, setUploadDocValues] = useState<any>();
+  const [trackingNo, setTrackingNo] = useState<any>(null);
+  const [courierType, setCourierType] = useState<string | null>(null);
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -89,6 +91,9 @@ export default function DispatchServiceForm() {
   const handleDocumentUpload = async (data: any) => {
     setUploadDocValues(data);
     setNumberOfPages(data?.numberOfPages);
+    if (data.trackingNumberNested !== "")
+      setTrackingNo(data.trackingNumberNested);
+    setCourierType(data.courierNested);
     const file = data?.uploadedFile;
     if (!file) return;
 
@@ -144,6 +149,8 @@ export default function DispatchServiceForm() {
           attachment,
           numberOfPages,
           isNotary: false,
+          trackingNo,
+          courierType,
         });
         await postTranslationOrder(payload);
       } else {
@@ -156,6 +163,8 @@ export default function DispatchServiceForm() {
           customerReference,
           numberOfPages,
           isNotary: false,
+          trackingNo,
+          courierType,
         });
         await updateOrder(payload.orderId, payload);
       }

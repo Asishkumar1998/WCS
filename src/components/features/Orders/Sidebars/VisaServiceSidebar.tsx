@@ -29,7 +29,7 @@ export default function VisaServiceSidebar() {
       >
         <List dense disablePadding>
           <ListItem sx={{ display: "list-item", pl: 2, mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="#1F2937" fontWeight={700}>
               A properly issued business visa permits you to participate in
               foreign markets. Quite different from a tourist visa, the business
               visa allows a wide range of activities that are otherwise
@@ -42,7 +42,7 @@ export default function VisaServiceSidebar() {
           </ListItem>
 
           <ListItem sx={{ display: "list-item", pl: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="#1F2937" fontWeight={700}>
               Requirements will vary from one country to another, so you can
               count on WCS, as the subject-matter experts. While US passport
               holders are exempt from needing business visas in most European

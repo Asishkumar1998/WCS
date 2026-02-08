@@ -64,6 +64,8 @@ import dayjs from "dayjs";
 import { useSearchParams } from "next/navigation";
 import { CART_SERVICE_MAP } from "@/constants/serviceMap";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
+import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import { getCustomer, getUser } from "@/services/userService";
 import ValidatedFileUpload from "@/components/features/Orders/Common/ValidatedFileUpload";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
@@ -236,6 +238,12 @@ export default function OrderMilestonePage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [allRegions, setAllRegions] = useState<any>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [expanded, setExpanded] = useState<number[]>([]);
+  const hasInitializedExpanded = useRef(false);
+
+  const allDocIds = allDocs.map((doc: any) => doc.docId);
+  const allExpanded =
+    expanded.length === allDocIds.length && allDocIds.length > 0;
 
   useEffect(() => {
     const auth = getAuth();
@@ -485,6 +493,13 @@ export default function OrderMilestonePage() {
       getRegions();
     }
   }, [customerId]);
+
+  useEffect(() => {
+    if (!hasInitializedExpanded.current && allDocIds.length > 0) {
+      setExpanded(allDocIds);
+      hasInitializedExpanded.current = true;
+    }
+  }, [allDocIds]);
 
   useEffect(() => {
     setInvoiceReference(orderDetails?.invoiceReference);
@@ -827,6 +842,22 @@ export default function OrderMilestonePage() {
   const validateCVV = (value: string) =>
     !value || value.length < 3 || value.length > 5 ? "Enter a valid CVV" : "";
 
+  const toggleExpand = (docId: number) => {
+    setExpanded((prev) =>
+      prev.includes(docId)
+        ? prev.filter((id) => id !== docId)
+        : [...prev, docId],
+    );
+  };
+
+  const toggleExpandAll = () => {
+    if (allExpanded) {
+      setExpanded([]);
+    } else {
+      setExpanded(allDocIds);
+    }
+  };
+
   if (loading) return <Loader />;
 
   return (
@@ -876,6 +907,25 @@ export default function OrderMilestonePage() {
                     </Button>
                   )}
 
+                  <Grid
+                    sx={{
+                      display: "flex",
+                      width: "100%",
+                      justifyContent: "end",
+                      mb: 2,
+                    }}
+                  >
+                    <Button
+                      variant="outlined"
+                      startIcon={
+                        allExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />
+                      }
+                      onClick={toggleExpandAll}
+                    >
+                      {allExpanded ? "Collapse All" : "Expand All"}
+                    </Button>
+                  </Grid>
+
                   {allDocs.map((doc: any, docIndex: number) => (
                     <Card
                       key={doc.docId}
@@ -891,7 +941,11 @@ export default function OrderMilestonePage() {
                         },
                       }}
                     >
-                      <Accordion defaultExpanded sx={{ borderRadius: 0 }}>
+                      <Accordion
+                        expanded={expanded.includes(doc.docId)}
+                        onChange={() => toggleExpand(doc.docId)}
+                        sx={{ borderRadius: 0 }}
+                      >
                         <AccordionSummary
                           expandIcon={<ExpandMoreIcon />}
                           sx={{ bgcolor: "#e9e7e7" }}
@@ -967,7 +1021,7 @@ export default function OrderMilestonePage() {
                               />
                             </Box>
 
-                            <Box sx={{ mb: 2 }}>
+                            <Box>
                               <Typography
                                 variant="body1"
                                 fontWeight="600"
@@ -975,8 +1029,8 @@ export default function OrderMilestonePage() {
                                 sx={{ lineHeight: 1.4 }}
                               >
                                 {doc.isSoftCopyGiven === 651
-                                  ? "Proceeding with attached documents"
-                                  : "Original documents will be mailed to WCS office"}
+                                  ? "PROCESS ATTACHED DOCUMENTS"
+                                  : "MAIL ORIGINAL DOCUMENTS TO WCS OFFICE"}
                               </Typography>
                               {doc.isSoftCopyGiven == 651 &&
                               service == "us-authentication" &&
@@ -1076,7 +1130,7 @@ export default function OrderMilestonePage() {
 
                               <Grid size={{ xs: 6 }}>
                                 <List dense disablePadding>
-                                  {doc.instructionsList.map(
+                                  {/* {doc.instructionsList.map(
                                     (i: any, index: number) => (
                                       <ListItem
                                         key={index}
@@ -1093,7 +1147,7 @@ export default function OrderMilestonePage() {
                                         />
                                       </ListItem>
                                     ),
-                                  )}
+                                  )} */}
                                   {doc.docFees?.some(
                                     (f: any) => f.feeTypeId === 17,
                                   ) && (
@@ -1144,7 +1198,7 @@ export default function OrderMilestonePage() {
                                   <Divider />
                                   <ListItem>
                                     <ListItemText
-                                      primary="Total"
+                                      primary="Total (USD)"
                                       primaryTypographyProps={{
                                         fontWeight: 700,
                                       }}
@@ -1570,10 +1624,44 @@ export default function OrderMilestonePage() {
                         </Typography>
                       </Box>
 
-                      <Box sx={{ px: 2, py: 2 }}>
+                      {/* <Box sx={{ px: 2, py: 2 }}>
                         <Typography variant="body2">
                           {customer?.billAddress || "-"}
                         </Typography>
+                      </Box> */}
+                      <Box sx={{ px: 2, py: 2 }}>
+                        {(() => {
+                          const addr = customer?.addresses?.find(
+                            (a: any) =>
+                              a.addressId === customer?.billingAddressId,
+                          );
+
+                          if (!addr) {
+                            return <Typography variant="body2">-</Typography>;
+                          }
+
+                          return (
+                            <>
+                              <Typography variant="body2">
+                                {[addr.addressLine1, addr.addressLine2]
+                                  .filter(Boolean)
+                                  .join(", ")}
+                              </Typography>
+
+                              <Typography variant="body2">
+                                {[addr.city, addr.state]
+                                  .filter(Boolean)
+                                  .join(", ")}
+                              </Typography>
+
+                              <Typography variant="body2">
+                                {[addr.zipCode, "India"]
+                                  .filter(Boolean)
+                                  .join(", ")}
+                              </Typography>
+                            </>
+                          );
+                        })()}
                       </Box>
                     </Box>
                   </Box>

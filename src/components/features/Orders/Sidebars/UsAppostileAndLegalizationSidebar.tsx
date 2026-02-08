@@ -51,7 +51,7 @@ export default function USAppostileAndLegalizationSidebar({
         <List dense disablePadding>
           {content.paragraphs.map((text, index) => (
             <ListItem key={index} sx={{ pl: 0, mb: 1 }}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="#1F2937" fontWeight={700}>
                 {text}
               </Typography>
             </ListItem>

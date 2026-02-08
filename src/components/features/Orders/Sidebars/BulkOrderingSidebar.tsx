@@ -52,7 +52,7 @@ export default function BulkOrderingSidebar({
         {content.title}
       </Typography>
 
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" color="#1F2937" fontWeight={700}>
         {content.description}
       </Typography>
     </FAQSidebarLayout>

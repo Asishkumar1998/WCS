@@ -23,6 +23,8 @@ function buildNotaryPayload({
   attachment,
   numberOfPages,
   isNotary,
+  trackingNo,
+  courierType,
 }: {
   country: any;
   additionalComments: any;
@@ -31,6 +33,8 @@ function buildNotaryPayload({
   attachment: any;
   numberOfPages: any;
   isNotary: boolean;
+  trackingNo: any;
+  courierType: any;
 }) {
   const userId = getAuthValue("userId");
   const customerId = getAuthValue("customerId");
@@ -72,6 +76,9 @@ function buildNotaryPayload({
             attachments: attachment,
 
             noOfPages: numberOfPages === "" ? undefined : numberOfPages,
+
+            incomingTracking: trackingNo ?? undefined,
+            incomingTrackingType: courierType ?? undefined,
           },
         ],
       },
@@ -88,6 +95,8 @@ type buildNotaryDispatchPayloadFromExistingOrder = {
   customerReference: string;
   numberOfPages: any;
   isNotary: boolean;
+  trackingNo: any;
+  courierType: any;
 };
 
 const buildNotaryDispatchPayloadFromExistingOrder = ({
@@ -99,6 +108,8 @@ const buildNotaryDispatchPayloadFromExistingOrder = ({
   customerReference,
   numberOfPages,
   isNotary,
+  trackingNo,
+  courierType,
 }: buildNotaryDispatchPayloadFromExistingOrder) => {
   if (!basePayload || !country) return basePayload;
 
@@ -127,6 +138,8 @@ const buildNotaryDispatchPayloadFromExistingOrder = ({
     isSoftCopyGiven: attachment ? YES : NO,
     noOfProducts: null,
     noOfPages: numberOfPages === "" ? undefined : numberOfPages,
+    incomingTracking: trackingNo ?? undefined,
+    incomingTrackingType: courierType ?? undefined,
   };
 
   const updatedDockets = basePayload.dockets.map((docket: any) => ({
@@ -136,7 +149,7 @@ const buildNotaryDispatchPayloadFromExistingOrder = ({
 
   const existingDocket = updatedDockets.find(
     (docket: any) =>
-      docket.docs?.length > 0 && docket.docs[0].countryId === selectedCountryId
+      docket.docs?.length > 0 && docket.docs[0].countryId === selectedCountryId,
   );
 
   if (existingDocket) {

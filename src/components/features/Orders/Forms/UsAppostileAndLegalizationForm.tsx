@@ -93,6 +93,8 @@ export default function USAppostileAndLegalizationForm({
   const [message, setMesage] = useState<string>("");
   const [customerReference, setCustomerReference] = useState<any>();
   const [additionalComments, setAdditionalComments] = useState<any>();
+  const [trackingNo, setTrackingNo] = useState<any>(null);
+  const [courierType, setCourierType] = useState<string | null>(null);
 
   const resetForm = () => {
     setCountry(null);
@@ -281,6 +283,9 @@ export default function USAppostileAndLegalizationForm({
     if (!data.uploadedFile) {
       lastUploadedRef.current = null;
     }
+    if (data.trackingNumberNested !== "")
+      setTrackingNo(data.trackingNumberNested);
+    setCourierType(data.courierNested);
     setUploadDocValues(data);
     setNumberOfPages(data?.numPages);
     const file: File | null = data?.uploadedFile;
@@ -353,6 +358,8 @@ export default function USAppostileAndLegalizationForm({
           numberOfPages,
           customerReference,
           additionalComments,
+          trackingNo,
+          courierType,
         });
         await createUSApostilleOrder(payload);
         showSnackbar("Order created successfully", "success");
@@ -368,6 +375,8 @@ export default function USAppostileAndLegalizationForm({
           numberOfPages,
           customerReference,
           additionalComments,
+          trackingNo,
+          courierType,
         });
         await updateOrder(payload.orderId, payload);
       }

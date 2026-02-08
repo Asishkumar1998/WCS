@@ -30,7 +30,7 @@ export default function DispatchServiceSidebar() {
       >
         <List dense disablePadding>
           <ListItem sx={{ display: "list-item", pl: 2, mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="#1F2937" fontWeight={700}>
               This service is for forwarding the document to the recipient
               (domestic or international). No other service will be performed
               (notary/apostille/legalization).

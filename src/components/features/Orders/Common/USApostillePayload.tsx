@@ -24,6 +24,8 @@ function buildUSApostillePayload({
   numberOfPages,
   customerReference,
   additionalComments,
+  trackingNo,
+  courierType,
 }: {
   countryId: any;
   docCategoryId: any;
@@ -36,6 +38,8 @@ function buildUSApostillePayload({
   numberOfPages: any;
   customerReference: any;
   additionalComments: any;
+  trackingNo: any;
+  courierType: any;
 }) {
   const userId = getAuthValue("userId");
   const customerId = getAuthValue("customerId");
@@ -71,11 +75,13 @@ function buildUSApostillePayload({
             additionalDOX: "",
             COCount: 0,
             CICount: 1,
-            docTypeId: 0,
+            docTypeId: docTypeId,
             originState: originState ?? undefined,
             nusaccRequired: nusaccRequired ?? undefined,
             instructions: additionalComments || "",
             internalReference: customerReference || "",
+            incomingTracking: trackingNo ?? undefined,
+            incomingTrackingType: courierType ?? undefined,
           },
         ],
       },
@@ -107,6 +113,8 @@ const buildUSApostillePayloadFromExistingOrder = ({
   numberOfPages,
   customerReference,
   additionalComments,
+  trackingNo,
+  courierType,
 }: {
   basePayload: any;
   countryId: any;
@@ -118,6 +126,8 @@ const buildUSApostillePayloadFromExistingOrder = ({
   numberOfPages: any;
   customerReference: any;
   additionalComments: any;
+  trackingNo: any;
+  courierType: any;
 }) => {
   if (!basePayload) return basePayload;
   const selectedCountryId = countryId;
@@ -148,6 +158,8 @@ const buildUSApostillePayloadFromExistingOrder = ({
     docTypeId: docTypeId,
     instructions: additionalComments || "",
     internalReference: customerReference || "",
+    incomingTracking: trackingNo ?? undefined,
+    incomingTrackingType: courierType ?? undefined,
   };
 
   const updatedDockets = basePayload.dockets.map((docket: any) => ({

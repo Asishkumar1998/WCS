@@ -18,6 +18,10 @@ import {
   CardContent,
   FormControlLabel,
   Checkbox,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  Radio,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -33,6 +37,7 @@ import {
 import AddressDialog from "@/components/features/Orders/Dialogs/AddressDialog";
 import { getAuth } from "../utils/auth";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
+import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
 
 function TabPanel({
   children,
@@ -55,13 +60,15 @@ export default function ProfilePage() {
   const [profileData, setProfileData] = React.useState<any>(null);
   const [addresses, setAddresses] = useState<any[]>([]);
   const [defaultShippingId, setDefaultShippingId] = useState<number | null>(
-    null
+    null,
   );
   const [defaultBillingId, setDefaultBillingId] = useState<number | null>(null);
   const [openAddAddress, setOpenAddAddress] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<any | null>(null);
 
-  const {showSnackbar} = useSnackbar();
+  const { showSnackbar } = useSnackbar();
+  const [loader, setLoader] = useState<boolean>(false);
+  const [loaderMessage, setLoaderMessage] = useState<string>("");
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -84,6 +91,9 @@ export default function ProfilePage() {
     city: "",
     state: "",
     zipCode: "",
+    paymentOption: "",
+    upoNumber: "",
+    apContact: "",
   });
 
   const getProfileData = async () => {
@@ -93,6 +103,8 @@ export default function ProfilePage() {
 
   const getCustomerAddresses = async () => {
     try {
+      setLoader(true);
+      setLoaderMessage("Getting Profile Details...");
       const res = await getCustomer(Number(customerId));
 
       if (!Array.isArray(res) || res.length === 0) return;
@@ -104,6 +116,9 @@ export default function ProfilePage() {
       setDefaultBillingId(customer.billingAddressId);
     } catch (error) {
       console.error("Failed to fetch addresses", error);
+    } finally {
+      setLoader(false);
+      setLoaderMessage("");
     }
   };
 
@@ -128,6 +143,9 @@ export default function ProfilePage() {
       city: billAddress?.city || "",
       state: billAddress?.state || "",
       zipCode: billAddress?.zipCode || "",
+      paymentOption: profileData?.user.paymentOption || "",
+      upoNumber: profileData?.user.upoNumber || "",
+      apContact: profileData?.user.apContact || "",
     });
   }, [profileData]);
 
@@ -143,7 +161,9 @@ export default function ProfilePage() {
       name: form.firstName,
       lastName: form.lastName,
       contactNo: form.phone,
-      paymentOption: "Cheque", // required by backend
+      paymentOption: form.paymentOption,
+      UPONumber: form.upoNumber,
+      apContact: form.apContact,
       referenceId: customer.customerId,
       userId: user.userId,
       industryTypeId: customer.industryTypeId,
@@ -164,15 +184,20 @@ export default function ProfilePage() {
 
   const handleUpdate = async () => {
     try {
+      setLoader(true);
+      setLoaderMessage("Updating details...");
       const payload = buildUpdatePayload();
 
-      await updateProfile(Number(userId), payload);
+      await updateProfile(Number(customerId), payload);
 
       await getProfileData();
       showSnackbar("Profile updated successfully", "success");
     } catch (err) {
       showSnackbar("Profile update failed", "error");
       console.error("Profile update failed", err);
+    } finally {
+      setLoader(false);
+      setLoaderMessage("");
     }
   };
 
@@ -201,391 +226,470 @@ export default function ProfilePage() {
   };
 
   return (
-    <Box sx={{ p: 3, mt: "64px" }}>
-      {/* Tabs */}
-      <Tabs
-        value={tab}
-        onChange={(_, v) => setTab(v)}
-        textColor="primary"
-        indicatorColor="primary"
-        variant="scrollable"
-        scrollButtons="auto"
-      >
-        <Tab label="Profile Info" />
-        <Tab label="Addresses" />
-      </Tabs>
+    <>
+      <OverlayLoader open={loader} message={loaderMessage} />
+      <Box sx={{ p: 3, mt: "64px" }}>
+        {/* Tabs */}
+        <Tabs
+          value={tab}
+          onChange={(_, v) => setTab(v)}
+          textColor="primary"
+          indicatorColor="primary"
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          <Tab label="Profile Info" />
+          <Tab label="Addresses" />
+        </Tabs>
 
-      {/* Profile Info */}
-      <TabPanel value={tab} index={0}>
-        {profileData &&
-          (() => {
-            const { user, customer } = profileData;
+        {/* Profile Info */}
+        <TabPanel value={tab} index={0}>
+          {profileData &&
+            (() => {
+              const { user, customer } = profileData;
 
-            return (
-              <>
-                {/* HEADER CARD */}
-                <Card
-                  sx={{
-                    mb: 3,
-                    borderRadius: 2,
-                    backgroundColor: "primary.main",
-                    color: "primary.contrastText",
-                  }}
-                >
-                  <CardContent
-                    sx={{ display: "flex", alignItems: "center", gap: 3 }}
-                  >
-                    <Avatar sx={{ bgcolor: "white", color: "primary.main" }}>
-                      {user.name[0]}
-                      {user.lastName[0]}
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6">
-                        {user.name} {user.lastName}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                      >
-                        <EmailIcon fontSize="small" /> {user.email}
-                      </Typography>
-                      <Chip
-                        icon={
-                          user.status === "Approved" ? (
-                            <VerifiedIcon />
-                          ) : (
-                            <HourglassTopIcon />
-                          )
-                        }
-                        label={
-                          user.status === "Approved" ? "Approved" : "Pending"
-                        }
-                        color={
-                          user.status === "Approved" ? "success" : "warning"
-                        }
-                        size="small"
-                        sx={{ mt: 1 }}
-                      />
-                    </Box>
-                  </CardContent>
-                </Card>
-
-                {/* PROFILE FORM */}
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight={600} gutterBottom>
-                      Profile Information
-                    </Typography>
-
-                    <Grid container spacing={3}>
-                      {/* Personal */}
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField
-                          fullWidth
-                          label="First Name"
-                          value={form.firstName}
-                          onChange={handleChange("firstName")}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField
-                          fullWidth
-                          label="Last Name"
-                          value={form.lastName}
-                          onChange={handleChange("lastName")}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField
-                          fullWidth
-                          label="Email"
-                          value={user.email}
-                          disabled
-                        />
-                      </Grid>
-                      <TextField
-                        fullWidth
-                        label="Phone Number"
-                        value={form.phone}
-                        onChange={handleChange("phone")}
-                      />
-
-                      {/* Company */}
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField
-                          fullWidth
-                          label="Company Name"
-                          value={customer.customerName}
-                          disabled
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField
-                          fullWidth
-                          label="Industry"
-                          value="Technology / IT"
-                          disabled
-                        />
-                      </Grid>
-
-                      {/* Account */}
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField
-                          fullWidth
-                          label="Account Status"
-                          value={user.status}
-                          disabled
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField
-                          fullWidth
-                          label="Account Created On"
-                          value={new Date(
-                            customer.createdAt
-                          ).toLocaleDateString()}
-                          disabled
-                        />
-                      </Grid>
-
-                      {/* Billing Address */}
-                      <Grid size={{ xs: 12 }}>
-                        <Typography fontWeight={600}>
-                          Billing Address
-                        </Typography>
-                      </Grid>
-
-                      <Grid size={{ xs: 12 }}>
-                        <TextField
-                          fullWidth
-                          label="Address Line 1"
-                          value={form.addressLine1}
-                          onChange={handleChange("addressLine1")}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12 }}>
-                        <TextField
-                          fullWidth
-                          label="Address Line 2"
-                          value={form.addressLine2}
-                          onChange={handleChange("addressLine2")}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <TextField
-                          fullWidth
-                          label="City"
-                          value={form.city}
-                          onChange={handleChange("city")}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <TextField
-                          fullWidth
-                          label="State"
-                          value={form.state}
-                          onChange={handleChange("state")}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <TextField
-                          fullWidth
-                          label="Postal Code"
-                          value={form.zipCode}
-                          onChange={handleChange("zipCode")}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField
-                          fullWidth
-                          label="Country"
-                          value="India"
-                          disabled
-                        />
-                      </Grid>
-                    </Grid>
-
-                    {/* ACTIONS */}
-                    <Box
-                      mt={3}
-                      display="flex"
-                      justifyContent="flex-end"
-                      gap={2}
-                    >
-                      <Button variant="contained" onClick={handleUpdate}>
-                        Update
-                      </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </>
-            );
-          })()}
-      </TabPanel>
-
-      {/* Addresses */}
-      <TabPanel value={tab} index={1}>
-        <Grid container spacing={3}>
-          {/* Add Address Card */}
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Paper
-              onClick={() => {
-                setSelectedAddress(null);
-                setOpenAddAddress(true);
-              }}
-              sx={{
-                p: 3,
-                height: "100%",
-                textAlign: "center",
-                border: "2px dashed",
-                borderColor: "primary.main",
-                bgcolor: "grey.50",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                cursor: "pointer",
-                "&:hover": { bgcolor: "grey.100" },
-              }}
-            >
-              <AddIcon color="primary" sx={{ fontSize: 40 }} />
-              <Typography color="primary" fontWeight={600}>
-                Add Address
-              </Typography>
-            </Paper>
-          </Grid>
-
-          {/* Address Cards */}
-          {addresses.map((addr) => {
-            const isDefaultShipping = addr.addressId === defaultShippingId;
-            const isDefaultBilling = addr.addressId === defaultBillingId;
-
-            return (
-              <Grid key={addr.addressId} size={{ xs: 12, sm: 6, md: 4 }}>
-                <Paper
-                  sx={{
-                    p: 2.5,
-                    borderRadius: 2,
-                    height: "100%",
-                    position: "relative",
-                    borderLeft: `6px solid ${
-                      isDefaultShipping ? "#1976d2" : "#9e9e9e"
-                    }`,
-                  }}
-                  elevation={3}
-                >
-                  {/* Top Action Buttons */}
-                  <Box
+              return (
+                <>
+                  {/* HEADER CARD */}
+                  <Card
                     sx={{
-                      position: "absolute",
-                      top: 8,
-                      right: 8,
-                      display: "flex",
-                      gap: 1,
+                      mb: 3,
+                      borderRadius: 2,
+                      backgroundColor: "primary.main",
+                      color: "primary.contrastText",
                     }}
                   >
-                    <Tooltip title="Edit">
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => {
-                          setSelectedAddress(addr);
-                          setOpenAddAddress(true);
-                        }}
+                    <CardContent
+                      sx={{ display: "flex", alignItems: "center", gap: 3 }}
+                    >
+                      <Avatar sx={{ bgcolor: "white", color: "primary.main" }}>
+                        {user.name[0]}
+                        {user.lastName[0]}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="h6">
+                          {user.name} {user.lastName}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          <EmailIcon fontSize="small" /> {user.email}
+                        </Typography>
+                        <Chip
+                          icon={
+                            user.status === "Approved" ? (
+                              <VerifiedIcon />
+                            ) : (
+                              <HourglassTopIcon />
+                            )
+                          }
+                          label={
+                            user.status === "Approved" ? "Approved" : "Pending"
+                          }
+                          color={
+                            user.status === "Approved" ? "success" : "warning"
+                          }
+                          size="small"
+                          sx={{ mt: 1 }}
+                        />
+                      </Box>
+                    </CardContent>
+                  </Card>
+
+                  {/* PROFILE FORM */}
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" fontWeight={600} gutterBottom>
+                        Profile Information
+                      </Typography>
+
+                      <Grid container spacing={3}>
+                        {/* Personal */}
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <TextField
+                            fullWidth
+                            label="First Name"
+                            value={form.firstName}
+                            onChange={handleChange("firstName")}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <TextField
+                            fullWidth
+                            label="Last Name"
+                            value={form.lastName}
+                            onChange={handleChange("lastName")}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <TextField
+                            fullWidth
+                            label="Email"
+                            value={user.email}
+                            disabled
+                          />
+                        </Grid>
+                        <TextField
+                          fullWidth
+                          label="Phone Number"
+                          value={form.phone}
+                          onChange={handleChange("phone")}
+                        />
+
+                        {/* Company */}
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <TextField
+                            fullWidth
+                            label="Company Name"
+                            value={customer.customerName}
+                            disabled
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <TextField
+                            fullWidth
+                            label="Industry"
+                            value="Technology / IT"
+                            disabled
+                          />
+                        </Grid>
+
+                        {/* Account */}
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <TextField
+                            fullWidth
+                            label="Account Status"
+                            value={user.status}
+                            disabled
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <TextField
+                            fullWidth
+                            label="Account Created On"
+                            value={new Date(
+                              customer.createdAt,
+                            ).toLocaleDateString()}
+                            disabled
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <FormControl fullWidth>
+                            <FormLabel>Payment Option</FormLabel>
+
+                            <RadioGroup
+                              value={form.paymentOption}
+                              onChange={(e) =>
+                                setForm((prev) => ({
+                                  ...prev,
+                                  paymentOption: e.target.value,
+                                }))
+                              }
+                              sx={{ display: "flex", flexDirection: "row" }}
+                            >
+                              <FormControlLabel
+                                value="Cheque"
+                                control={<Radio />}
+                                label="Cheque"
+                              />
+
+                              <FormControlLabel
+                                value="Wire/ACH Transfer"
+                                control={<Radio />}
+                                label="Wire/ACH Transfer"
+                              />
+
+                              <FormControlLabel
+                                value="Credit Card"
+                                control={<Radio />}
+                                label="Credit Card"
+                              />
+
+                              <FormControlLabel
+                                value="Pay On Invoice"
+                                control={<Radio />}
+                                label="Invoice (Portal)"
+                              />
+                              {/* Pay On PO Option */}
+                              <Box>
+                                <FormControlLabel
+                                  value="Pay On PO"
+                                  control={<Radio />}
+                                  label="Pay With Purchase Order (PO)"
+                                />
+
+                                {form.paymentOption === "Pay On PO" && (
+                                  <Box sx={{ ml: 4, mt: 1 }}>
+                                    <TextField
+                                      fullWidth
+                                      size="small"
+                                      label="PO Number"
+                                      value={form.upoNumber}
+                                      onChange={handleChange("upoNumber")}
+                                    />
+                                  </Box>
+                                )}
+                              </Box>
+                            </RadioGroup>
+                          </FormControl>
+                        </Grid>
+
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <TextField
+                            fullWidth
+                            label="AP Contact"
+                            value={form.apContact}
+                            onChange={handleChange("apContact")}
+                          />
+                        </Grid>
+
+                        {/* Billing Address */}
+                        <Grid size={{ xs: 12 }}>
+                          <Typography fontWeight={600}>
+                            Billing Address
+                          </Typography>
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <TextField
+                            fullWidth
+                            label="Address Line 1"
+                            value={form.addressLine1}
+                            onChange={handleChange("addressLine1")}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                          <TextField
+                            fullWidth
+                            label="Address Line 2"
+                            value={form.addressLine2}
+                            onChange={handleChange("addressLine2")}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <TextField
+                            fullWidth
+                            label="City"
+                            value={form.city}
+                            onChange={handleChange("city")}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <TextField
+                            fullWidth
+                            label="State"
+                            value={form.state}
+                            onChange={handleChange("state")}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <TextField
+                            fullWidth
+                            label="Postal Code"
+                            value={form.zipCode}
+                            onChange={handleChange("zipCode")}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <TextField
+                            fullWidth
+                            label="Country"
+                            value="India"
+                            disabled
+                          />
+                        </Grid>
+                      </Grid>
+
+                      {/* ACTIONS */}
+                      <Box
+                        mt={3}
+                        display="flex"
+                        justifyContent="flex-end"
+                        gap={2}
                       >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    {/* <Tooltip title="Delete">
+                        <Button variant="contained" onClick={handleUpdate}>
+                          Update
+                        </Button>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </>
+              );
+            })()}
+        </TabPanel>
+
+        {/* Addresses */}
+        <TabPanel value={tab} index={1}>
+          <Grid container spacing={3}>
+            {/* Add Address Card */}
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Paper
+                onClick={() => {
+                  setSelectedAddress(null);
+                  setOpenAddAddress(true);
+                }}
+                sx={{
+                  p: 3,
+                  height: "100%",
+                  textAlign: "center",
+                  border: "2px dashed",
+                  borderColor: "primary.main",
+                  bgcolor: "grey.50",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  cursor: "pointer",
+                  "&:hover": { bgcolor: "grey.100" },
+                }}
+              >
+                <AddIcon color="primary" sx={{ fontSize: 40 }} />
+                <Typography color="primary" fontWeight={600}>
+                  Add Address
+                </Typography>
+              </Paper>
+            </Grid>
+
+            {/* Address Cards */}
+            {addresses.map((addr) => {
+              const isDefaultShipping = addr.addressId === defaultShippingId;
+              const isDefaultBilling = addr.addressId === defaultBillingId;
+
+              return (
+                <Grid key={addr.addressId} size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Paper
+                    sx={{
+                      p: 2.5,
+                      borderRadius: 2,
+                      height: "100%",
+                      position: "relative",
+                      borderLeft: `6px solid ${
+                        isDefaultShipping ? "#1976d2" : "#9e9e9e"
+                      }`,
+                    }}
+                    elevation={3}
+                  >
+                    {/* Top Action Buttons */}
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        display: "flex",
+                        gap: 1,
+                      }}
+                    >
+                      <Tooltip title="Edit">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => {
+                            setSelectedAddress(addr);
+                            setOpenAddAddress(true);
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      {/* <Tooltip title="Delete">
                       <IconButton size="small" color="error">
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Tooltip> */}
-                  </Box>
+                    </Box>
 
-                  {/* Address Content */}
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={600}
-                    sx={{ mb: 0.5 }}
-                  >
-                    {addr.addressLine1}
-                  </Typography>
-
-                  <Typography variant="body2" color="text.secondary">
-                    {addr.addressLine2}
-                  </Typography>
-
-                  <Typography variant="body2" color="text.secondary">
-                    {addr.city}, {addr.state}, {addr.zipCode}
-                  </Typography>
-
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    India
-                  </Typography>
-
-                  {addr.number1 && (
-                    <Typography variant="body2" fontWeight={500}>
-                      📞 {addr.number1}
+                    {/* Address Content */}
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight={600}
+                      sx={{ mb: 0.5 }}
+                    >
+                      {addr.addressLine1}
                     </Typography>
-                  )}
 
-                  {/* Chips for Defaults */}
-                  <Box sx={{ mt: 2, display: "flex", flexDirection: "column" }}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={isDefaultShipping}
-                          onChange={() => {
-                            if (!isDefaultShipping) {
-                              handleSetDefaultShipping(addr.addressId);
-                            }
-                          }}
-                        />
-                      }
-                      label={
-                        isDefaultShipping
-                          ? "Default Shipping"
-                          : "Set Default Shipping"
-                      }
-                    />
+                    <Typography variant="body2" color="text.secondary">
+                      {addr.addressLine2}
+                    </Typography>
 
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={isDefaultBilling}
-                          onChange={() => {
-                            if (!isDefaultBilling) {
-                              handleSetDefaultBilling(addr.addressId);
-                            }
-                          }}
-                        />
-                      }
-                      label={
-                        isDefaultBilling
-                          ? "Default Billing"
-                          : "Set Default Billing"
-                      }
-                    />
-                  </Box>
-                </Paper>
-              </Grid>
-            );
-          })}
-        </Grid>
-      </TabPanel>
+                    <Typography variant="body2" color="text.secondary">
+                      {addr.city}, {addr.state}, {addr.zipCode}
+                    </Typography>
 
-      <AddressDialog
-        open={openAddAddress}
-        onClose={() => setOpenAddAddress(false)}
-        customerId={Number(customerId)}
-        address={selectedAddress}
-        onSuccess={getCustomerAddresses}
-      />
-    </Box>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      gutterBottom
+                    >
+                      India
+                    </Typography>
+
+                    {addr.number1 && (
+                      <Typography variant="body2" fontWeight={500}>
+                        📞 {addr.number1}
+                      </Typography>
+                    )}
+
+                    {/* Chips for Defaults */}
+                    <Box
+                      sx={{ mt: 2, display: "flex", flexDirection: "column" }}
+                    >
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={isDefaultShipping}
+                            onChange={() => {
+                              if (!isDefaultShipping) {
+                                handleSetDefaultShipping(addr.addressId);
+                              }
+                            }}
+                          />
+                        }
+                        label={
+                          isDefaultShipping
+                            ? "Default Shipping"
+                            : "Set Default Shipping"
+                        }
+                      />
+
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={isDefaultBilling}
+                            onChange={() => {
+                              if (!isDefaultBilling) {
+                                handleSetDefaultBilling(addr.addressId);
+                              }
+                            }}
+                          />
+                        }
+                        label={
+                          isDefaultBilling
+                            ? "Default Billing"
+                            : "Set Default Billing"
+                        }
+                      />
+                    </Box>
+                  </Paper>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </TabPanel>
+
+        <AddressDialog
+          open={openAddAddress}
+          onClose={() => setOpenAddAddress(false)}
+          customerId={Number(customerId)}
+          address={selectedAddress}
+          onSuccess={getCustomerAddresses}
+        />
+      </Box>
+    </>
   );
 }

@@ -31,19 +31,19 @@ export default function TranslationServiceSidebar() {
       >
         <List dense disablePadding>
           <ListItem sx={{ display: "list-item", pl: 2, mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="#1F2937" fontWeight={700}>
               This service provides translation to and from English.{" "}
             </Typography>
           </ListItem>
 
           <ListItem sx={{ display: "list-item", pl: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="#1F2937" fontWeight={700}>
               WCS translation supports more than 120 languages. Most common
               languages are Spanish, Arabic, French.
             </Typography>
           </ListItem>
           <ListItem sx={{ display: "list-item", pl: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="#1F2937" fontWeight={700}>
               We invite you to contact us for translations of
               pharmaceutical-labels, government approvals, assignments of
               agency, Letters of Attorney, academic credentials—a full menu

@@ -31,26 +31,26 @@ export default function GlobalAuthenticationSidebar() {
       >
         <List dense disablePadding>
           <ListItem sx={{ display: "list-item", pl: 2, mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="#1F2937" fontWeight={700}>
               WCS can provide authentication services in the country of origin
               of the document.
             </Typography>
           </ListItem>
 
           <ListItem sx={{ display: "list-item", pl: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="#1F2937" fontWeight={700}>
               Typically originals are required (whether electronic or
               originals).
             </Typography>
           </ListItem>
           <ListItem sx={{ display: "list-item", pl: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="#1F2937" fontWeight={700}>
               The process varies per country, as does the estimated processing
               times and fees.
             </Typography>
           </ListItem>
           <ListItem sx={{ display: "list-item", pl: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="#1F2937" fontWeight={700}>
               The process varies per country, as does the estimated processing
               times and fees.
             </Typography>
