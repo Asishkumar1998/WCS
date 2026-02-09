@@ -29,6 +29,13 @@ interface TrackOrderDialogProps {
   returnInstructions?: string;
   processStartByDocId?: any;
 }
+type TrackStep = {
+  label: string;
+  date?: string | Date | null;
+  description?: string;
+  status?: "pending" | "in_transit" | "processing" | "completed";
+  completed: boolean;
+};
 
 export default function TrackOrderDialog({
   open,
@@ -63,7 +70,6 @@ export default function TrackOrderDialog({
     if (response[0].pickupOrDropOff) setReturnInstructions("Pickup / Dropoff");
   };
 
-
   useEffect(() => {
     getStops();
     getOrderDetails();
@@ -82,10 +88,7 @@ export default function TrackOrderDialog({
     }
   }, [orderDetails]);
 
-
-  const stopsMap = Object.fromEntries(
-    stops.map((s: any) => [s.stopId, s.stopName]),
-  );
+  const stopsMap = Object.fromEntries(stops.map((s: any) => [s.stopId, s]));
 
   useEffect(() => {
     if (!orderId || !docIds) {
@@ -141,6 +144,13 @@ export default function TrackOrderDialog({
     setOrderDetails(undefined);
     setRegionAddress(undefined);
     setReturnInstructions(null);
+  };
+
+  const getStopStatus = (stop: any) => {
+    if (stop.actReceiveBackDate) return "completed";
+    if (stop.actDropOffDate) return "processing";
+    if (stop.actCourierDate) return "in_transit";
+    return "pending";
   };
 
   return (
@@ -232,25 +242,34 @@ export default function TrackOrderDialog({
                 },
               ];
 
-              const dynamicSteps = files.map((details: any) => ({
-                label: stopsMap[details.stopId] || `Stop ${details.stopNumber}`, // Will be replaced with API call later
-                date: "",
-                description: details.processDays
-                  ? `Est. Processing time: ${details.processDays} days`
-                  : "",
-                completed: details.docStopStatusId !== 0, // 0 = pending, other values = completed
-                stopId: details.stopId,
-                stopNumber: details.stopNumber,
-                docStopStatusId: details.docStopStatusId,
-                isBase: false,
-              }));
+              const dynamicSteps = files.map((details: any) => {
+                const meta = stopsMap[details.stopId] || {};
+
+                const status = getStopStatus(details);
+
+                return {
+                  label: meta.stopName || `Stop ${details.stopNumber}`,
+                  date: null,
+                  description: meta.processDays
+                    ? `Est. Processing time: ${meta.processDays} days`
+                    : "",
+                  status,
+                  completed: status === "completed",
+                };
+              });
+
+              const lastStop = files.at(-1);
+
+              const finalCompleted = !!lastStop?.actReceiveBackDate;
 
               const finalStep = {
                 label: "Shipped / Completed",
-                date: files.at(-1)?.estReceiveBackDate || "",
+                date:
+                  lastStop?.actReceiveBackDate ||
+                  lastStop?.estReceiveBackDate ||
+                  "",
                 description: "",
-                completed: false,
-                isBase: true,
+                completed: finalCompleted,
               };
 
               const allSteps = [...baseSteps, ...dynamicSteps, finalStep];
