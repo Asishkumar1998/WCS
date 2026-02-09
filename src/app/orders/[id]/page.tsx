@@ -244,6 +244,22 @@ export default function OrdersPage() {
     }
   }, []);
 
+  useEffect(() => {
+    const shouldLockScroll = trackOpen || attachmentsOpen;
+    if (!shouldLockScroll) return;
+
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+    };
+  }, [trackOpen, attachmentsOpen]);
+
   const getStops = async () => {
     const response = await getAllStops();
     setStops(response);
@@ -333,39 +349,48 @@ export default function OrdersPage() {
   };
 
   const printCover = async (orderId: number) => {
-    const order = await getOrder(orderId);
-    const customer = await getCustomer(String(customerId));
-    const user = await getUser(String(userId));
+    try {
+      setLoader(true);
+      setLoaderMessage("Printing Cover...");
+      const order = await getOrder(orderId);
+      const customer = await getCustomer(String(customerId));
+      const user = await getUser(String(userId));
 
-    const userData = {
-      customerId: customer[0].sageCustomerId,
-      customerName: customer[0].customerName,
-      userName: `${user[0].name} ${user[0].lastName}`,
-      email: user[0].email,
-      contactNo: user[0].contactNo,
-    };
+      const userData = {
+        customerId: customer[0].sageCustomerId,
+        customerName: customer[0].customerName,
+        userName: `${user[0].name} ${user[0].lastName}`,
+        email: user[0].email,
+        contactNo: user[0].contactNo,
+      };
 
-    const countryMapById = Object.fromEntries(
-      countries.map((c) => [c.countryId, c]),
-    );
+      const countryMapById = Object.fromEntries(
+        countries.map((c) => [c.countryId, c]),
+      );
 
-    const stopMapById = Object.fromEntries(
-      stops.map((s: any) => [s.stopId, s]),
-    );
+      const stopMapById = Object.fromEntries(
+        stops.map((s: any) => [s.stopId, s]),
+      );
 
-    const docTypeMapById = Object.fromEntries(
-      docTypes.map((d: any) => [d.lookupId, d]),
-    );
+      const docTypeMapById = Object.fromEntries(
+        docTypes.map((d: any) => [d.lookupId, d]),
+      );
 
-    const payload = await buildPrintCoverPayload(
-      order[0],
-      countryMapById,
-      stopMapById,
-      docTypeMapById,
-      userData,
-    );
+      const payload = await buildPrintCoverPayload(
+        order[0],
+        countryMapById,
+        stopMapById,
+        docTypeMapById,
+        userData,
+      );
 
-    await generatePDF(payload, "download");
+      await generatePDF(payload, "download");
+    }catch(e){
+      showSnackbar("Failed to Print Cover", "error");
+    } finally {
+      setLoader(false);
+      setLoaderMessage("");
+    }
   };
 
   const viewAttachments = (e: any, orderId: number, docIds: number[]) => {
@@ -481,6 +506,9 @@ export default function OrdersPage() {
     delete excelPayload.rowsPerPage;
 
     try {
+      setLoader(true);
+      setLoaderMessage("Exporting data to Excel...");
+
       const response = await exportDataToExcel(excelPayload);
 
       const blob = new Blob([response], {
@@ -505,6 +533,9 @@ export default function OrdersPage() {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Failed to export Excel:", err);
+    } finally {
+      setLoader(false);
+      setLoaderMessage("");
     }
   };
 
@@ -865,6 +896,7 @@ export default function OrdersPage() {
                     </Button>
                     <Button
                       onClick={() => {
+                        setLoader(true);
                         router.push(`/orders/${order.orderId}/conversation`);
                       }}
                       size="small"
@@ -968,6 +1000,16 @@ export default function OrdersPage() {
           onClose={() => setTrackOpen(false)}
           orderId={trackOpen ? selectedOrderId : null}
           docIds={trackOpen ? selectedDocIds : []}
+          processStartByDocId={
+            trackOpen && selectedOrderId
+              ? Object.fromEntries(
+                  data?.orders
+                    .find((o) => o.orderId === selectedOrderId)
+                    ?.docs.filter((d) => selectedDocIds.includes(d.docId))
+                    .map((d) => [d.docId, d.processStart]) ?? []
+                )
+              : {}
+          }
           returnInstructions="Enclose Return Shipping Label by mail with documents"
         />
         <AttachmentsDialog

@@ -12,4 +12,7 @@ export const getAllStops = async () => {
   return response.data;
 };
 
-
+export const getRegionNoteAddress = async (customerId: number, regionNote: string) => {
+  const response = await axiosInstance.get("orders/regionAddress?customerId=" + customerId + "&regionNote=" + regionNote);
+  return response.data;
+}

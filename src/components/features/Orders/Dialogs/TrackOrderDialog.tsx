@@ -14,7 +14,12 @@ import {
   Paper,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { getAllStops, getDocStops } from "@/services/TrackOrderService";
+import {
+  getAllStops,
+  getDocStops,
+  getRegionNoteAddress,
+} from "@/services/TrackOrderService";
+import { getOrder } from "@/services/cartServices";
 
 interface TrackOrderDialogProps {
   open: boolean;
@@ -22,6 +27,7 @@ interface TrackOrderDialogProps {
   orderId: number | null;
   docIds: number[];
   returnInstructions?: string;
+  processStartByDocId?: any;
 }
 
 export default function TrackOrderDialog({
@@ -29,19 +35,53 @@ export default function TrackOrderDialog({
   onClose,
   orderId,
   docIds,
-  returnInstructions,
+  processStartByDocId,
 }: TrackOrderDialogProps) {
   const [stopsByDoc, setStopsByDoc] = useState<Record<number, any[]>>({});
   const [stops, setStops] = useState<any>([]);
+  const [orderDetails, setOrderDetails] = useState<any>();
+  const [regionAddress, setRegionAddress] = useState<any>();
+  const [returnInstructions, setReturnInstructions] = useState<string | null>(
+    null,
+  );
 
   const getStops = async () => {
     const response = await getAllStops();
     setStops(response);
   };
 
+  const getOrderDetails = async () => {
+    const response = await getOrder(Number(orderId));
+    setOrderDetails(response[0]);
+
+    if (response[0].useUserCourier)
+      setReturnInstructions("Use Prepaid Label Uploaded");
+    if (response[0].labelByMail)
+      setReturnInstructions(
+        "Enclose Return Shipping Label by mail with documents",
+      );
+    if (response[0].pickupOrDropOff) setReturnInstructions("Pickup / Dropoff");
+  };
+
+
   useEffect(() => {
     getStops();
+    getOrderDetails();
   }, [open]);
+
+  useEffect(() => {
+    if (orderDetails?.regionId && orderDetails?.regionNote) {
+      const fetchRegionAddress = async () => {
+        const response = await getRegionNoteAddress(
+          orderDetails.customerId,
+          orderDetails.regionNote,
+        );
+        setRegionAddress(response);
+      };
+      fetchRegionAddress();
+    }
+  }, [orderDetails]);
+
 
   const stopsMap = Object.fromEntries(
     stops.map((s: any) => [s.stopId, s.stopName]),
@@ -95,10 +135,21 @@ export default function TrackOrderDialog({
     };
   }, [orderId, JSON.stringify(docIds)]);
 
+  const resetStates = () => {
+    setStopsByDoc({});
+    setStops([]);
+    setOrderDetails(undefined);
+    setRegionAddress(undefined);
+    setReturnInstructions(null);
+  };
+
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => {
+        resetStates();
+        onClose();
+      }}
       maxWidth="md"
       fullWidth
       PaperProps={{
@@ -176,7 +227,7 @@ export default function TrackOrderDialog({
                       day: "numeric",
                     }) || "",
                   description: "",
-                  completed: files.length > 0,
+                  completed: processStartByDocId[docId] === "" ? false : true,
                   isBase: true,
                 },
               ];
@@ -259,14 +310,36 @@ export default function TrackOrderDialog({
         <Divider sx={{ my: 3 }} />
 
         {/* Return Shipping Instructions */}
-        {returnInstructions && (
+        {(regionAddress || returnInstructions) && (
           <Box>
-            <Typography variant="subtitle1" fontWeight="bold">
+            {/* Heading */}
+            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
               Return Shipping Instructions:
             </Typography>
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              {returnInstructions}
-            </Typography>
+
+            {/* 1️⃣ Priority → Return Address */}
+            {regionAddress ? (
+              <Box>
+                <Typography variant="body2" ml={1}>
+                  {" "}
+                  • Use WCS Courier Account for additional fee.{" "}
+                </Typography>
+                <Typography variant="body2" ml={3}>
+                  <strong>Return Address:</strong>
+                  <br />
+                  {regionAddress.regContactName}, {regionAddress.regAddress},{" "}
+                  {regionAddress.regCity}, {regionAddress.regCountry}{" "}
+                  {regionAddress.regPostalCode}.<br />
+                  Phone: {regionAddress.regPhoneNumber} | Email:{" "}
+                  {regionAddress.emailAddress}
+                </Typography>
+              </Box>
+            ) : (
+              /* 2️⃣ Fallback → Return Instructions */
+              <Typography variant="body2" ml={2}>
+                {returnInstructions}
+              </Typography>
+            )}
           </Box>
         )}
       </DialogContent>

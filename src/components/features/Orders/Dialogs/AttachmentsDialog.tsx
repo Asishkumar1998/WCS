@@ -41,7 +41,10 @@ export default function AttachmentsDialog({
   const [shippingDetailsByDoc, setShippingDetailsByDoc] = useState<
     Record<number, any[]>
   >({});
-  const [conversationAttachments, setConversationAttachments] = useState<any[]>([]);
+  const [conversationByDoc, setConversationByDoc] = useState<
+    Record<number, any[]>
+  >({});
+
   const [attachments, setAttachments] = useState<any[]>([]);
 
   useEffect(() => {
@@ -54,8 +57,8 @@ export default function AttachmentsDialog({
     const ids: number[] = Array.isArray(docIds)
       ? (docIds as any[]).map((d) => Number(d))
       : typeof docIds === "string"
-      ? (docIds as string).split(",").map((s) => Number(s.trim()))
-      : [Number(docIds)];
+        ? (docIds as string).split(",").map((s) => Number(s.trim()))
+        : [Number(docIds)];
 
     let cancelled = false;
     (async () => {
@@ -71,7 +74,7 @@ export default function AttachmentsDialog({
             } catch {
               return { id, files: [] };
             }
-          })
+          }),
         );
 
         if (cancelled) return;
@@ -85,8 +88,8 @@ export default function AttachmentsDialog({
         // flattened list (optionally include docId on each file)
         setAttachments(
           results.flatMap((r) =>
-            r.files.map((f: any) => ({ ...(f || {}), docId: r.id }))
-          )
+            r.files.map((f: any) => ({ ...(f || {}), docId: r.id })),
+          ),
         );
       } catch {
         if (!cancelled) {
@@ -111,8 +114,8 @@ export default function AttachmentsDialog({
     const ids: number[] = Array.isArray(docIds)
       ? (docIds as any[]).map((d) => Number(d))
       : typeof docIds === "string"
-      ? (docIds as string).split(",").map((s) => Number(s.trim()))
-      : [Number(docIds)];
+        ? (docIds as string).split(",").map((s) => Number(s.trim()))
+        : [Number(docIds)];
 
     let cancelled = false;
     (async () => {
@@ -127,7 +130,7 @@ export default function AttachmentsDialog({
             } catch {
               return { id, files: [] };
             }
-          })
+          }),
         );
 
         if (cancelled) return;
@@ -152,10 +155,23 @@ export default function AttachmentsDialog({
 
   const fetchConversationAttachments = async () => {
     const response = await getConversationAttachments({ orderId: orderId });
-    setConversationAttachments(response);
+
+    const map: Record<number, any[]> = {};
+
+    (response || []).forEach((file: any) => {
+      const id = Number(file.docId);
+
+      if (!map[id]) {
+        map[id] = [];
+      }
+
+      map[id].push(file);
+    });
+
+    setConversationByDoc(map);
   };
   useEffect(() => {
-    if(!orderId) return;
+    if (!orderId) return;
     fetchConversationAttachments();
   }, [orderId]);
 
@@ -266,7 +282,7 @@ export default function AttachmentsDialog({
             <TableBody>
               {Object.entries(attachmentsByDoc).map(([docId, files]) => {
                 const filteredFiles = (files || []).filter(
-                  (f: any) => Number(f?.referenceId) === 0
+                  (f: any) => Number(f?.referenceId) === 0,
                 );
                 if (filteredFiles.length === 0)
                   return (
@@ -303,7 +319,7 @@ export default function AttachmentsDialog({
                               year: "numeric",
                               month: "long",
                               day: "numeric",
-                            }
+                            },
                           )}
                         </TableCell>
                         <TableCell align="right">
@@ -341,7 +357,7 @@ export default function AttachmentsDialog({
         </Typography>
         {Object.keys(shippingDetailsByDoc).length === 0 ||
         Object.values(shippingDetailsByDoc).every(
-          (files) => files.length === 0
+          (files) => files.length === 0,
         ) ? (
           <Paper sx={{ p: 2, mb: 3, bgcolor: "grey.50" }}>
             <Typography
@@ -378,7 +394,7 @@ export default function AttachmentsDialog({
                               year: "numeric",
                               month: "long",
                               day: "numeric",
-                            }
+                            },
                           )}
                         </TableCell>
                         <TableCell align="right">
@@ -412,7 +428,7 @@ export default function AttachmentsDialog({
         <Divider sx={{ my: 2 }} />
 
         {/* Conversation Tab */}
-        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+        {/* <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
           Conversation Tab
         </Typography>
         {conversationAttachments.length === 0 ? (
@@ -465,7 +481,74 @@ export default function AttachmentsDialog({
               ))}
             </TableBody>
           </Table>
-        )}
+        )} */}
+        {/* Conversation Tab */}
+<Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+  Conversation Tab
+</Typography>
+
+{Object.keys(conversationByDoc).length === 0 ? (
+  <Paper sx={{ p: 2, mb: 3, bgcolor: "grey.50" }}>
+    <Typography
+      variant="body2"
+      color="text.secondary"
+      fontStyle="italic"
+    >
+      No attachments found
+    </Typography>
+  </Paper>
+) : (
+  <Table size="small">
+    <TableBody>
+      {Object.entries(conversationByDoc).map(([docId, files]) => (
+        <React.Fragment key={docId}>
+          {/* Doc Header */}
+          <TableRow>
+            <TableCell colSpan={3}>
+              <Typography variant="caption" color="text.secondary">
+                Doc ID: {docId}
+              </Typography>
+            </TableCell>
+          </TableRow>
+
+          {/* Files */}
+          {files.map((file: any, idx: number) => (
+            <TableRow key={`conv-${docId}-${idx}`}>
+              <TableCell>{file.fileName}</TableCell>
+
+              <TableCell>
+                {new Date(file.createdAt).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </TableCell>
+
+              <TableCell align="right">
+                <Tooltip title="Download">
+                  <IconButton
+                    color="primary"
+                    onClick={() =>
+                      downloadAttachments({
+                        attachmentId:
+                          file.attachmentId ?? file.id ?? "",
+                        fileName:
+                          file.fileName ?? file.name ?? "download",
+                      })
+                    }
+                  >
+                    <DownloadIcon />
+                  </IconButton>
+                </Tooltip>
+              </TableCell>
+            </TableRow>
+          ))}
+        </React.Fragment>
+      ))}
+    </TableBody>
+  </Table>
+)}
+
       </DialogContent>
     </Dialog>
   );

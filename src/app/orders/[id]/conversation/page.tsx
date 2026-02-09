@@ -15,7 +15,7 @@ import AddCommentIcon from "@mui/icons-material/AddComment";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useParams, useRouter } from "next/navigation";
 import { getCustomerNotification } from "@/services/notificationService";
-import Loader from "@/components/ui/Loader/Loader";
+import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
 
 interface Notification {
   notificationId: number;
@@ -29,7 +29,8 @@ interface Notification {
 const MyConversations = () => {
   const router = useRouter();
   const [conversations, setConversations] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loader, setLoader] = useState<boolean>(false);
+  const [loaderMessage, setLoaderMessage] = useState<string>("");
   const { id } = useParams();
 
   useEffect(() => {
@@ -37,26 +38,25 @@ const MyConversations = () => {
   }, []);
 
   const fetchConversations = async () => {
-    setLoading(true);
+    setLoader(true);
     try {
       const res = await getCustomerNotification(Number(id));
       const roots = res
         .filter((n: Notification) => n.parentId === 0 && n.rootId === 0)
         .sort(
           (a: Notification, b: Notification) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         );
 
       setConversations(roots);
     } finally {
-      setLoading(false);
+      setLoader(false);
     }
   };
 
   return (
     <>
-      {loading && <Loader />}
-
+      <OverlayLoader open={loader} message={loaderMessage} />
       <Box maxWidth="lg" mx="auto" mt={10} px={2}>
         {/* Header */}
         <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 3 }}>
@@ -77,14 +77,20 @@ const MyConversations = () => {
               <Button
                 variant="outlined"
                 startIcon={<ArrowBackIcon />}
-                onClick={() => router.push("/orders/all")}
+                onClick={() => {
+                  setLoader(true);
+                  router.push("/orders/all");
+                }}
               >
                 Orders
               </Button>
               <Button
                 variant="contained"
                 startIcon={<AddCommentIcon />}
-                onClick={() => router.push(`/orders/${id}/conversation/new`)}
+                onClick={() => {
+                  setLoader(true);
+                  router.push(`/orders/${id}/conversation/new`);
+                }}
               >
                 New Message
               </Button>
@@ -99,7 +105,7 @@ const MyConversations = () => {
               <Box
                 onClick={() =>
                   router.push(
-                    `/orders/${id}/conversation/${item.notificationId}`
+                    `/orders/${id}/conversation/${item.notificationId}`,
                   )
                 }
                 sx={{
@@ -155,7 +161,7 @@ const MyConversations = () => {
             </React.Fragment>
           ))}
 
-          {!loading && conversations.length === 0 && (
+          {!loader && conversations.length === 0 && (
             <Box py={6} textAlign="center">
               <Typography variant="h6" gutterBottom>
                 No conversations yet

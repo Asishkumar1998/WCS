@@ -11,6 +11,7 @@ import {
   Menu,
   MenuItem,
   Typography,
+  Tooltip,
 } from "@mui/material";
 import { ShoppingCart, Person, Search, Info } from "@mui/icons-material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -161,27 +162,40 @@ export default function Navbar() {
 
           {/* Icons */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <NotificationPopup />
-            <IconButton onClick={() => router.replace(`/faq`)} color="inherit">
-              <Info />
-            </IconButton>
-            <IconButton
-              onClick={() => router.replace(`/cart?service=${service}`)}
-              color="inherit"
-            >
-              <Badge
-                badgeContent={docCount}
-                color="error"
-                invisible={!docCount}
-                max={99}
+            <Tooltip title="Notifications" arrow>
+              <span>
+                <NotificationPopup />
+              </span>
+            </Tooltip>
+            <Tooltip title="FAQs" arrow>
+              <IconButton
+                onClick={() => router.replace(`/faq`)}
+                color="inherit"
               >
-                <ShoppingCart />
-              </Badge>
-            </IconButton>
+                <Info />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="View Cart" arrow>
+              <IconButton
+                onClick={() => router.replace(`/cart?service=${service}`)}
+                color="inherit"
+              >
+                <Badge
+                  badgeContent={docCount}
+                  color="error"
+                  invisible={!docCount}
+                  max={99}
+                >
+                  <ShoppingCart />
+                </Badge>
+              </IconButton>
+            </Tooltip>
 
-            <IconButton color="inherit" onClick={handleMenu}>
-              <Person />
-            </IconButton>
+            <Tooltip title="Account Settings" arrow>
+              <IconButton color="inherit" onClick={handleMenu}>
+                <Person />
+              </IconButton>
+            </Tooltip>
 
             <Menu
               anchorEl={anchorEl}

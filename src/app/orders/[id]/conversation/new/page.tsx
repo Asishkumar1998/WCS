@@ -17,12 +17,13 @@ import { useRouter, useParams } from "next/navigation";
 
 import RichTextEditor from "@/components/ui/RichTextEditor/RichTextEditor";
 import OneLineUpload from "@/components/features/Orders/Common/OneLineUpload";
-import Loader from "@/components/ui/Loader/Loader";
 
 import { addNotification } from "@/services/notificationService";
 import { getOrderDetails } from "@/services/cartServices";
 import { uploadFile } from "@/services/formsService";
 import { getAuth } from "@/app/utils/auth";
+import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
+import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
 
 export default function NewConversationPage() {
   const router = useRouter();
@@ -31,7 +32,9 @@ export default function NewConversationPage() {
   const [orderDetails, setOrderDetails] = useState<any>();
   const [subject, setSubject] = useState("");
   const [attachment, setAttachment] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loader, setLoader] = useState<boolean>(false);
+  const [loaderMessage, setLoaderMessage] = useState<string>("");
+  const { showSnackbar } = useSnackbar();
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -55,7 +58,9 @@ export default function NewConversationPage() {
 
   const fetchOrder = async () => {
     try {
-      setLoading(true);
+      setLoader(true);
+      setLoaderMessage("Fetching order details...");
+
       const orderData = await getOrderDetails({ orderId: id });
       setOrderDetails(orderData[0]);
 
@@ -67,7 +72,8 @@ export default function NewConversationPage() {
       }`;
       setSubject(defaultSubject);
     } finally {
-      setLoading(false);
+      setLoader(false);
+      setLoaderMessage("");
     }
   };
 
@@ -82,9 +88,12 @@ export default function NewConversationPage() {
       formData.append("file_0", file);
       const data = await uploadFile(formData);
 
+      showSnackbar("Document uploaded successfully.", "success");
+
       setAttachment((prev) => [...prev, data]);
     } catch (err) {
       console.error(err);
+      showSnackbar("Failed to upload document", "error");
     }
   }
 
@@ -96,7 +105,7 @@ export default function NewConversationPage() {
     if (!content || !subject) return;
 
     try {
-      setLoading(true);
+      setLoader(true);
 
       /* Create ROOT notification */
       await addNotification({
@@ -117,14 +126,13 @@ export default function NewConversationPage() {
     } catch (err) {
       console.error("Failed to send new conversation", err);
     } finally {
-      setLoading(false);
+      setLoader(false);
     }
   };
 
   return (
     <>
-      {loading && <Loader />}
-
+      <OverlayLoader open={loader} message={loaderMessage} />
       <Grid container spacing={2} sx={{ mt: "64px", p: 3 }}>
         {/* Compose Area */}
         <Grid size={{ xs: 12, md: 8 }}>

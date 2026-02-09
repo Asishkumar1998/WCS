@@ -133,14 +133,12 @@ export default function HomePage() {
           </Grid>
 
           {/* Updates + News */}
-          <Grid container spacing={3} width="1248px">
-            <Grid size={{ xs: 12, md: 6 }}>
-              <UpdatesSection updates={updates} />
-            </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <UpdatesSection updates={updates} />
+          </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <NewsSection news={news} />
-            </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <NewsSection news={news} />
           </Grid>
         </Grid>
       </Box>
