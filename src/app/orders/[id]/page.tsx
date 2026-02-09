@@ -56,6 +56,9 @@ import { getAuth } from "@/app/utils/auth";
 import { generateExactInvoicePDF } from "@/app/utils/generateInvoicePDF";
 import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/app/store/store";
+import { fetchFormsSharedData } from "@/app/store/features/formsSlice";
 
 //Below are the Interfaces to handle the API response
 interface Instruction {
@@ -197,6 +200,8 @@ export const DOC_STATES: Record<number, string> = {
 };
 
 export default function OrdersPage() {
+  const dispatch = useDispatch<AppDispatch>();
+  const sharedFormData = useSelector((state: RootState) => state.formsData);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [data, setData] = useState<OrdersResponse | null>(null);
@@ -243,6 +248,10 @@ export default function OrdersPage() {
       setCustomerId(auth.customerId);
     }
   }, []);
+
+  useEffect(() => {
+    dispatch(fetchFormsSharedData());
+  }, [dispatch]);
 
   useEffect(() => {
     const shouldLockScroll = trackOpen || attachmentsOpen;
