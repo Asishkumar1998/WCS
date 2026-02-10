@@ -11,7 +11,7 @@ import { theme } from "@/theme/theme";
 import Navbar from "@/components/layout/NavBar/NavBar";
 import { usePathname, useRouter } from "next/navigation";
 import { SnackbarProvider } from "@/components/ui/Snakebar/SnackbarProvider";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getAuth } from "./utils/auth";
 
 const roboto = Roboto({
@@ -31,61 +31,61 @@ export default function RootLayout({
   const publicRoutes = ["/login", "/signup"];
 
   const hideLayout = publicRoutes.includes(pathname);
+  const isPublicRoute = publicRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
 
-  // useEffect(() => {
-  //   const token =
-  //     typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
-
-  //   const isPublicRoute = publicRoutes.some((route) =>
-  //     pathname.startsWith(route)
-  //   );
-
-  //   // Not logged in → block protected routes
-  //   if (!token && !isPublicRoute) {
-  //     router.replace("/login");
-  //   }
-
-  //   // Logged in → block login/signup
-  //   if (token && (pathname === "/login" || pathname === "/signup")) {
-  //     router.replace("/");
-  //   }
-  // }, [pathname, router]);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthed, setIsAuthed] = useState(false);
 
   useEffect(() => {
     const auth = getAuth();
 
-    const isPublicRoute = publicRoutes.some((route) =>
-      pathname.startsWith(route)
-    );
-
     // Not logged in or expired
     if (!auth && !isPublicRoute) {
+      setIsAuthed(false);
+      setAuthChecked(true);
       router.replace("/login");
+      return;
     }
 
-    // Logged in → block login page
+    // Logged in -> block login page
     if (auth && (pathname === "/login" || pathname === "/signup")) {
+      setIsAuthed(true);
+      setAuthChecked(true);
       router.replace("/");
+      return;
     }
+
+    setIsAuthed(!!auth || isPublicRoute);
+    setAuthChecked(true);
   }, [pathname, router]);
+
+  const shouldRenderApp = isPublicRoute || (authChecked && isAuthed);
 
   return (
     <html lang="en">
       <body className={`${roboto.variable}`}>
-        <AppRouterCacheProvider>
-          <Provider store={store}>
-            <ThemeProvider theme={theme}>
-              <SnackbarProvider>
-                <div style={{ display: "flex" }}>
-                  {!hideLayout && <SideDrawer />}
-                  {!hideLayout && <Navbar />}
-                  <main style={{ flexGrow: 1 }}>{children}</main>
-                </div>
-              </SnackbarProvider>
-            </ThemeProvider>
-          </Provider>
-        </AppRouterCacheProvider>
+        {shouldRenderApp ? (
+          <AppRouterCacheProvider>
+            <Provider store={store}>
+              <ThemeProvider theme={theme}>
+                <SnackbarProvider>
+                  <div style={{ display: "flex" }}>
+                    {!hideLayout && <SideDrawer />}
+                    {!hideLayout && <Navbar />}
+                    <main style={{ flexGrow: 1 }}>{children}</main>
+                  </div>
+                </SnackbarProvider>
+              </ThemeProvider>
+            </Provider>
+          </AppRouterCacheProvider>
+        ) : (
+          <div style={{ minHeight: "100vh" }} />
+        )}
       </body>
     </html>
   );
 }
+
+
