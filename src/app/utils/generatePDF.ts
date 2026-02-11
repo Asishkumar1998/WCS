@@ -1,6 +1,7 @@
 "use client";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
+import { SIDEBAR_CONTENT } from "@/components/features/Orders/Sidebars/US Rules/us-auth-sidebar.content";
 
 (pdfMake as any).vfs = (pdfFonts as any).vfs;
 
@@ -86,6 +87,19 @@ const logoBase64 = "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAANgAAACMCAYAA
 
 export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "download") => {
   const content: any[] = [];
+  const getEmbassySidebarContent = (countryName?: string) => {
+    const normalized = (countryName ?? "").trim().toLowerCase();
+    switch (normalized) {
+      case "iraq":
+        return SIDEBAR_CONTENT.IRAQ_DOC;
+      case "lebanon":
+        return SIDEBAR_CONTENT.LEBANON_DOC;
+      case "taiwan":
+        return SIDEBAR_CONTENT.TAIWAN_DOC;
+      default:
+        return null;
+    }
+  };
 
   // ---------- For each document ----------
   data.documents.forEach((doc, index) => {
@@ -447,8 +461,51 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
     }
 
     // Customer Instructions section (if any)
-    // This would need the instructionsList array from your data
-    // Placeholder for now - add if you have this data
+    const embassyContent = getEmbassySidebarContent(doc.countryName);
+    const taiwanExtraInstructions = [
+      "Please take a print of this order form and send it along with the documents.",
+      "Originals are required for legalization of General document for Taiwan. Processing will be initiated after WCS receives the originals.",
+    ];
+    const customerInstructions: string[] = [];
+
+    if ((doc.countryName ?? "").trim().toLowerCase() === "taiwan") {
+      customerInstructions.push(...taiwanExtraInstructions);
+    }
+    if (embassyContent) {
+      customerInstructions.push(...embassyContent.paragraphs);
+    }
+
+    if (customerInstructions.length > 0) {
+      content.push({
+        table: {
+          widths: ["*"],
+          body: [
+            [
+              {
+                text: "\nCustomer Instructions:\n",
+                bold: true,
+                fontSize: 11,
+              },
+            ],
+            [
+              {
+                ul: customerInstructions,
+                fontSize: 10,
+                margin: [0, 0, 0, 6],
+              },
+            ],
+          ],
+        },
+        layout: {
+          hLineWidth: () => 1,
+          vLineWidth: () => 1,
+          hLineColor: (i: number, node: any) =>
+            i === 0 || i === node.table.body.length ? "#cccccc" : "white",
+          vLineColor: (i: number, node: any) =>
+            i === 0 || i === node.table.widths.length ? "#cccccc" : "white",
+        },
+      });
+    }
 
     // Page break after each document except last
     if (index < data.documents.length - 1) {
