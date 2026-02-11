@@ -91,6 +91,7 @@ export const buildPrintCoverPayload = async (
 
       internalReference: order.orderType == 1102 ? doc.visa[0].customerReference : doc.internalReference,
       invoiceReference: doc.invoiceReference,
+      instructions: doc.instructions,
 
       stops:
         doc.docStops?.map((ds: any) => {
