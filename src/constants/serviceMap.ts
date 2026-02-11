@@ -24,5 +24,9 @@ export const CART_SERVICE_MAP: any = {
     isUSOrigin: 1,
     orderType: 1101,
     docCategoryId: 529,
+  },
+  "bulk-ordering": {
+    isUSOrigin: 1,
+    orderType: 1104,
   }
 };

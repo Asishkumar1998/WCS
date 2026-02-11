@@ -44,14 +44,19 @@ export default function Navbar() {
   }, []);
 
   const pathName = usePathname();
-  let service = pathName.split("/")[3];
+  const pathSegments = pathName.split("/").filter(Boolean);
+  let service = "us-authentication";
+
+  if (pathSegments[0] === "orders") {
+    if (pathSegments[1] === "new" && pathSegments[2]) {
+      service = pathSegments[2];
+    } else if (pathSegments[1] === "bulk-ordering") {
+      service = "bulk-ordering";
+    }
+  }
 
   const searchParams = useSearchParams();
   const serviceCart = searchParams.get("service") as string;
-
-  if (service == undefined) {
-    service = "us-authentication";
-  }
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);

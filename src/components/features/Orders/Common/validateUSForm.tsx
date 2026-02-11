@@ -6,57 +6,85 @@ type ValidationResult = {
 };
 
 type Params = {
-  country: any;
-  document: any;
-  additionalQuestions: { questionId: number; answer: any }[];
-  uploadDocValues: any;
+  countries?: any;
+  country?: any;
+  document?: any;
+  additionalQuestions?: { questionId: number; answer: any }[];
+  uploadDocValues?: any;
 };
 
 const OPTIONAL_QUESTION_IDS = [1, 8];
 
 const validateUSApostilleForm = ({
+  countries,
   country,
   document,
   additionalQuestions,
   uploadDocValues,
 }: Params): ValidationResult => {
-  if (!country) {
-    return { isValid: false, error: "Country is required" };
+  /* ---------------- Country ---------------- */
+  if (country !== undefined) {
+    if (!country) {
+      return { isValid: false, error: "Country is required" };
+    }
   }
 
-  if (!document) {
-    return { isValid: false, error: "Document is required" };
-  }
-  if (uploadDocValues.nestedSelection === null) {
-    return { isValid: false, error: "Please Select Document Upload options" };
-  }
-  if (
-    uploadDocValues.nestedSelection === "proceedWithAttached" &&
-    uploadDocValues.uploadedFile === null
-  ) {
-    return { isValid: false, error: "Please Upload Document" };
+  /* ---------------- Document ---------------- */
+  if (document !== undefined) {
+    if (!document) {
+      return { isValid: false, error: "Document is required" };
+    }
   }
 
-  // 🔥 CORE FIX
-  const requiredQuestionIds =
-    ADDITIONAL_QUESTION_COUNTRY_MAP[country.countryId] || [];
+  /* ---------------- Countries ---------------- */
+  if (countries !== undefined) {
+    if (!countries || countries.length === 0) {
+      return { isValid: false, error: "Please select at least one country" };
+    }
+  }
 
-  for (const qId of requiredQuestionIds) {
-    if (OPTIONAL_QUESTION_IDS.includes(qId)) continue;
-
-    const answered = additionalQuestions.find(
-      (q) =>
-        q.questionId === qId &&
-        q.answer !== undefined &&
-        q.answer !== null &&
-        q.answer !== "",
-    );
-
-    if (!answered) {
+  /* ---------------- Upload Values ---------------- */
+  if (uploadDocValues !== undefined) {
+    if (uploadDocValues?.nestedSelection === null) {
       return {
         isValid: false,
-        error: "Please answer all required additional questions",
+        error: "Please Select Document Upload options",
       };
+    }
+
+    if (
+      uploadDocValues?.nestedSelection === "proceedWithAttached" &&
+      uploadDocValues?.uploadedFile === null
+    ) {
+      return {
+        isValid: false,
+        error: "Please Upload Document",
+      };
+    }
+  }
+
+  /* ---------------- Additional Questions ---------------- */
+  if (country && additionalQuestions !== undefined) {
+    const requiredQuestionIds =
+      ADDITIONAL_QUESTION_COUNTRY_MAP[country.countryId] || [];
+
+    for (const qId of requiredQuestionIds) {
+      if (OPTIONAL_QUESTION_IDS.includes(qId)) continue;
+
+      const answered = additionalQuestions?.find(
+        (q) =>
+          q.questionId === qId &&
+          q.answer !== undefined &&
+          q.answer !== null &&
+          q.answer !== "",
+      );
+
+      if (!answered) {
+        return {
+          isValid: false,
+          error: "Please answer all required additional questions",
+        };
+      }
     }
   }
 
