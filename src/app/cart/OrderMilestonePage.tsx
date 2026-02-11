@@ -2244,7 +2244,14 @@ export default function OrderMilestonePage() {
               variant="contained"
               size="large"
               startIcon={<AddCircleOutlineIcon />}
-              onClick={() => (window.location.href = `/orders/new/${service}`)}
+              onClick={() => {
+                const url =
+                  service === "bulk-ordering"
+                    ? `/orders/${service}`
+                    : `/orders/new/${service}`;
+
+                window.location.href = url;
+              }}
             >
               Add Documents
             </Button>
