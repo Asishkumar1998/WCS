@@ -157,12 +157,14 @@ export default function ProfilePage() {
   const buildUpdatePayload = () => {
     const { user, customer, billAddress } = profileData;
 
+    const upoNumber = form.paymentOption === 'Pay On PO' ? form.upoNumber : "";
+
     return {
       name: form.firstName,
       lastName: form.lastName,
       contactNo: form.phone,
       paymentOption: form.paymentOption,
-      UPONumber: form.upoNumber,
+      UPONumber: upoNumber,
       apContact: form.apContact,
       referenceId: customer.customerId,
       userId: user.userId,

@@ -66,7 +66,6 @@ const CustomerLogin = () => {
         backgroundPosition: "center",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "center",
         alignItems: "center",
         position: "relative",
       }}
@@ -79,6 +78,7 @@ const CustomerLogin = () => {
           py: 2,
           color: "#fff",
           gap: 3,
+          mt: 3,
         }}
       >
         {/* LOGO */}
@@ -87,6 +87,7 @@ const CustomerLogin = () => {
           alt="WCS Logo"
           width={130}
           height={130}
+          style={{ width: "11.875rem", height: "10rem" }}
         />
 
         {/* TITLE + ADDRESS COLUMN */}
@@ -96,6 +97,7 @@ const CustomerLogin = () => {
             variant="h4"
             fontWeight={600}
             lineHeight={1.2}
+            fontSize={"42px"}
             sx={{
               fontFamily: "'Lato', sans-serif !important",
             }}
@@ -117,13 +119,37 @@ const CustomerLogin = () => {
 
           {/* Address (touches title start) */}
           <Box sx={{ mt: 1 }}>
-            <Typography variant="body2">
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Poppins, Arial, Helvetica, sans-serif",
+                color: "white",
+                fontSize: "1.2375rem",
+                fontWeight: 500,
+              }}
+            >
               20 Courthouse Square, Suite 219, Rockville, Maryland, 20850 USA
             </Typography>
-            <Typography variant="body2">
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Poppins, Arial, Helvetica, sans-serif",
+                color: "white",
+                fontSize: "1.2375rem",
+                fontWeight: 500,
+              }}
+            >
               Email: wcs@wcss.com &nbsp; | &nbsp; Phone: +1 301 605 1500
             </Typography>
-            <Typography variant="body2">
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Poppins, Arial, Helvetica, sans-serif",
+                color: "white",
+                fontSize: "1.2375rem",
+                fontWeight: 500,
+              }}
+            >
               Toll Free: 1-866-ALL-DOCS (255-3627)
             </Typography>
           </Box>
@@ -133,21 +159,35 @@ const CustomerLogin = () => {
       {/* Login Card */}
       <Box
         sx={{
-          width: 520,
+          width: 620,
           p: 4,
           borderRadius: 3,
-          // background: "rgba(15, 35, 65, 0.9)",
-          backdropFilter: "blur(10px)",
-          boxShadow: "0 20px 50px rgba(0,0,0,0.4)",
-          border: "1px solid rgba(255,255,255,0.1)",
+
+          background:
+            "linear-gradient(135deg, rgba(15,35,65,0.85), rgba(10,25,50,0.75))",
+
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+
+          // Border
+          border: "1px solid rgba(255,255,255,0.25)",
+
+          // Glow + depth
+          boxShadow: `
+            0 0 0 1px rgba(255,255,255,0.1) inset,
+            0 8px 32px rgba(0,0,0,0.6),
+            0 0 40px rgba(255,255,255,0.35)
+          `,
+          mt: 5,
         }}
       >
         <Typography
           variant="h5"
           textAlign="center"
-          fontWeight={600}
+          fontWeight={500}
           color="#fff"
-          mb={3}
+          mb={6}
+          fontSize={"2.1rem"}
         >
           Sign In to WCS Express
         </Typography>

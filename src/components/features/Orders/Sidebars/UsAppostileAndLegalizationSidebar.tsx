@@ -50,15 +50,28 @@ export default function USAppostileAndLegalizationSidebar({
       <Box sx={{ mt: 2 }}>
         <List dense disablePadding>
           {content.paragraphs.map((text, index) => (
+            // <ListItem key={index} sx={{ pl: 0, mb: 1 }}>
+            //   <Typography variant="body2" color="#1F2937" fontWeight={700}>
+            //     {text}
+            //   </Typography>
+            // </ListItem>
             <ListItem key={index} sx={{ pl: 0, mb: 1 }}>
-              <Typography variant="body2" color="#1F2937" fontWeight={700}>
-                {text}
-              </Typography>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "0.875rem",
+                  color: "#1F2937",
+                  fontWeight: 700,
+                  fontFamily: "Inter, Roboto, Helvetica, Arial, sans-serif",
+                  lineHeight: 1.43,
+                }}
+                dangerouslySetInnerHTML={{ __html: text }}
+              />
             </ListItem>
           ))}
         </List>
 
-        <Image
+        <img
           src={content.sampleDoc}
           alt="Sample Document"
           width={400}

@@ -95,6 +95,8 @@ export default function USAppostileAndLegalizationForm({
   const [additionalComments, setAdditionalComments] = useState<any>();
   const [trackingNo, setTrackingNo] = useState<any>(null);
   const [courierType, setCourierType] = useState<string | null>(null);
+  const [forceOriginalMail, setForceOriginalMail] = useState(false);
+  const [suppressNextDocOpen, setSuppressNextDocOpen] = useState(false);
 
   const resetForm = () => {
     setCountry(null);
@@ -108,6 +110,8 @@ export default function USAppostileAndLegalizationForm({
     setInfoCardVisible(false);
     setModal({ open: false, type: "warning", message: "" });
     setShowCartConflict(false);
+    setForceOriginalMail(false);
+    setSuppressNextDocOpen(false);
 
     setFormResetKey((prev) => prev + 1);
   };
@@ -128,7 +132,7 @@ export default function USAppostileAndLegalizationForm({
     const countryType = country.countryTypeId === 501 ? "HAGUE" : "NON_HAGUE";
 
     if (countryType === "HAGUE") {
-      // Case 1: STOP PROCESS
+      // Case 1: REQUIRE ORIGINALS (block upload)
       if (STOP_DOCS_HAGUE_COUNTRIES.includes(id)) {
         let warningMessage = "";
 
@@ -175,7 +179,9 @@ export default function USAppostileAndLegalizationForm({
           type: "warning",
           message: warningMessage,
         });
-        setDisabled(true);
+        setDisabled(false);
+        setForceOriginalMail(true);
+        setSuppressNextDocOpen(true);
         setDocument(newValue);
         setDropdownOpen(false);
         return;
@@ -185,10 +191,12 @@ export default function USAppostileAndLegalizationForm({
       if (!STOP_DOCS_HAGUE_COUNTRIES.includes(id)) {
         setDocument(newValue);
         setDisabled(false);
+        setForceOriginalMail(false);
+        setSuppressNextDocOpen(false);
         setModal((prev) => ({ ...prev, open: false }));
       }
     } else {
-      // Case 1: STOP PROCESS
+      // Case 1: REQUIRE ORIGINALS (block upload)
       if (STOP_DOCS_NON_HAGUE_COUNTRIES.includes(id)) {
         let warningMessage = "";
 
@@ -235,7 +243,9 @@ export default function USAppostileAndLegalizationForm({
           type: "warning",
           message: warningMessage,
         });
-        setDisabled(true);
+        setDisabled(false);
+        setForceOriginalMail(true);
+        setSuppressNextDocOpen(true);
         setDocument(newValue);
         setDropdownOpen(false);
         return;
@@ -245,6 +255,8 @@ export default function USAppostileAndLegalizationForm({
       if (!STOP_DOCS_NON_HAGUE_COUNTRIES.includes(id)) {
         setDocument(newValue);
         setDisabled(false);
+        setForceOriginalMail(false);
+        setSuppressNextDocOpen(false);
         setModal((prev) => ({ ...prev, open: false }));
       }
     }
@@ -254,6 +266,7 @@ export default function USAppostileAndLegalizationForm({
     setCountry(value);
     setDocument(null);
     setAdditionalServices([]);
+    setForceOriginalMail(false);
   };
 
   useEffect(() => {
@@ -502,7 +515,7 @@ export default function USAppostileAndLegalizationForm({
           {/* Country */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <CountrySelect
-              label="Select Country"
+              label="Select or Type Country"
               value={country}
               required
               onChange={handleCountrySelect}
@@ -533,13 +546,19 @@ export default function USAppostileAndLegalizationForm({
           {/* Document */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <DocumentDropdown
-              label="Select Document"
+              label="Select or Type Document"
               country={country}
               value={document}
               required
               onChange={handleDocumentSelect}
               open={dropdownOpen}
-              onOpen={() => setDropdownOpen(true)}
+              onOpen={() => {
+                if (suppressNextDocOpen) {
+                  setSuppressNextDocOpen(false);
+                  return;
+                }
+                setDropdownOpen(true);
+              }}
               onClose={() => setDropdownOpen(false)}
               disabled={!country}
             />
@@ -666,6 +685,7 @@ export default function USAppostileAndLegalizationForm({
               <DocumentUpload
                 onChange={handleDocumentUpload}
                 country={country}
+                forceOriginalMail={forceOriginalMail}
               />
             </Box>
           </Grid>
@@ -714,12 +734,20 @@ export default function USAppostileAndLegalizationForm({
 
         <Modal
           open={modal.open}
-          onClose={() => setModal((prev) => ({ ...prev, open: false }))}
+          onClose={() => {
+            setModal((prev) => ({ ...prev, open: false }));
+            setDropdownOpen(false);
+            setSuppressNextDocOpen(true);
+          }}
           type={modal.type}
           title="Document Restriction"
           message={modal.message}
           confirmText="OK"
-          onConfirm={() => setModal((prev) => ({ ...prev, open: false }))}
+          onConfirm={() => {
+            setModal((prev) => ({ ...prev, open: false }));
+            setDropdownOpen(false);
+            setSuppressNextDocOpen(true);
+          }}
         />
       </FormLayout>
     </>

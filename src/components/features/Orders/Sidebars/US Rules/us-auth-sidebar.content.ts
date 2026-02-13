@@ -12,13 +12,15 @@ const COUNTRIES_REQUIRING_NOTARIZATION = new Set([
     "egypt",
     "iraq",
     "qatar",
+    "yemen",
+    "kurdistan",
 ]);
 
 const embassyBaseParagraph = (countryName: string) =>
     `Documents for ${countryName} will go through Embassy Legalization which is the alternative method for authenticating a document that is utilized for countries that are Non-Hague Convention countries. These countries do not recognize the Apostille as a means to authenticating documents per the 1961 Hague Convention.`;
 
 const notarizationParagraph = (countryName: string) =>
-    `For ${countryName} documents, please make sure to prepare your documents correctly prior to sending it to WCS: Document should be signed, dated and notarized from the U.S address mentioned on the document.`;
+    `For ${countryName} documents, please make sure to prepare your documents correctly prior to sending it to WCS: <mark style="background-color: yellow;">Document should be signed, dated and notarized from the U.S address mentioned on the document.</mark>`;
 
 
 export const SIDEBAR_CONTENT = {
@@ -34,9 +36,9 @@ export const SIDEBAR_CONTENT = {
     APOSTILLE_FEDERAL: {
         title: "Apostille Services for Hague Countries (Federal Government Document)",
         paragraphs: [
-            "Apostille is French for “certification” and represents the authentication of an official gold seal or signature on a document.",
+            "Apostille is French for “certification” and represents the authentication of an official gold seal or signature on a document. If you are sending your documents to a country that is part of the 1961 Hague Convention, an Apostille certificate is used as proof of authenticity among the member nations.",
             "Documents will be apostilled by US Department of State (USDOS).",
-            "Federally issued documents should not be notarized.",
+            "<em>Federally issued documents should not be notarized.</em>",
         ],
         sampleDoc: "/us-auth/samples/apostille-federal.jpg",
     },
@@ -53,13 +55,13 @@ export const SIDEBAR_CONTENT = {
     EMBASSY_COUNTRY: (countryName: string): SidebarContent => {
         const slug = countryName.toLowerCase().replace(/\s+/g, "-");
 
-        if(countryName === "Iraq") {
+        if (countryName === "Iraq") {
             return SIDEBAR_CONTENT.IRAQ_DOC;
         }
-        if(countryName === "Taiwan") {
+        if (countryName === "Taiwan") {
             return SIDEBAR_CONTENT.TAIWAN_DOC;
         }
-        if(countryName === "Lebanon") {
+        if (countryName === "Lebanon") {
             return SIDEBAR_CONTENT.LEBANON_DOC;
         }
 

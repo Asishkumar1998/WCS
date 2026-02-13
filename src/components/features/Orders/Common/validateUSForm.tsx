@@ -64,7 +64,11 @@ const validateUSApostilleForm = ({
   }
 
   /* ---------------- Additional Questions ---------------- */
-  if (country && additionalQuestions !== undefined) {
+  if (
+    country &&
+    additionalQuestions !== undefined &&
+    document?.docCategoryId === 522
+  ) {
     const requiredQuestionIds =
       ADDITIONAL_QUESTION_COUNTRY_MAP[country.countryId] || [];
 

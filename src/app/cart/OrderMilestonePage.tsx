@@ -40,7 +40,7 @@ import StatusStepper from "@/components/ui/Stepper/FormStepper";
 import { DescriptionOutlined, Email, Home, Phone } from "@mui/icons-material";
 import Image from "next/image";
 import { savePayment } from "./savePayment";
-import { updateOrder } from "@/services/paymentService";
+import { processPayLater, updateOrder } from "@/services/paymentService";
 import {
   addRegionAddress,
   getFeeTypes,
@@ -188,6 +188,7 @@ export default function OrderMilestonePage() {
   const [nameError, setNameError] = useState<string>("");
   const [cardNumberError, setCardNumberError] = useState<string>("");
   const [cvvError, setCvvError] = useState<string>("");
+  const [showCard, setShowCard] = useState<boolean>(false);
   const [addressErrors, setAddressErrors] = useState<Record<string, string>>(
     {},
   );
@@ -510,6 +511,17 @@ export default function OrderMilestonePage() {
     }));
   }, [orderDetails]);
 
+  useEffect(() => {
+    if (
+      paymentType === "card" &&
+      (service === "us-authentication" ||
+        service === "notary-service" ||
+        service === "dispatch-service")
+    )
+      setShowCard(true);
+    else setShowCard(false);
+  }, [service, paymentType]);
+
   const downloadAttachments = async (attachment: {
     attachmentId: string;
     fileName: string;
@@ -623,7 +635,7 @@ export default function OrderMilestonePage() {
       showSnackbar("Please select payment type", "error");
       return;
     }
-    if (paymentType === "card") {
+    if (showCard) {
       const nameErr = validateName(card.cardHolderName);
       const numErr = validateCardNumber(card.cardNumber);
       const expiryErr = validateExpiry(card.expirationDate);
@@ -669,16 +681,18 @@ export default function OrderMilestonePage() {
 
       setCard(paymentCard);
       let response;
-      if (paymentType == "card") {
+      if (showCard) {
         paymentCard.amount = Number(totalAmount) + totalAmount * 0.035;
         response = await savePayment(paymentCard);
       } else {
+        const paymentOption = paymentType === "card" ? "Credit Card" : paymentType;
+        await processPayLater({"orderId": orderDetails.orderId});
         response = await updateOrder(orderDetails?.orderId, {
           billingAddressId: customer.billingAddressId,
           confirmOrderDate: true,
           orderId: orderDetails?.orderId,
           orderStatusId: 534,
-          payLaterOptions: paymentType,
+          payLaterOptions: paymentOption,
           shippingAddressId: customer.shippingAddressId,
         });
       }
@@ -1304,7 +1318,9 @@ export default function OrderMilestonePage() {
                         variant="outlined"
                         size="small"
                         fullWidth
-                        value={invoiceReference}
+                        value={
+                          user?.upoNumber ? user?.upoNumber : invoiceReference
+                        }
                         onChange={(e) => setInvoiceReference(e.target.value)}
                         InputLabelProps={{
                           shrink: Boolean(invoiceReference),
@@ -1753,7 +1769,7 @@ export default function OrderMilestonePage() {
                           <FormControlLabel
                             value="card"
                             control={<Radio />}
-                            label="Credit/Debit Cart"
+                            label="Credit/Debit Card"
                           />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
@@ -1779,7 +1795,7 @@ export default function OrderMilestonePage() {
                         </Grid>
                       </RadioGroup>
 
-                      {paymentType === "card" && (
+                      {showCard && (
                         <>
                           <Typography variant="body2" mt={1} mb={2}>
                             * 3.5% service charge applies to all card
@@ -1906,7 +1922,10 @@ export default function OrderMilestonePage() {
                           },
                         }}
                       >
-                        {paymentType === "card"
+                        {paymentType === "card" &&
+                        (service === "us-authentication" ||
+                          service === "notary-service" ||
+                          service === "dispatch-service")
                           ? `Checkout & Pay $${totalAmount}`
                           : `Checkout & Confirm to Pay Later $${totalAmount}`}
                       </Button>
@@ -2021,7 +2040,7 @@ export default function OrderMilestonePage() {
                 <Grid container spacing={2} mt={2}>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <CountrySelect
-                      label="Select Country"
+                      label="Select or Type Country"
                       value={country}
                       required
                       onChange={(value: any) => {

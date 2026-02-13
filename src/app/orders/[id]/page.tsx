@@ -638,7 +638,7 @@ export default function OrdersPage() {
 
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <CountrySelect
-                label="Select Country"
+                label="Select or Type Country"
                 value={country}
                 onChange={handleCountrySelect}
               />

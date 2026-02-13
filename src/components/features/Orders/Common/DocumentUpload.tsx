@@ -18,9 +18,11 @@ const couriers = ["FEDEX", "UPS", "USPS", "DHL", "OTHERS"];
 export default function DocumentUpload({
   country,
   onChange,
+  forceOriginalMail = false,
 }: {
   country?: any;
   onChange?: (data: any) => void;
+  forceOriginalMail?: boolean;
 }) {
   const [nestedSelection, setNestedSelection] = useState<
     "proceedWithAttached" | "originalMailedNested" | null
@@ -47,6 +49,14 @@ export default function DocumentUpload({
     trackingNumberNested,
     courierNested,
   ]);
+
+  useEffect(() => {
+    if (!forceOriginalMail) return;
+    setNestedSelection("originalMailedNested");
+    setUploadedFile(null);
+    setFileName("");
+    setNumPages("");
+  }, [forceOriginalMail]);
 
   const handleFileChange = (file: File | null) => {
     setUploadedFile(file);
@@ -98,6 +108,7 @@ export default function DocumentUpload({
           label="Choose file"
           fileNameProp={fileName}
           onChange={handleFileChange}
+          disabled={forceOriginalMail}
         />
         {uploadedFile && (
           <Box
@@ -129,12 +140,16 @@ export default function DocumentUpload({
         {/* Nested Options */}
         <RadioGroup
           value={nestedSelection}
-          onChange={(e) => setNestedSelection(e.target.value as any)}
+          onChange={(e) => {
+            const value = e.target.value as any;
+            if (forceOriginalMail && value === "proceedWithAttached") return;
+            setNestedSelection(value);
+          }}
         >
           {/* Attached */}
           <FormControlLabel
             value="proceedWithAttached"
-            control={<Radio size="small" />}
+            control={<Radio size="small" disabled={forceOriginalMail} />}
             label={
               country?.countryId === 195
                 ? "Upload un-notarized document (document will be notarized by WCS and certified by MD Secretary of State)"

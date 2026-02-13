@@ -274,7 +274,7 @@ export default function NotaryServiceForm() {
           {/* Country */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <CountrySelect
-              label="Select Country"
+              label="Select or Type Country"
               required
               value={country}
               onChange={setCountry}
@@ -284,7 +284,7 @@ export default function NotaryServiceForm() {
           {/* Document */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <DocumentDropdown
-              label="Select Document"
+              label="Select or Type Document"
               country={country}
               value={document}
               required
