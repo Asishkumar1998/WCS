@@ -77,6 +77,12 @@ const buildBulkDoc = ({
   };
 };
 
+const toDocAttachmentGroups = (uploadedAttachments: any) => {
+  if (!Array.isArray(uploadedAttachments)) return [[]];
+  if (uploadedAttachments.length === 0) return [[]];
+  return uploadedAttachments.map((attachment) => [attachment]);
+};
+
 const buildBulkMultiDocSingleCountryPayload = ({
   country,
   documents,
@@ -107,23 +113,28 @@ const buildBulkMultiDocSingleCountryPayload = ({
         ) || null
       : null;
 
-  const docs = documents.map((entry) =>
-    buildBulkDoc({
-      country,
-      document: entry,
-      additionalServices,
-      uploadedAttachments: entry.uploadedAttachments,
-      customerReference: entry.reference,
-      additionalComments,
-      numberOfPages: entry.uploadData?.numPages ?? "",
-      trackingNo: entry.uploadData?.trackingNumberNested,
-      courierType: entry.uploadData?.courierNested,
-      originState: entry.docCategoryId === 522 ? originState : undefined,
-      nusaccRequired: entry.docCategoryId === 522 ? nusaccRequired : undefined,
-      numberOfProducts:
-        entry.docCategoryId === 522 ? numberOfProducts : undefined,
-    }),
-  );
+  const docs = documents.flatMap((entry) => {
+    const attachmentGroups = toDocAttachmentGroups(entry.uploadedAttachments);
+
+    return attachmentGroups.map((attachments) =>
+      buildBulkDoc({
+        country,
+        document: entry,
+        additionalServices,
+        uploadedAttachments: attachments,
+        customerReference: entry.reference,
+        additionalComments,
+        numberOfPages: entry.uploadData?.numPages ?? "",
+        trackingNo: entry.uploadData?.trackingNumberNested,
+        courierType: entry.uploadData?.courierNested,
+        originState: entry.docCategoryId === 522 ? originState : undefined,
+        nusaccRequired:
+          entry.docCategoryId === 522 ? nusaccRequired : undefined,
+        numberOfProducts:
+          entry.docCategoryId === 522 ? numberOfProducts : undefined,
+      }),
+    );
+  });
 
   return {
     customerId,
