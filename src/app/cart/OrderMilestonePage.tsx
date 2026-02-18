@@ -503,13 +503,15 @@ export default function OrderMilestonePage() {
   }, [allDocIds]);
 
   useEffect(() => {
-    setInvoiceReference(orderDetails?.invoiceReference);
+    const nextInvoiceReference =
+      orderDetails?.invoiceReference ?? user?.upoNumber ?? "";
+    setInvoiceReference(nextInvoiceReference);
     const option = getShippingOptionFromOrder(orderDetails);
     setChecked((prev) => ({
       ...prev,
       option: option,
     }));
-  }, [orderDetails]);
+  }, [orderDetails, user?.upoNumber]);
 
   useEffect(() => {
     if (
@@ -782,7 +784,7 @@ export default function OrderMilestonePage() {
                 (a: any) => a.regionAddressId === checked.regionAddressId,
               )?.regionAddressId ?? shippingDetails.regionNote)
             : shippingDetails.regionNote,
-        ...(invoiceReference ? { invoiceReference } : {}),
+        invoiceReference: invoiceReference?.trim() ?? "",
       };
       await updateShippingDetails(orderDetails?.orderId, payload);
 
@@ -1318,9 +1320,7 @@ export default function OrderMilestonePage() {
                         variant="outlined"
                         size="small"
                         fullWidth
-                        value={
-                          user?.upoNumber ? user?.upoNumber : invoiceReference
-                        }
+                        value={invoiceReference}
                         onChange={(e) => setInvoiceReference(e.target.value)}
                         InputLabelProps={{
                           shrink: Boolean(invoiceReference),
