@@ -2,6 +2,7 @@
 
 import {
   Autocomplete,
+  Alert,
   Box,
   FormControl,
   FormControlLabel,
@@ -19,6 +20,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useEffect, useRef, useState } from "react";
 
 const couriers = ["FEDEX", "UPS", "USPS", "DHL", "OTHERS"];
+const ALLOWED_TYPES = ["pdf", "doc", "docx"];
+const MAX_SIZE_MB = 5;
 
 type NestedSelection = "proceedWithAttached" | "originalMailedNested" | null;
 
@@ -53,6 +56,7 @@ export default function MultiDocumentUpload({ country, onChange, value }: Props)
   const [numPages, setNumPages] = useState("");
   const [trackingNumberNested, setTrackingNumberNested] = useState("");
   const [courierNested, setCourierNested] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   const current: UploadValue = isControlled
     ? {
@@ -106,9 +110,47 @@ export default function MultiDocumentUpload({ country, onChange, value }: Props)
     if (!e.target.files) return;
 
     const files = Array.from(e.target.files);
+    const validFiles: File[] = [];
+    const invalidReasons: string[] = [];
+
+    files.forEach((file) => {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "";
+      const isValidType = ALLOWED_TYPES.includes(ext);
+      const isValidSize = file.size / 1024 / 1024 <= MAX_SIZE_MB;
+
+      if (!isValidType) {
+        invalidReasons.push(
+          `${file.name}: invalid type (allowed ${ALLOWED_TYPES
+            .map((t) => t.toUpperCase())
+            .join(", ")})`,
+        );
+        return;
+      }
+
+      if (!isValidSize) {
+        invalidReasons.push(
+          `${file.name}: file too large (max ${MAX_SIZE_MB} MB)`,
+        );
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    if (invalidReasons.length > 0) {
+      setError(invalidReasons.join(" | "));
+    } else {
+      setError("");
+    }
+
+    if (validFiles.length === 0) {
+      e.target.value = "";
+      return;
+    }
+
     apply({
       ...current,
-      uploadedFiles: [...current.uploadedFiles, ...files],
+      uploadedFiles: [...current.uploadedFiles, ...validFiles],
     });
     e.target.value = "";
   };
@@ -140,6 +182,7 @@ export default function MultiDocumentUpload({ country, onChange, value }: Props)
             hidden
             multiple
             onChange={handleFileSelect}
+            accept={ALLOWED_TYPES.map((t) => `.${t}`).join(",")}
           />
 
           <Box
@@ -181,6 +224,8 @@ export default function MultiDocumentUpload({ country, onChange, value }: Props)
             ))}
           </List>
         )}
+
+        {error && <Alert severity="error">{error}</Alert>}
 
         <RadioGroup
           value={current.nestedSelection}
