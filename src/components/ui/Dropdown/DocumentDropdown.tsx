@@ -26,6 +26,7 @@ export interface DocType {
   modifiedAt: number;
   ordSequence: any;
   attachmentRequired: any;
+  isDeleted: boolean;
 }
 
 interface BaseDropdownProps {
