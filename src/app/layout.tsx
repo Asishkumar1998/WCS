@@ -28,7 +28,7 @@ export default function RootLayout({
   const pathname = usePathname();
   const router = useRouter();
 
-  const publicRoutes = ["/login", "/signup"];
+  const publicRoutes = ["/login", "/signup","/thankyou"];
 
   const hideLayout = publicRoutes.includes(pathname);
   const isPublicRoute = publicRoutes.some((route) =>
@@ -50,10 +50,10 @@ export default function RootLayout({
     }
 
     // Logged in -> block login page
-    if (auth && (pathname === "/login" || pathname === "/signup")) {
+    if (!auth && (pathname === "/login" || pathname === "/signup"|| pathname==="/thankyou")) {
       setIsAuthed(true);
       setAuthChecked(true);
-      router.replace("/");
+      router.replace(pathname);
       return;
     }
 

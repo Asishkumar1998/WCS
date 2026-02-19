@@ -7,6 +7,7 @@ import {
   FormControl,
   IconButton,
   InputAdornment,
+  Link,
   OutlinedInput,
   Typography,
 } from "@mui/material";
@@ -261,29 +262,29 @@ const CustomerLogin = () => {
           {loading ? "Signing in..." : "Sign In"}
         </Button>
 
-        {/* <Box
+        <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
             mt: 2,
           }}
         >
-          <Typography variant="body2" color="#fff">
+          <Typography variant="body2" color="#fff" fontWeight={600}>
             New to WCS?{" "}
-            <span
-              style={{
-                color: "#ff4d4f",
-                cursor: "pointer",
-              }}
-            >
-              Sign Up Now
-            </span>
+            
+              <Link
+                href="/signup" underline="none"
+                sx={{color: "red", ml: 1}}
+                
+              >Sign Up Now</Link>
+              
+            
           </Typography>
 
-          <Typography variant="body2" color="#fff" sx={{ cursor: "pointer" }}>
+          {/* <Typography variant="body2" color="#fff" sx={{ cursor: "pointer" }}>
             Forgot password?
-          </Typography>
-        </Box> */}
+          </Typography> */}
+        </Box>
       </Box>
 
       {/* Bottom Branding */}

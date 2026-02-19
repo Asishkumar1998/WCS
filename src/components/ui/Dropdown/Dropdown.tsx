@@ -15,6 +15,8 @@ interface BaseDropdownProps {
   multiple?: boolean;
   disabled?: boolean;
   required?: boolean;
+  style?: any;
+  variant?: any;
 }
 
 interface SingleDropdownProps extends BaseDropdownProps {
@@ -42,6 +44,8 @@ const Dropdown: React.FC<DropdownProps> = ({
   required = false,
   multiple = false,
   disabled = false,
+  style = null,
+  variant = "outlined"
 }) => {
   return (
     <FormControl fullWidth>
@@ -94,6 +98,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         disableClearable={!multiple}
         disableCloseOnSelect={multiple}
         openOnFocus
+        sx={style}
         ListboxProps={{ style: { maxHeight: 320 } }}
       />
     </FormControl>

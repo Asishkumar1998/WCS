@@ -13,15 +13,17 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const auth = getAuth();
+      const path = window.location.pathname;
+      if (path !== "/signup" && path !=="/thankyou") {
+        const auth = getAuth();
+        if (!auth) {
+          window.location.href = "/login";
+          return Promise.reject("Session expired");
+        }
 
-      if (!auth) {
-        window.location.href = "/login";
-        return Promise.reject("Session expired");
+        config.headers.Authorization = auth.restApiToken;
       }
-
-      config.headers.Authorization = auth.restApiToken;
-
+      
     }
 
     return config;
