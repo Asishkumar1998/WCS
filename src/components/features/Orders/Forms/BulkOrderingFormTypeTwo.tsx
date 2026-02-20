@@ -89,13 +89,15 @@ export default function BulkOrderingFormTypeTwo() {
   const { documentTypes } = useSelector((state: RootState) => state.formsData);
   const { showSnackbar } = useSnackbar();
 
-  const PINNED_DOC_IDS = [35, 78];
+  const PINNED_DOC_IDS = [78, 35, 36];
 
   const documentOptions = useMemo(() => {
-    const filteredDocs = documentTypes.filter((d) => d.docTypeId !== 36);
+    const filteredDocs = documentTypes;
 
-    const pinned = filteredDocs
-      .filter((d) => PINNED_DOC_IDS.includes(d.docTypeId))
+    const pinned = PINNED_DOC_IDS.map((id) =>
+      filteredDocs.find((d) => d.docTypeId === id),
+    )
+      .filter((d): d is DocumentType => Boolean(d))
       .map((d) => d.docTypeName);
 
     const rest = filteredDocs

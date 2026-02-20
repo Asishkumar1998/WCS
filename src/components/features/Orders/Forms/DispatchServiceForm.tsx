@@ -261,6 +261,7 @@ export default function DispatchServiceForm() {
               country={country}
               value={document}
               required
+              pinnedDocTypeIds={[78, 35, 36]}
               onChange={handleDocumentSelect}
               open={dropdownOpen}
               onOpen={() => setDropdownOpen(true)}

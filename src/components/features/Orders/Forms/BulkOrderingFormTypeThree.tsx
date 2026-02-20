@@ -80,16 +80,16 @@ export default function BulkOrderingFormTypeThree() {
   const { showSnackbar } = useSnackbar();
   const [additionalServicesState] = useState(AdditionalServices);
 
-  const PINNED_DOC_IDS = [35, 78];
+  const PINNED_DOC_IDS = [78, 35, 36];
 
   const documentOptions = useMemo(() => {
-    const filteredDocs = documentTypes.filter((d) => d.docTypeId !== 36);
-
-    const pinned = filteredDocs
-      .filter((d) => PINNED_DOC_IDS.includes(d.docTypeId))
+    const pinned = PINNED_DOC_IDS.map((id) =>
+      documentTypes.find((d) => d.docTypeId === id),
+    )
+      .filter((d): d is (typeof documentTypes)[number] => Boolean(d))
       .map((d) => d.docTypeName);
 
-    const rest = filteredDocs
+    const rest = documentTypes
       .filter((d) => !PINNED_DOC_IDS.includes(d.docTypeId))
       .sort((a, b) => a.docTypeName.localeCompare(b.docTypeName))
       .map((d) => d.docTypeName);

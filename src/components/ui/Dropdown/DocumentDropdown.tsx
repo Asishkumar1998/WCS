@@ -38,6 +38,7 @@ interface BaseDropdownProps {
   onClose?: () => void;
   disabled?: boolean;
   isBulkOrder?: boolean;
+  pinnedDocTypeIds?: number[];
 }
 
 interface SingleDropdownProps extends BaseDropdownProps {
@@ -69,6 +70,7 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
   onClose,
   disabled = false,
   isBulkOrder = false,
+  pinnedDocTypeIds = [],
 }) => {
   const { documentTypes } = useSelector((state: RootState) => state.formsData);
   const [filteredDocs, setFilteredDocs] = useState<DocType[]>([]);
@@ -89,6 +91,15 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
   useEffect(() => {
     const sortByName = (docs: DocType[]) =>
       [...docs].sort((a, b) => a.docTypeName.localeCompare(b.docTypeName));
+    const sortPinnedThenName = (docs: DocType[], pinnedIds: number[]) => {
+      const pinnedSet = new Set(pinnedIds);
+      const pinnedDocs = pinnedIds
+        .map((id) => docs.find((doc) => doc.docTypeId === id))
+        .filter((doc): doc is DocType => Boolean(doc));
+      const remainingDocs = docs.filter((doc) => !pinnedSet.has(doc.docTypeId));
+
+      return [...pinnedDocs, ...sortByName(remainingDocs)];
+    };
 
     let docs = documentTypes;
 
@@ -96,24 +107,21 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
       docs = docs.filter((doc) => doc.docCategoryId !== 523);
     }
 
+    if (!isBulkOrder) {
+      const pinnedIds = pinnedDocTypeIds.length ? pinnedDocTypeIds : [];
+      if (pinnedIds.length > 0) {
+        setFilteredDocs(sortPinnedThenName(docs, pinnedIds));
+        return;
+      }
+    }
+
     if (isBulkOrder) {
-      const PINNED_DOC_IDS = [35, 78];
-
-      const filteredDocs = docs.filter((d) => d.docTypeId !== 36);
-
-      const pinnedDocs = filteredDocs.filter((d) =>
-        PINNED_DOC_IDS.includes(d.docTypeId),
-      );
-
-      const remainingDocs = filteredDocs.filter(
-        (d) => !PINNED_DOC_IDS.includes(d.docTypeId),
-      );
-
-      setFilteredDocs([...pinnedDocs, ...sortByName(remainingDocs)]);
+      const bulkPinnedDocIds = [78, 35, 36];
+      setFilteredDocs(sortPinnedThenName(docs, bulkPinnedDocIds));
     } else {
       setFilteredDocs(sortByName(docs));
     }
-  }, [documentTypes, country, isBulkOrder]);
+  }, [documentTypes, country, isBulkOrder, pinnedDocTypeIds]);
 
   return (
     <FormControl fullWidth>
