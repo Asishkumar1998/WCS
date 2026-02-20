@@ -15,18 +15,24 @@ export const signupSchema = yup.object().shape({
   contactNo: yup
     .string()
     .required("Phone number is mandatory")
-    .matches(/^\d{6,15}$/, "Phone Number should be between 6 to 15 digits"),
+    .matches(/^\+?\d{6,15}$/, "Phone Number should be between 6 to 15 digits"),
 
   email: yup
     .string()
     .required("Email address is mandatory")
-    .email("Enter a valid email address"),
+    // .email("Enter a valid email address"),
+    .matches( /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,"Enter a valid email address"),
 
   billAddress: yup.object().shape({
 
     addressLine1: yup
       .string()
       .required("Address Line 1 is mandatory"),
+    
+    addressLine2: yup
+    .string()
+    .nullable()
+    .notRequired(),
 
     city: yup
       .string()

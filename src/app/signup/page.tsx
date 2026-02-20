@@ -1,12 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import {
-  Box,
-  Button,
-  Grid,
-  Typography,
-} from "@mui/material";
+import React, { useEffect, useRef, useState } from "react";
+import { Box, Button, Grid, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
@@ -26,7 +21,7 @@ import Script from "next/script";
 import { Label } from "@mui/icons-material";
 import { randomString } from "../utils/randomString";
 import InputField from "@/components/ui/Input/Input";
-import { signupSchema } from "@/components/features/Orders/Common/SignUpValidation"; 
+import { signupSchema } from "@/components/features/Orders/Common/SignUpValidation";
 import {
   customerSignupFields,
   getFieldStyle,
@@ -86,6 +81,7 @@ const CustomerSignup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [captchaValid, setCaptchaValid] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const optionMap = {
     countries: countries.map((c: any) => c.countryShortName),
@@ -159,10 +155,11 @@ const CustomerSignup = () => {
         }
       });
 
+      // validate this field using Yup
+      validateField(field, newForm);
       return newForm;
     });
   };
-
 
   const handleSubmit = async () => {
     try {
@@ -183,7 +180,6 @@ const CustomerSignup = () => {
       const iId = industryTypes.find(
         (f: any) => f.lookupName === industryType,
       )?.lookupId;
-      
 
       // assign values
       const updatedForm = {
@@ -247,6 +243,22 @@ const CustomerSignup = () => {
     }
   };
 
+  const validateField = async (fieldName: string, updatedForm: any) => {
+    try {
+      await signupSchema.validateAt(fieldName, updatedForm);
+
+      setErrors((prev) => ({
+        ...prev,
+        [fieldName]: "",
+      }));
+    } catch (error: any) {
+      setErrors((prev) => ({
+        ...prev,
+        [fieldName]: error.message,
+      }));
+    }
+  };
+
   const fetchCountries = async () => {
     const response = await getCountries();
     setCountries(response);
@@ -264,7 +276,6 @@ const CustomerSignup = () => {
     const response = await getFindUsTypes();
     setFindusTypes(response);
   };
-
 
   const getFieldValue = (field: string) => {
     return field.split(".").reduce((obj: any, key: string) => {
@@ -313,6 +324,7 @@ const CustomerSignup = () => {
           position: "relative",
           overflow: "hidden",
           overflowY: "auto",
+          backgroundAttachment: "fixed",
         }}
       >
         <Box
@@ -412,7 +424,9 @@ const CustomerSignup = () => {
         <Box
           sx={{
             width: 768,
-            p: 4,
+            // p: 4,
+            padding: "20px 40px 0px 40px",
+            margin: "20px 0px",
             borderRadius: 3,
             // background: "rgba(15, 35, 65, 0.9)",
             backdropFilter: "blur(10px)",
@@ -444,6 +458,8 @@ const CustomerSignup = () => {
                         key={field.label}
                         placeholder={field.placeholder}
                         value={getFieldValue(field.name)}
+                        error={Boolean(errors[field.name])}
+                        helperText={errors[field.name] || ""}
                         onChange={(e: any) =>
                           handleChange(field.name, e.target.value)
                         }
@@ -455,6 +471,8 @@ const CustomerSignup = () => {
                         id={field.placeholder}
                         key={field.label}
                         placeholder={field.placeholder}
+                        error={Boolean(errors[field.name])}
+                        helperText={errors[field.name] || ""}
                         value={getFieldValue(field.name)}
                         onChange={(e: any) =>
                           handleChange(field.name, e.target.value)
@@ -467,6 +485,8 @@ const CustomerSignup = () => {
                         key={field.label}
                         placeholder={field.placeholder}
                         value={getFieldValue(field.name)}
+                        error={Boolean(errors[field.name])}
+                        helperText={errors[field.name] || ""}
                         onChange={(e: any) =>
                           handleChange(field.name, e.target.value)
                         }
@@ -498,7 +518,6 @@ const CustomerSignup = () => {
                           "& .MuiFormLabel-asterisk": {
                             color: "red",
                           },
-                          // Label color (unfocused and focused)
                           "& .MuiInputLabel-root": {
                             color: form[field.name as keyof typeof form]
                               ? "transparent"
@@ -543,7 +562,6 @@ const CustomerSignup = () => {
                           "& .MuiFormLabel-asterisk": {
                             color: "red",
                           },
-                          // Label color (unfocused and focused)
                           "& .MuiInputLabel-root": {
                             color: form[field.name as keyof typeof form]
                               ? "transparent"
@@ -618,6 +636,7 @@ const CustomerSignup = () => {
                   color: "#c8002e",
                   cursor: "pointer",
                   textDecoration: "none",
+                  ml: 0.5,
                   "&:hover": {
                     textDecoration: "underline",
                   },
@@ -632,7 +651,7 @@ const CustomerSignup = () => {
         {/* Bottom Branding */}
         <Box
           sx={{
-            position: "absolute",
+            position: "fixed",
             bottom: 24,
             right: 24,
             display: "flex",

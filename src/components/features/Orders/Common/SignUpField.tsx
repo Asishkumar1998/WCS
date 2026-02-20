@@ -1,3 +1,5 @@
+import { colors } from "@mui/material";
+
 export const customerSignupFields = [
     [
     {
@@ -178,10 +180,10 @@ export const customerSignupFields = [
 export const getFieldStyle = (placeholder: string, required?: boolean) => ({
 
   mb: 2,
-  backgroundColor: "#fff",
+  // backgroundColor: "#fff",
   borderRadius: 1,
 
-  "& fieldset": { border: "none" },
+  "& fieldset": { border: "2px solid ",},
 
   "& input::placeholder": {
     color: "transparent",
@@ -189,6 +191,8 @@ export const getFieldStyle = (placeholder: string, required?: boolean) => ({
 
   "& .MuiOutlinedInput-root": {
     position: "relative",
+    marginBottom: "4px",
+    backgroundColor: "#fff",
   },
 
   "& .MuiOutlinedInput-root::before": {
@@ -221,6 +225,13 @@ export const getFieldStyle = (placeholder: string, required?: boolean) => ({
     {
       display: "none",
     },
+  "& .MuiFormHelperText-root": {
+     marginTop: "2px",   // space below input
+  marginLeft: "0px",  // align with left edge
+  fontSize: "15px",
+  lineHeight: "1.4",
+  colors:"#c7022e"
+  },
 
 });
 
