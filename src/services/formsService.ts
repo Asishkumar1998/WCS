@@ -96,6 +96,31 @@ export const getStates = async () => {
   return response.data;
 }
 
+export const getStops = async () => {
+  const response = await axiosInstance.get("stops");
+  return response.data;
+};
+
+export const getApplicableStops = async () => {
+  const response = await axiosInstance.get("applicableStops");
+  return response.data;
+};
+
+export const getApplicableOOS = async () => {
+  const response = await axiosInstance.get("applicabelOOS");
+  return response.data;
+};
+
+export const getOOSDeptMapping = async () => {
+  const response = await axiosInstance.get("applicabelOOS/getOOSDeptMapping");
+  return response.data;
+};
+
+export const getOOSAddress = async () => {
+  const response = await axiosInstance.get("oosAddress");
+  return response.data;
+};
+
 export const uploadVisaFile = async (payload: any) => {
   const response = await axiosInstance.post("visaDocuments/documents", payload, {
     headers: {

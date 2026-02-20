@@ -58,6 +58,7 @@ export interface PrintCoverPayload {
   };
   documents: Array<{
     docId: number;
+    orderId?: number;
     barcode?: string;
     countryName?: string;
     originCountryName?: string;
@@ -184,7 +185,7 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                 },
                 {
                   width: "33.33%",
-                  text: `ORDER NO: W${data.orderId}`,
+                  text: `ORDER NO: W${doc.orderId ?? data.orderId}`,
                 },
                 {
                   width: "33.33%",

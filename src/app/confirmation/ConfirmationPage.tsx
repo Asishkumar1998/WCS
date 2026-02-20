@@ -51,6 +51,25 @@ interface ConfirmedDocument {
   internalReference: string;
 }
 
+const normalizeOrder = (response: any) =>
+  Array.isArray(response) ? response[0] : response;
+
+const normalizeSplitOrderIds = (splitResponse: any): number[] => {
+  if (!Array.isArray(splitResponse)) return [];
+
+  return Array.from(
+    new Set(
+      splitResponse
+        .map((item: any) => {
+          if (typeof item === "number") return item;
+          if (typeof item === "string") return Number(item);
+          return Number(item?.orderId ?? item?.id);
+        })
+        .filter((id) => Number.isFinite(id) && id > 0)
+    )
+  );
+};
+
 const OrderConfirmation = () => {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId") as string;
@@ -74,11 +93,17 @@ const OrderConfirmation = () => {
   }, []);
 
   const getData = async () => {
-    const orderIds = await SplitOrder(orderId);
+    const splitResponse = await SplitOrder(orderId);
+    const baseOrderId = Number(orderId);
+    const orderIds = normalizeSplitOrderIds(splitResponse);
+    const resolvedOrderIds =
+      orderIds.length || !Number.isFinite(baseOrderId) || baseOrderId <= 0
+        ? orderIds
+        : [baseOrderId];
     const orders = await Promise.all(
-      orderIds.map(async (id: number) => {
+      resolvedOrderIds.map(async (id: number) => {
         const response = await getOrder(id);
-        return response[0];
+        return normalizeOrder(response);
       })
     );
     setAllOrders(orders);
@@ -142,7 +167,6 @@ const OrderConfirmation = () => {
   }, [documents]);
 
   const handleDownload = async (docId: number, type: string) => {
-    const order = await getOrder(Number(orderId));
     const customer = await getCustomer(String(customerId));
     const user = await getUser(String(userId));
 
@@ -165,24 +189,79 @@ const OrderConfirmation = () => {
     const docTypeMapById = Object.fromEntries(
       docTypes.map((d: any) => [d.lookupId, d])
     );
-    const fullPayload = await buildPrintCoverPayload(
-      order[0],
-      countryMapById,
-      stopMapById,
-      docTypeMapById,
-      userData
+    const selectedDoc =
+      type === "single" ? documents.find((doc) => doc.docId === docId) : null;
+
+    const fallbackOrderId = Number(orderId);
+    let orderIdsForAction =
+      type === "single"
+        ? [Number(selectedDoc?.orderId ?? fallbackOrderId)].filter(
+            (id) => Number.isFinite(id) && id > 0
+          )
+        : allOrders
+            .map((order) => Number(order?.orderId))
+            .filter((id) => Number.isFinite(id) && id > 0);
+
+    if (!orderIdsForAction.length) {
+      const splitIds = normalizeSplitOrderIds(await SplitOrder(orderId));
+      orderIdsForAction = splitIds.length
+        ? splitIds
+        : [fallbackOrderId].filter((id) => Number.isFinite(id) && id > 0);
+    }
+
+    if (!orderIdsForAction.length) return;
+
+    const orders = await Promise.all(
+      orderIdsForAction.map(async (id) => {
+        const existing = allOrders.find(
+          (order) => Number(order?.orderId) === Number(id)
+        );
+        if (existing) return existing;
+        const response = await getOrder(Number(id));
+        return normalizeOrder(response);
+      })
     );
+
+    const payloads = await Promise.all(
+      orders
+        .filter(Boolean)
+        .map((order) =>
+          buildPrintCoverPayload(
+            order,
+            countryMapById,
+            stopMapById,
+            docTypeMapById,
+            userData
+          )
+        )
+    );
+
+    if (!payloads.length) return;
+
+    const mergedPayload = {
+      ...payloads[0],
+      fileName: `Order_${orderIdsForAction.join("_")}_Cover.pdf`,
+      documents: payloads.flatMap((payload) => payload.documents),
+    };
+
     if (type === "single") {
+      const singlePayloadForDoc = payloads.find((payload) =>
+        payload.documents.some((doc) => doc.docId === docId)
+      );
+      if (!singlePayloadForDoc) return;
+
       const singleDocPayload = {
-        ...fullPayload,
-        fileName: `Order_${fullPayload.orderId}_Doc_${docId}.pdf`,
-        documents: fullPayload.documents.filter((doc) => doc.docId === docId),
+        ...singlePayloadForDoc,
+        fileName: `Order_${singlePayloadForDoc.orderId}_Doc_${docId}.pdf`,
+        documents: singlePayloadForDoc.documents.filter(
+          (doc) => doc.docId === docId
+        ),
       };
       await generatePDF(singleDocPayload, "download");
     } else if (type === "all") {
-      await generatePDF(fullPayload, "download");
+      await generatePDF(mergedPayload, "download");
     } else if (type === "print") {
-      await generatePDF(fullPayload, "print");
+      await generatePDF(mergedPayload, "print");
     }
   };
 

@@ -74,6 +74,7 @@ export const buildPrintCoverPayload = async (
 
     documents: docsWithBarcodes.map((doc: any) => ({
       docId: doc.docId,
+      orderId: order.orderId,
       barcode: doc.barcode || "-",
       docCategoryName: docTypeMapById[doc.docCategoryId]?.lookupName,
 

@@ -26,7 +26,6 @@ import DocumentDropdown, {
   DocType,
 } from "@/components/ui/Dropdown/DocumentDropdown";
 import Modal from "@/components/ui/Modal/Modal";
-import InfoCard from "../Common/InfoCard";
 import DocumentUpload from "../Common/DocumentUpload";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
@@ -35,6 +34,11 @@ import { AdditionalQuestions } from "../Common/AdditionalQuestions";
 import {
   createUSApostilleOrder,
   getStates,
+  getStops,
+  getApplicableStops,
+  getApplicableOOS,
+  getOOSDeptMapping,
+  getOOSAddress,
   uploadFile,
 } from "@/services/formsService";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
@@ -51,6 +55,46 @@ import validateUSApostilleForm from "../Common/validateUSForm";
 
 const STOP_DOCS_HAGUE_COUNTRIES = [6, 15, 28, 29, 30, 31, 35, 36];
 const STOP_DOCS_NON_HAGUE_COUNTRIES = [6, 12, 28, 29, 30, 31, 35, 36];
+
+type Stop = {
+  stopId: number;
+  stopName: string;
+  stopSequence?: number | null;
+  stopNumber?: number | null;
+  isChecked?: boolean;
+  isOOS?: boolean;
+  oosAddressId?: number;
+  oosReferenceId?: number | null;
+  consulateName?: string | null;
+  stopAddress?: any;
+};
+
+type ApplicableStop = {
+  stopId: number;
+  stopSequence?: number | null;
+  countryTypeId?: number | null;
+  countryId?: number | null;
+  docCategoryId?: number | null;
+  docTypeId?: number | null;
+};
+
+type OOSRule = {
+  countryId: number;
+  docCategoryId: number;
+  docSubCategoryId: number;
+  isOOSSOS: boolean;
+  isOOSEMB: boolean;
+};
+
+type DisplayStop = Stop & {
+  __virtual?: boolean;
+};
+
+const getDisplayStopName = (name: string) => {
+  if (name === "ARAB CHAMBER") return "ACC";
+  if (name === "TRANSLATION") return "TRA";
+  return name;
+};
 
 export default function USAppostileAndLegalizationForm({
   country,
@@ -74,7 +118,6 @@ export default function USAppostileAndLegalizationForm({
   });
   const [disabled, setDisabled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [infoCardVisible, setInfoCardVisible] = useState(false);
   const [additionalServicesState, setAdditionalServicesState] =
     useState(AdditionalServices);
   const [additionalQuestions, setAdditionalQuestions] = useState<any>([]);
@@ -97,6 +140,14 @@ export default function USAppostileAndLegalizationForm({
   const [courierType, setCourierType] = useState<string | null>(null);
   const [forceOriginalMail, setForceOriginalMail] = useState(false);
   const [suppressNextDocOpen, setSuppressNextDocOpen] = useState(false);
+  const [allStops, setAllStops] = useState<Stop[]>([]);
+  const [allApplicableStops, setAllApplicableStops] = useState<ApplicableStop[]>(
+    [],
+  );
+  const [allApplicableOOS, setAllApplicableOOS] = useState<OOSRule[]>([]);
+  const [allOOSDeptMappings, setAllOOSDeptMappings] = useState<any[]>([]);
+  const [allOOSAddresses, setAllOOSAddresses] = useState<any[]>([]);
+  const [documentStops, setDocumentStops] = useState<Stop[]>([]);
 
   const resetForm = () => {
     setCountry(null);
@@ -107,11 +158,11 @@ export default function USAppostileAndLegalizationForm({
     setUploadedDoc(null);
     setDisabled(false);
     setDropdownOpen(false);
-    setInfoCardVisible(false);
     setModal({ open: false, type: "warning", message: "" });
     setShowCartConflict(false);
     setForceOriginalMail(false);
     setSuppressNextDocOpen(false);
+    setDocumentStops([]);
 
     setFormResetKey((prev) => prev + 1);
   };
@@ -267,6 +318,226 @@ export default function USAppostileAndLegalizationForm({
     setDocument(null);
     setAdditionalServices([]);
     setForceOriginalMail(false);
+    setDocumentStops([]);
+  };
+
+  const getOriginState = () => {
+    const selectedStateId = Number(
+      additionalQuestions.find((q: any) => q.questionId === 2)?.answer,
+    );
+    if (selectedStateId) {
+      return states?.find((s: any) => s.stateId === selectedStateId);
+    }
+    return states?.find(
+      (s: any) => String(s.stateName).toUpperCase() === "MARYLAND",
+    );
+  };
+
+  const normalizeStops = ({
+    stops,
+    applicableStops,
+    selectedCountry,
+    selectedDocument,
+    isRush,
+  }: {
+    stops: Stop[];
+    applicableStops: ApplicableStop[];
+    selectedCountry: any;
+    selectedDocument: any;
+    isRush: boolean;
+  }) => {
+    const applicableStopMap: Record<number, ApplicableStop> = {};
+
+    applicableStops.forEach((applicableStop) => {
+      if (
+        selectedCountry &&
+        applicableStop.countryTypeId &&
+        applicableStop.countryTypeId !== 0 &&
+        applicableStop.countryTypeId !== selectedCountry.countryTypeId
+      ) {
+        return;
+      }
+      if (
+        selectedCountry &&
+        applicableStop.countryId &&
+        applicableStop.countryId !== 0 &&
+        applicableStop.countryId !== selectedCountry.countryId
+      ) {
+        return;
+      }
+      if (
+        selectedDocument &&
+        applicableStop.docCategoryId &&
+        applicableStop.docCategoryId !== 0 &&
+        applicableStop.docCategoryId !== selectedDocument.docCategoryId
+      ) {
+        return;
+      }
+      if (
+        selectedDocument &&
+        applicableStop.docTypeId &&
+        applicableStop.docTypeId !== 0 &&
+        applicableStop.docTypeId !== selectedDocument.docTypeId
+      ) {
+        return;
+      }
+
+      const shippingException =
+        (selectedCountry?.shippingException === 1 &&
+          selectedCountry?.countryId !== 13 &&
+          selectedCountry?.countryId !== 133 &&
+          selectedCountry?.countryId !== 204 &&
+          applicableStop.stopId === 2 &&
+          selectedDocument?.docCategoryId === 523) ||
+        (selectedCountry?.shippingException === 1 &&
+          selectedCountry?.countryId === 144 &&
+          applicableStop.stopId === 2 &&
+          selectedDocument?.docCategoryId === 522) ||
+        (selectedCountry?.shippingException === 1 &&
+          applicableStop.stopId === 3 &&
+          selectedDocument?.docCategoryId === 523);
+
+      if (shippingException) return;
+      if (applicableStop.stopId === 11 || applicableStop.stopId === 14) return;
+
+      if (selectedCountry?.countryId === 174 && applicableStop.stopId === 5) {
+        return;
+      }
+      if (
+        selectedCountry?.countryId === 93 &&
+        selectedDocument?.docCategoryId !== 522 &&
+        applicableStop.stopId === 6
+      ) {
+        return;
+      }
+      if (
+        selectedCountry?.countryId === 93 &&
+        applicableStop.stopId === 6 &&
+        !isRush
+      ) {
+        return;
+      }
+      if (
+        isRush &&
+        applicableStop.stopId === 3 &&
+        [93, 53, 195, 199, 97, 188].includes(selectedCountry?.countryId) &&
+        selectedDocument?.docCategoryId === 522
+      ) {
+        return;
+      }
+
+      applicableStopMap[applicableStop.stopId] = applicableStop;
+    });
+
+    return stops
+      .map((stop) => {
+        const applicableStop = applicableStopMap[stop.stopId];
+        return {
+          ...stop,
+          isChecked: applicableStop != null,
+          stopSequence: applicableStop?.stopSequence ?? null,
+          stopNumber: applicableStop?.stopSequence ?? null,
+          isOOS: false,
+          oosAddressId: 0,
+          oosReferenceId: null,
+          consulateName: null,
+          stopAddress: null,
+        };
+      })
+      .sort((a, b) => {
+        const aSeq = a.stopSequence ?? Number.MAX_SAFE_INTEGER;
+        const bSeq = b.stopSequence ?? Number.MAX_SAFE_INTEGER;
+        return aSeq - bSeq;
+      });
+  };
+
+  const enrichOOSStops = ({
+    stops,
+    selectedCountry,
+    selectedDocument,
+    originState,
+    docTypeId,
+  }: {
+    stops: Stop[];
+    selectedCountry: any;
+    selectedDocument: any;
+    originState: any;
+    docTypeId: number;
+  }) => {
+    if (!originState || !selectedCountry || !selectedDocument) return stops;
+
+    if (String(originState.stateName).toUpperCase() === "MARYLAND") {
+      return stops.map((stop) => ({
+        ...stop,
+        isOOS: false,
+        oosAddressId: 0,
+        oosReferenceId: null,
+        consulateName: null,
+        stopAddress: null,
+      }));
+    }
+
+    const docSubCategoryId =
+      selectedCountry.countryId === 199 || selectedCountry.countryId === 53
+        ? docTypeId
+        : 0;
+
+    const applicableOOS = allApplicableOOS.filter(
+      (rule) =>
+        rule.countryId === selectedCountry.countryId &&
+        rule.docCategoryId === selectedDocument.docCategoryId &&
+        rule.docSubCategoryId === docSubCategoryId,
+    );
+
+    if (!applicableOOS.length) return stops;
+
+    const activeRule = applicableOOS[0];
+
+    return stops.map((stop) => {
+      const cleanStop = {
+        ...stop,
+        isOOS: false,
+        oosAddressId: 0,
+        oosReferenceId: null,
+        consulateName: null,
+        stopAddress: null,
+      };
+
+      const isSOSOOS = activeRule.isOOSSOS === true && stop.stopId === 2;
+      const isEMBOOS = activeRule.isOOSEMB === true && stop.stopId === 5;
+      if (!isSOSOOS && !isEMBOOS) return cleanStop;
+
+      const mapping = allOOSDeptMappings.find((m: any) => {
+        if (stop.stopId === 2) {
+          return (
+            m.deptType === "STATE" &&
+            m.stateOfOriginId === originState.stateId
+          );
+        }
+        return (
+          m.deptType === "CONSULATE" &&
+          m.destinationCountryId === selectedCountry.countryId &&
+          m.stateOfOriginId === originState.stateId
+        );
+      });
+
+      if (!mapping) return cleanStop;
+
+      const address = allOOSAddresses.find(
+        (addr: any) => addr.oosAddressId === mapping.oosAddressId,
+      );
+
+      return {
+        ...cleanStop,
+        isOOS: true,
+        oosAddressId: mapping.oosAddressId ?? 0,
+        oosReferenceId: mapping.deptId ?? null,
+        consulateName:
+          stop.stopId === 5 ? mapping.deptName : originState.stateShortName,
+        stopName: stop.stopId === 5 ? "EMB" : stop.stopName,
+        stopAddress: address ?? null,
+      };
+    });
   };
 
   useEffect(() => {
@@ -283,14 +554,6 @@ export default function USAppostileAndLegalizationForm({
       setAdditionalServicesState([...AdditionalServices]);
     }
   }, [country, document]);
-
-  useEffect(() => {
-    if (additionalServices.includes("Rush")) {
-      setInfoCardVisible(true);
-    } else {
-      setInfoCardVisible(false);
-    }
-  }, [additionalServices]);
 
   const handleDocumentUpload = async (data: any) => {
     if (!data.uploadedFile) {
@@ -353,6 +616,11 @@ export default function USAppostileAndLegalizationForm({
       const countryId = country?.countryId;
       const docCategoryId = document?.docCategoryId;
       const docTypeId = document?.docTypeId;
+      const originState = additionalQuestions.find((q: any) => q.questionId === 2)
+        ?.answer;
+      const nusaccRequired =
+        additionalQuestions.find((q: any) => q.questionId === 8)?.answer ===
+        "Yes";
       if (basePayload == null) {
         payload = buildUSApostillePayload({
           countryId,
@@ -360,13 +628,8 @@ export default function USAppostileAndLegalizationForm({
           additionalServices,
           uploadedDoc,
           docTypeId,
-          originState: additionalQuestions.find((q: any) => q.questionId === 2)
-            ?.answer,
-          nusaccRequired:
-            additionalQuestions.find((q: any) => q.questionId === 8)?.answer ===
-            "Yes"
-              ? true
-              : false,
+          originState,
+          nusaccRequired,
           numberOfProducts,
           numberOfPages,
           customerReference,
@@ -384,6 +647,8 @@ export default function USAppostileAndLegalizationForm({
           additionalServices,
           uploadedDoc,
           docTypeId,
+          originState,
+          nusaccRequired,
           numberOfProducts,
           numberOfPages,
           customerReference,
@@ -450,17 +715,79 @@ export default function USAppostileAndLegalizationForm({
     }
   };
 
+  const fetchStopsMetadata = async () => {
+    try {
+      const [stopsRes, applicableStopsRes, applicableOOSRes, oosDeptRes, oosAddressRes] =
+        await Promise.all([
+          getStops(),
+          getApplicableStops(),
+          getApplicableOOS(),
+          getOOSDeptMapping(),
+          getOOSAddress(),
+        ]);
+
+      setAllStops(Array.isArray(stopsRes) ? stopsRes : []);
+      setAllApplicableStops(
+        Array.isArray(applicableStopsRes) ? applicableStopsRes : [],
+      );
+      setAllApplicableOOS(Array.isArray(applicableOOSRes) ? applicableOOSRes : []);
+      setAllOOSDeptMappings(Array.isArray(oosDeptRes) ? oosDeptRes : []);
+      setAllOOSAddresses(Array.isArray(oosAddressRes) ? oosAddressRes : []);
+    } catch (e) {
+      console.log("Failed to fetch stop metadata.", e);
+    }
+  };
+
   useEffect(() => {
     if (customerId) {
       getCartOrder();
     }
     fetchStates();
+    fetchStopsMetadata();
   }, [customerId, formResetKey]);
 
   useEffect(() => {
-    additionalQuestions.find((q: any) => q.questionId === 1)?.answer === "No"
-      ? setShowCartConflict(true)
-      : null;
+    if (!country || !document || !allStops.length || !allApplicableStops.length) {
+      setDocumentStops([]);
+      return;
+    }
+
+    const isRush = additionalServices.includes("Rush");
+    const normalizedStops = normalizeStops({
+      stops: allStops,
+      applicableStops: allApplicableStops,
+      selectedCountry: country,
+      selectedDocument: document,
+      isRush,
+    });
+
+    const originState = getOriginState();
+    const withOOS = enrichOOSStops({
+      stops: normalizedStops,
+      selectedCountry: country,
+      selectedDocument: document,
+      originState,
+      docTypeId: document?.docTypeId ?? 0,
+    });
+
+    setDocumentStops(withOOS);
+  }, [
+    country,
+    document,
+    additionalServices,
+    allStops,
+    allApplicableStops,
+    allApplicableOOS,
+    allOOSDeptMappings,
+    allOOSAddresses,
+    states,
+    additionalQuestions,
+  ]);
+
+  useEffect(() => {
+    setShowCartConflict(
+      additionalQuestions.find((q: any) => q.questionId === 1)?.answer === "No",
+    );
   }, [additionalQuestions]);
 
   const getServiceTooltip = (service: string) => {
@@ -468,6 +795,62 @@ export default function USAppostileAndLegalizationForm({
     if (service === "Pre-Scan") return "Scan of Original Document";
     return null;
   };
+
+  const selectedStopsBase = documentStops
+    .filter((stop) => stop.isChecked)
+    .sort((a, b) => (a.stopSequence ?? 0) - (b.stopSequence ?? 0));
+
+  const selectedStops: DisplayStop[] = (() => {
+    const withArabChamber = [...selectedStopsBase];
+    const arabChamberSelected =
+      additionalQuestions.find((q: any) => q.questionId === 8)?.answer === "Yes";
+
+    if (!arabChamberSelected) return withArabChamber;
+
+    const hasACCAlready = withArabChamber.some(
+      (stop) =>
+        String(stop.stopName).toUpperCase() === "ARAB CHAMBER" ||
+        String(stop.stopName).toUpperCase() === "ACC",
+    );
+
+    if (hasACCAlready) return withArabChamber;
+
+    const accStop: DisplayStop = {
+      stopId: -8,
+      stopName: "ARAB CHAMBER",
+      isChecked: true,
+      __virtual: true,
+    };
+
+    const countryName = String(country?.countryShortName ?? "").toUpperCase();
+    const isKuwait = countryName === "KUWAIT";
+
+    if (isKuwait) {
+      const embassyIndex = withArabChamber.findIndex(
+        (stop) =>
+          String(stop.stopName).toUpperCase().includes("EMB") ||
+          String(stop.stopName).toUpperCase().includes("EMBASSY"),
+      );
+
+      if (embassyIndex >= 0) {
+        withArabChamber.splice(embassyIndex, 0, accStop);
+      } else {
+        withArabChamber.push(accStop);
+      }
+      return withArabChamber;
+    }
+
+    // Default behavior for Qatar/Egypt/Yemen/Lebanon/Algeria and others:
+    // append ACC as last operational step before Customer marker.
+    withArabChamber.push(accStop);
+    return withArabChamber;
+  })();
+
+  const routeStops: DisplayStop[] = [
+    { stopId: 0, stopName: "New", __virtual: true },
+    ...selectedStops,
+    { stopId: -1, stopName: "Customer", __virtual: true },
+  ];
 
   if (loading) return <Loader />;
 
@@ -730,6 +1113,77 @@ export default function USAppostileAndLegalizationForm({
               onChange={(e) => setCustomerReference(e.target.value)}
             />
           </Grid>
+
+          {country && document && documentStops.length > 0 && (
+            <Grid size={{ xs: 12 }}>
+              <Box
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  overflow: "hidden",
+                  mt: 1,
+                }}
+              >
+                <Box sx={{ p: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+                  <Typography fontWeight={700}>Processing Steps & Timelines</Typography>
+                </Box>
+
+                <Box sx={{ p: 2 }}>
+                  <Box sx={{ display: "flex", alignItems: "flex-start", width: "100%" }}>
+                    {routeStops.map((stop: any, idx: number) => (
+                      <React.Fragment key={`${stop.stopId}-${idx}`}>
+                        <Box sx={{ flex: "1 1 0", minWidth: 0, textAlign: "center" }}>
+                          <Box
+                            sx={{
+                              width: 28,
+                              height: 28,
+                              borderRadius: "50%",
+                              bgcolor:
+                                stop.stopName === "New"
+                                  ? "success.main"
+                                  : stop.stopName === "Customer"
+                                    ? "primary.main"
+                                    : stop.isOOS
+                                      ? "warning.main"
+                                      : "grey.400",
+                              mx: "auto",
+                              mb: 0.5,
+                            }}
+                          />
+                          <Typography
+                            variant="caption"
+                            fontWeight={600}
+                            sx={{
+                              display: "block",
+                              lineHeight: 1.2,
+                              overflowWrap: "anywhere",
+                            }}
+                          >
+                            {stop.isOOS && stop.consulateName
+                              ? `${getDisplayStopName(stop.stopName)} (${stop.consulateName})`
+                              : getDisplayStopName(stop.stopName)}
+                          </Typography>
+                        </Box>
+
+                        {idx < routeStops.length - 1 && (
+                          <Box
+                            sx={{
+                              flex: "0 1 24px",
+                              height: 2,
+                              bgcolor: "divider",
+                              mt: "13px",
+                              mx: 0.5,
+                            }}
+                          />
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </Box>
+                </Box>
+              </Box>
+            </Grid>
+          )}
         </Grid>
 
         <Modal

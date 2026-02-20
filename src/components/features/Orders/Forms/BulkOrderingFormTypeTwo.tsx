@@ -127,13 +127,19 @@ export default function BulkOrderingFormTypeTwo() {
   const shouldRenderGeneralAdditionalQuestions = useMemo(() => {
     if (!country?.countryId) return false;
     const mappedQuestions = ADDITIONAL_QUESTION_COUNTRY_MAP[country.countryId];
-    return generalDocs.length > 0 && Array.isArray(mappedQuestions) && mappedQuestions.length > 0;
+    return (
+      generalDocs.length > 0 &&
+      Array.isArray(mappedQuestions) &&
+      mappedQuestions.length > 0
+    );
   }, [country?.countryId, generalDocs.length]);
 
   // When docs are chosen in dropdown and user clicks upload
   const openDialogForDocs = () => {
     setDocEntries((prev) => {
-      const previousById = new Map(prev.map((entry) => [entry.docTypeId, entry]));
+      const previousById = new Map(
+        prev.map((entry) => [entry.docTypeId, entry]),
+      );
 
       return selectedDocs.map((doc) => {
         const existing = previousById.get(doc.docTypeId);
@@ -248,6 +254,7 @@ export default function BulkOrderingFormTypeTwo() {
       if (!entry.uploadData?.nestedSelection) {
         return `Please select a document upload option for ${entry.type}`;
       }
+
       if (
         entry.uploadData.nestedSelection === "proceedWithAttached" &&
         entry.uploadData.uploadedFiles.length === 0
@@ -257,6 +264,15 @@ export default function BulkOrderingFormTypeTwo() {
     }
 
     return "";
+  };
+
+  const handleDialogSave = () => {
+    const error = validateUploadEntries();
+    if (error) {
+      showSnackbar(error, "error");
+      return;
+    }
+    setDialogOpen(false);
   };
 
   const uploadEntryFiles = async (entry: DocumentEntry) => {
@@ -315,10 +331,9 @@ export default function BulkOrderingFormTypeTwo() {
         country,
         documents: entriesWithUploads,
         additionalServices,
-        generalAdditionalQuestions:
-          shouldRenderGeneralAdditionalQuestions
-            ? generalAdditionalQuestions
-            : [],
+        generalAdditionalQuestions: shouldRenderGeneralAdditionalQuestions
+          ? generalAdditionalQuestions
+          : [],
         additionalComments,
       });
 
@@ -377,7 +392,7 @@ export default function BulkOrderingFormTypeTwo() {
         title="Bulk Ordering - Add multiple documents for a single country."
         onProceed={submitOrder}
       >
-        <Grid container spacing={2}>
+        <Grid container spacing={2} alignItems="flex-start">
           {/* Country */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <CountrySelect
@@ -424,7 +439,10 @@ export default function BulkOrderingFormTypeTwo() {
                 setAdditionalPreferences={setGeneralAdditionalQuestions}
                 docCategoryId={522}
               />
-              <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
+              <Typography
+                variant="body2"
+                sx={{ mt: 1, color: "text.secondary" }}
+              >
                 Applies to General document types: {generalDocNames.join(", ")}
               </Typography>
             </Grid>
@@ -637,7 +655,7 @@ export default function BulkOrderingFormTypeTwo() {
               Cancel
             </Button>
             <Button
-              onClick={() => setDialogOpen(false)}
+              onClick={handleDialogSave}
               variant="contained"
               color="primary"
             >

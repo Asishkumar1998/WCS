@@ -39,14 +39,6 @@ type Props = {
   value?: Partial<UploadValue>;
 };
 
-const defaultValue = (): UploadValue => ({
-  uploadedFiles: [],
-  nestedSelection: null,
-  numPages: "",
-  trackingNumberNested: "",
-  courierNested: null,
-});
-
 export default function MultiDocumentUpload({ country, onChange, value }: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const isControlled = value !== undefined;
@@ -163,18 +155,44 @@ export default function MultiDocumentUpload({ country, onChange, value }: Props)
   };
 
   return (
-    <FormControl
-      fullWidth
-      sx={{
-        border: "1px solid #C7C9CD",
-        borderRadius: 1,
-        px: 2,
-        py: 1.5,
-      }}
-    >
-      <InputLabel shrink>Upload Documents *</InputLabel>
+    <FormControl fullWidth variant="outlined" required>
+      <InputLabel
+        shrink
+        required
+        sx={{
+          transform: "translate(14px, -9px) scale(0.75)",
+          backgroundColor: "background.paper",
+          px: 0.5,
+          zIndex: 1,
+          "& .MuiFormLabel-asterisk": {
+            color: "red",
+          },
+        }}
+      >
+        Upload Documents
+      </InputLabel>
 
-      <Box sx={{ mt: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box
+        sx={{
+          border: "1px solid",
+          borderColor: "rgba(0, 0, 0, 0.23)",
+          borderRadius: 1,
+          p: 2,
+          pt: 2.5,
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          "&:hover": {
+            borderColor: "rgba(0, 0, 0, 0.87)",
+          },
+          "&:focus-within": {
+            borderColor: "primary.main",
+            borderWidth: "2px",
+            p: "15px",
+            pt: "19px",
+          },
+        }}
+      >
         <Box>
           <input
             ref={fileInputRef}

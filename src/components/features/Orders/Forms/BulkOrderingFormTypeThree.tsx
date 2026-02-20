@@ -7,6 +7,9 @@ import {
   Button,
   FormGroup,
   FormControlLabel,
+  FormControl,
+  InputLabel,
+  OutlinedInput,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -360,6 +363,15 @@ export default function BulkOrderingFormTypeThree() {
     }
 
     return "";
+  };
+
+  const handleDialogSave = () => {
+    const uploadError = validateUploads();
+    if (uploadError) {
+      showSnackbar(uploadError, "error");
+      return;
+    }
+    setDialogOpen(false);
   };
 
   const uploadEntryFiles = async (entry: UploadEntry) => {
@@ -755,25 +767,87 @@ export default function BulkOrderingFormTypeThree() {
 
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <Grid>
-                          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                            Additional Services
-                          </Typography>
-                          <FormGroup row sx={{ gap: 1 }}>
-                            {additionalServicesState.map((service) => (
-                              <FormControlLabel
-                                key={service}
-                                control={
-                                  <Checkbox
-                                    checked={docData.services.includes(service)}
-                                    onChange={() =>
-                                      toggleService(country, numericDocId, service)
-                                    }
-                                  />
-                                }
-                                label={service}
-                              />
-                            ))}
-                          </FormGroup>
+                          <FormControl
+                            fullWidth
+                            variant="outlined"
+                            sx={{
+                              "& .MuiOutlinedInput-root": {
+                                borderRadius: 1,
+                                minHeight: 56,
+                                display: "flex",
+                                alignItems: "center",
+                                px: 1.25,
+                                "&:hover fieldset": {
+                                  borderColor: "rgba(0,0,0,0.12)",
+                                },
+                                "&.Mui-focused fieldset": {
+                                  borderColor: "rgba(0,0,0,0.12)",
+                                },
+                              },
+                            }}
+                          >
+                            <InputLabel shrink>Additional Services</InputLabel>
+
+                            <OutlinedInput
+                              notched
+                              label="Additional Services"
+                              inputComponent={() => (
+                                <Box
+                                  sx={{
+                                    width: "100%",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    overflowX: "auto",
+                                    minHeight: 48,
+                                    pl: "6px",
+                                  }}
+                                >
+                                  <FormGroup
+                                    row
+                                    sx={{
+                                      flexWrap: "nowrap",
+                                      justifyContent: "flex-start",
+                                      alignItems: "center",
+                                      "& .MuiFormControlLabel-root": {
+                                        flex: "0 0 auto",
+                                        whiteSpace: "nowrap",
+                                        mr: 1.5,
+                                        ml: 0,
+                                        "& .MuiTypography-root": {
+                                          fontSize: "0.9rem",
+                                        },
+                                        "& .MuiCheckbox-root": {
+                                          transform: "scale(0.9)",
+                                          p: "2px",
+                                        },
+                                      },
+                                    }}
+                                  >
+                                    {additionalServicesState.map((service) => (
+                                      <FormControlLabel
+                                        key={service}
+                                        control={
+                                          <Checkbox
+                                            checked={docData.services.includes(service)}
+                                            onChange={() =>
+                                              toggleService(country, numericDocId, service)
+                                            }
+                                          />
+                                        }
+                                        label={service}
+                                      />
+                                    ))}
+                                  </FormGroup>
+                                </Box>
+                              )}
+                              sx={{
+                                "& .MuiOutlinedInput-input": {
+                                  height: "auto",
+                                  padding: 0,
+                                },
+                              }}
+                            />
+                          </FormControl>
                         </Grid>
 
                         <Grid mt={3}>
@@ -799,7 +873,7 @@ export default function BulkOrderingFormTypeThree() {
 
           <DialogActions>
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button variant="contained" onClick={() => setDialogOpen(false)}>
+            <Button variant="contained" onClick={handleDialogSave}>
               Save
             </Button>
           </DialogActions>
