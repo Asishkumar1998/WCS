@@ -32,7 +32,7 @@ export const fetchFormsSharedData = createAsyncThunk(
 
       return {
         countries: countriesRes,
-        documentTypes: docTypesRes.filter((dt:any)=>dt.isDeleted===true),
+        documentTypes: docTypesRes.filter((dt: any) => !dt.isDeleted)
       };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || err.message);
