@@ -36,3 +36,28 @@ export const updatePassword = async (userId: number, payload: any) => {
     throw err;
   }
 }
+
+export const getCountries = async () => {
+  const response = await axios.get("countries");
+  return response.data;
+};
+
+export const getIndustryTypes=async ()=>{
+  const response=await axios.get("lookups?lookupType.EQ=IndustryType")
+  return response.data;
+}
+
+export const getFindUsTypes=async ()=>{
+  const response=await axios.get("lookups?lookupType.EQ=FindUS")
+  return response.data;
+}
+
+export const getCustomerTypes=async ()=>{
+  const response=await axios.get("lookups?lookupType.EQ=CustomerType")
+  return response.data;
+}
+
+export const signupCustomer=async (payload:any)=>{
+  const response=await axios.post("users/signup",payload)
+  return response.data;
+}

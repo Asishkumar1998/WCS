@@ -46,6 +46,7 @@ export interface DocType {
   modifiedAt: number;
   ordSequence: any;
   attachmentRequired: any;
+  isDeleted: boolean;
 }
 
 export default function NotaryServiceForm() {
