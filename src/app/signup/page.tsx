@@ -444,10 +444,11 @@ const CustomerSignup = () => {
             Signup For WCS Express
           </Typography>
 
-          {customerSignupFields.map((row) => (
-            <Grid container spacing={2} columns={16}>
-              {row.map((field) => (
+          {customerSignupFields.map((row, rowIndex) => (
+            <Grid key={`signup-row-${rowIndex}`} container spacing={2} columns={16}>
+              {row.map((field, fieldIndex) => (
                 <Grid
+                  key={`${rowIndex}-${field.name ?? fieldIndex}`}
                   size={field.name === "findUsOtherText" ? 16 : 8}
                   spacing={2}
                 >
