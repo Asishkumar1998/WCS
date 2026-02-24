@@ -69,6 +69,7 @@ export interface PrintCoverPayload {
     docCategoryName?: string;
     createdAt?: string | Date;
     instructions?: string;
+    instructionsList?: string[];
     invoiceReference?: string;
     internalReference?: string;
     orderAmount?: number;
@@ -368,7 +369,10 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
           ],
           [
             {
-              text: doc.instructions ?? "No Information Provided",
+              text:
+                doc.instructions && doc.instructions.trim().length > 0
+                  ? doc.instructions
+                  : "No Information Provided",
               fontSize: 11,
               margin: [0, 20],
             },
@@ -469,6 +473,10 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
     ];
     const customerInstructions: string[] = [];
 
+    if (doc.instructionsList?.length) {
+      customerInstructions.push(...doc.instructionsList);
+    }
+
     if ((doc.countryName ?? "").trim().toLowerCase() === "taiwan") {
       customerInstructions.push(...taiwanExtraInstructions);
     }
@@ -476,7 +484,15 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
       customerInstructions.push(...embassyContent.paragraphs);
     }
 
-    if (customerInstructions.length > 0) {
+    const normalizedCustomerInstructions = Array.from(
+      new Set(
+        customerInstructions
+          .map((instruction) => instruction.trim())
+          .filter((instruction) => instruction.length > 0)
+      )
+    );
+
+    if (normalizedCustomerInstructions.length > 0) {
       content.push({
         table: {
           widths: ["*"],
@@ -490,7 +506,7 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
             ],
             [
               {
-                ul: customerInstructions,
+                ul: normalizedCustomerInstructions,
                 fontSize: 10,
                 margin: [0, 0, 0, 6],
               },

@@ -93,6 +93,17 @@ export const buildPrintCoverPayload = async (
       internalReference: order.orderType == 1102 ? doc.visa[0].customerReference : doc.internalReference,
       invoiceReference: doc.invoiceReference,
       instructions: doc.instructions,
+      estDateOfCompletion:
+        doc.estDateOfCompletion ?? doc.estCompletionDate ?? doc.completionDate,
+      instructionsList:
+        doc.instructionsList
+          ?.map((item: any) =>
+            typeof item === "string" ? item : item?.instruction
+          )
+          .filter(
+            (instruction: any): instruction is string =>
+              typeof instruction === "string" && instruction.trim().length > 0
+          ) ?? [],
 
       stops:
         doc.docStops?.map((ds: any) => {
@@ -100,7 +111,8 @@ export const buildPrintCoverPayload = async (
 
           return {
             stopName: stop?.stopName ?? `Stop ${ds.stopId}`,
-            processDays: ds.processDays,
+            description: stop?.description,
+            processDays: ds.processDays ?? stop?.processDays,
           };
         }) ?? [],
     })),

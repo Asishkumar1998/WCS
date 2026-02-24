@@ -2,6 +2,7 @@
 
 import { Typography, Box, List, ListItem, Divider } from "@mui/material";
 import FAQSidebarLayout from "@/components/layout/SideDrawer/FAQSideDrawerLayout";
+import Image from "next/image";
 
 export default function DispatchServiceSidebar() {
   return (
@@ -37,6 +38,13 @@ export default function DispatchServiceSidebar() {
             </Typography>
           </ListItem>
         </List>
+        <Image
+          src="/Dispatch Service Image.png"
+          alt="Dispatch Service Card"
+          width={400}
+          height={250}
+          style={{ width: "100%", height: "auto", marginTop: "50px" }}
+        />
       </Box>
     </FAQSidebarLayout>
   );

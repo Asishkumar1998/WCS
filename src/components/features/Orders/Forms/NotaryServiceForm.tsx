@@ -458,6 +458,7 @@ export default function NotaryServiceForm() {
                   resize: "none",
                 },
               }}
+              onChange={(e) => setAdditionalComments(e.target.value)}
             />
           </Grid>
         </Grid>
