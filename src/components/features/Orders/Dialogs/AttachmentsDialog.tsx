@@ -21,6 +21,7 @@ import {
   getConversationAttachments,
   getShippingDetails,
 } from "@/services/formsService";
+import { buildApiUrl } from "@/constants/api";
 import React from "react";
 import axios from "axios";
 
@@ -180,7 +181,7 @@ export default function AttachmentsDialog({
     fileName: string;
   }) => {
     try {
-      const url = `https://wcsstestserver.azurewebsites.net/api/v1/documentattachments/${attachment.attachmentId}`;
+      const url = buildApiUrl(`documentattachments/${attachment.attachmentId}`);
       // Comment out the below code once the backend change are deployed.
       // const response = await axiosInstance.get(url, { responseType: "blob" });
 
@@ -206,7 +207,9 @@ export default function AttachmentsDialog({
     fileName: string;
   }) => {
     try {
-      const url = `https://wcsstestserver.azurewebsites.net/api/v1/shippingLabelattachments/${shippingLabel.shippingLabelId}`;
+      const url = buildApiUrl(
+        `shippingLabelattachments/${shippingLabel.shippingLabelId}`,
+      );
       // Comment out the below code once the backend change are deployed.
       // const response = await axiosInstance.get(url, { responseType: "blob" });
 

@@ -56,6 +56,7 @@ import {
   updateShippingDetails,
 } from "@/services/cartServices";
 import { shippingOptionMap } from "@/constants/shippingOptionMap";
+import { buildApiUrl } from "@/constants/api";
 import { getAllStops } from "@/services/TrackOrderService";
 import { getLookup, uploadFile } from "@/services/formsService";
 import { countries } from "@/dataset/countries";
@@ -179,7 +180,6 @@ export default function OrderMilestonePage() {
   const isFirstRender = useRef(true);
   const [fileName, setFileName] = useState("");
   const [uploadFileData, setUploadFileData] = useState<any>();
-  const [submitShipping, setSubmitShipping] = useState<boolean>(false);
   const [region, setRegion] = useState<any>();
   const [isPolicyAccepted, setIsPolicyAccepted] = useState(false);
   const [expiryError, setExpiryError] = useState<string>("");
@@ -216,21 +216,6 @@ export default function OrderMilestonePage() {
     promocodeId: undefined,
     requestId: null,
     shippingAddressId: null,
-  });
-  const [shippingDetails, setShippingDetails] = useState<{
-    invoiceReference: string | null;
-    useUserCourier: boolean;
-    labelByMail: boolean;
-    pickupOrDropOff: boolean;
-    regionId: number;
-    regionNote: string;
-  }>({
-    invoiceReference: null,
-    useUserCourier: false,
-    labelByMail: false,
-    pickupOrDropOff: false,
-    regionId: 0,
-    regionNote: "",
   });
   const { showSnackbar } = useSnackbar();
   const [loading, setLoading] = useState<boolean>(false);
@@ -529,7 +514,7 @@ export default function OrderMilestonePage() {
     fileName: string;
   }) => {
     try {
-      const url = `https://wcsstestserver.azurewebsites.net/api/v1/documentattachments/${attachment.attachmentId}`;
+      const url = buildApiUrl(`documentattachments/${attachment.attachmentId}`);
       // Comment out the below code once the backend change are deployed.
       // const response = await axiosInstance.get(url, { responseType: "blob" });
 
@@ -619,16 +604,6 @@ export default function OrderMilestonePage() {
   const cardTypeImg = getCardTypeForCardNumber(card?.cardNumber).img;
 
   const handlePayNow = async () => {
-    if (
-      orderDetails.labelByMail === false &&
-      orderDetails.useUserCourier === false &&
-      orderDetails.pickupOrDropOff === false &&
-      orderDetails.regionId === 0 &&
-      submitShipping === false
-    ) {
-      showSnackbar("Please save Shipping details first.", "error");
-      return;
-    }
     if (!isPolicyAccepted) {
       showSnackbar("Please accept Cancellation & Refund Policy.", "error");
       return;
@@ -656,6 +631,8 @@ export default function OrderMilestonePage() {
 
     try {
       setIsSubmitting(true);
+      const shippingSaved = await submitShippingDetails({ showSuccess: false });
+      if (!shippingSaved) return;
 
       if (!hasFedex60Fee && checked.option === "courier") {
         const payload = allDocs[0];
@@ -679,6 +656,9 @@ export default function OrderMilestonePage() {
         amount: totalAmount,
         paymentType: paymentType,
         customerId: Number(customerId),
+        invoiceReference: invoiceReference?.trim() ?? "",
+        billingAddressId: customer?.billingAddressId ?? null,
+        shippingAddressId: customer?.shippingAddressId ?? null,
       };
 
       setCard(paymentCard);
@@ -687,8 +667,9 @@ export default function OrderMilestonePage() {
         paymentCard.amount = Number(totalAmount) + totalAmount * 0.035;
         response = await savePayment(paymentCard);
       } else {
-        const paymentOption = paymentType === "card" ? "Credit Card" : paymentType;
-        await processPayLater({"orderId": orderDetails.orderId});
+        const paymentOption =
+          paymentType === "card" ? "Credit Card" : paymentType;
+        await processPayLater({ orderId: orderDetails.orderId });
         response = await updateOrder(orderDetails?.orderId, {
           billingAddressId: customer.billingAddressId,
           confirmOrderDate: true,
@@ -755,40 +736,84 @@ export default function OrderMilestonePage() {
     }
   }, [checked.regionAddressId]);
 
-  const handleShippingOptionChange = (value: any) => {
-    setShippingDetails((prev) => ({
-      ...prev,
-      ...shippingOptionMap[value as keyof typeof shippingOptionMap],
-    }));
-  };
-
-  const submitShippingDetails = async () => {
-    if (checked.option === "") {
+  const submitShippingDetails = async ({
+    showSuccess = true,
+  }: {
+    showSuccess?: boolean;
+  } = {}) => {
+    const selectedOption = checked.option;
+    if (!selectedOption) {
       showSnackbar("Please select Shipping Label/Return Instructions", "error");
-      return;
+      return false;
     }
+
+    const normalizedInvoiceReference = invoiceReference?.trim() ?? "";
+    if (!normalizedInvoiceReference) {
+      showSnackbar("Please enter invoice reference or PO number", "error");
+      return false;
+    }
+
+    const mappedShippingOption =
+      shippingOptionMap[selectedOption as keyof typeof shippingOptionMap];
+    if (!mappedShippingOption) {
+      showSnackbar("Invalid shipping option selected", "error");
+      return false;
+    }
+
+    const selectedAddress = addresses.find(
+      (a: any) => a.regionAddressId === checked.regionAddressId,
+    );
+    const regionIdForCourier =
+      selectedAddress?.regionId ??
+      region?.regionId ??
+      orderDetails?.regionId ??
+      0;
+    const regionAddressIdForCourier =
+      selectedAddress?.regionAddressId ??
+      region?.regionAddressId ??
+      orderDetails?.regionNote ??
+      "";
+
+    if (
+      selectedOption === "courier" &&
+      (!regionIdForCourier || !regionAddressIdForCourier)
+    ) {
+      showSnackbar("Please select or add a return courier address", "error");
+      return false;
+    }
+
+    const hasExistingUploadedLabel = allDocs.some(
+      (doc: any) =>
+        Array.isArray(doc?.oosShippingDetail) &&
+        doc.oosShippingDetail.some(
+          (detail: any) =>
+            Boolean(detail?.shippingLabel?.shippingLabelId) ||
+            Boolean(detail?.shippingLabel?.blobName),
+        ),
+    );
+
+    if (
+      selectedOption === "upload" &&
+      !uploadFileData?.sourceUrl &&
+      !hasExistingUploadedLabel
+    ) {
+      showSnackbar("Please upload a return shipping label", "error");
+      return false;
+    }
+
     try {
       const payload = {
-        useUserCourier: shippingDetails.useUserCourier,
-        labelByMail: shippingDetails.labelByMail,
-        pickupOrDropOff: shippingDetails.pickupOrDropOff,
-        regionId:
-          checked.option === "courier"
-            ? (addresses.find(
-                (a: any) => a.regionAddressId === checked.regionAddressId,
-              )?.regionId ?? shippingDetails.regionId)
-            : shippingDetails.regionId,
+        useUserCourier: mappedShippingOption.useUserCourier,
+        labelByMail: mappedShippingOption.labelByMail,
+        pickupOrDropOff: mappedShippingOption.pickupOrDropOff,
+        regionId: selectedOption === "courier" ? regionIdForCourier : 0,
         regionNote:
-          checked.option === "courier"
-            ? (addresses.find(
-                (a: any) => a.regionAddressId === checked.regionAddressId,
-              )?.regionAddressId ?? shippingDetails.regionNote)
-            : shippingDetails.regionNote,
-        invoiceReference: invoiceReference?.trim() ?? "",
+          selectedOption === "courier" ? regionAddressIdForCourier : "",
+        invoiceReference: normalizedInvoiceReference,
       };
       await updateShippingDetails(orderDetails?.orderId, payload);
 
-      if (checked.option === "upload") {
+      if (selectedOption === "upload" && uploadFileData?.sourceUrl) {
         const UserCourierPayload = {
           shippingLabelURL: uploadFileData?.sourceUrl,
           blobName: uploadFileData?.blobName,
@@ -811,11 +836,14 @@ export default function OrderMilestonePage() {
         });
         await Promise.all(requests);
       }
-      showSnackbar("Successfully saved shipping details", "success");
-      setSubmitShipping(true);
+      if (showSuccess) {
+        showSnackbar("Successfully saved shipping details", "success");
+      }
+      return true;
     } catch (e) {
       showSnackbar("Failed to save shipping details", "error");
       console.log(e);
+      return false;
     }
   };
 
@@ -1275,226 +1303,150 @@ export default function OrderMilestonePage() {
                     gap: 2,
                   }}
                 >
-                  {/* Shipping Details Section */}
-                  <Paper
-                    elevation={0}
+                  {/* Invoice Reference / PO NUmber */}
+                  <Box
                     sx={{
-                      p: 1,
-                      borderRadius: 0,
                       border: "1px solid",
                       borderColor: "divider",
-                      backgroundColor: "background.paper",
+                      borderRadius: 0.5,
+                      overflow: "hidden",
+                      width: "100%",
                     }}
                   >
-                    {/* Invoice Reference / PO NUmber */}
                     <Box
                       sx={{
-                        border: "1px solid",
-                        borderColor: "divider",
-                        borderRadius: 0.5,
-                        overflow: "hidden",
-                        width: "100%",
-                        mb: 3,
+                        backgroundColor: "#c30010",
+                        height: 38,
+                        display: "flex",
+                        alignItems: "center",
+                        px: 2,
                       }}
                     >
-                      <Box
-                        sx={{
-                          backgroundColor: "#c30010",
-                          height: 38,
-                          display: "flex",
-                          alignItems: "center",
-                          px: 2,
-                        }}
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={600}
+                        color="white"
+                        sx={{ letterSpacing: "0.3px" }}
                       >
-                        <Typography
-                          variant="subtitle2"
-                          fontWeight={600}
-                          color="white"
-                          sx={{ letterSpacing: "0.3px" }}
-                        >
-                          INVOICE REFERENCE / PO NUMBER
-                        </Typography>
-                      </Box>
-                      <TextField
-                        placeholder="Enter invoice reference or PO number"
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        value={invoiceReference}
-                        onChange={(e) => setInvoiceReference(e.target.value)}
-                        InputLabelProps={{
-                          shrink: Boolean(invoiceReference),
-                        }}
-                        sx={{
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: 0,
-                            height: 40,
-                            "& fieldset": {
-                              borderColor: "#1976d2",
-                            },
+                        INVOICE REFERENCE / PO NUMBER
+                      </Typography>
+                    </Box>
+                    <TextField
+                      placeholder="Enter invoice reference or PO number"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      value={invoiceReference}
+                      onChange={(e) => setInvoiceReference(e.target.value)}
+                      InputLabelProps={{
+                        shrink: Boolean(invoiceReference),
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 0,
+                          height: 40,
+                          "& fieldset": {
+                            borderColor: "#1976d2",
                           },
-                        }}
-                      />
+                        },
+                      }}
+                    />
+                  </Box>
+
+                  {/* Shipping Label / Return Instructions */}
+                  <Box sx={{ border: "1px solid" }}>
+                    <Box
+                      sx={{
+                        backgroundColor: "primary.main",
+                        height: 38,
+                        display: "flex",
+                        alignItems: "center",
+                        px: 2,
+                      }}
+                    >
+                      {/* Left title */}
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={600}
+                        color="white"
+                        sx={{ letterSpacing: "0.3px" }}
+                      >
+                        SHIPPING LABEL / RETURN INSTRUCTIONS
+                      </Typography>
                     </Box>
 
-                    {/* Shipping Label / Return Instructions */}
-                    <Box sx={{ mb: 1, border: "1px solid" }}>
-                      <Box
+                    {/* Radio Buttons */}
+                    <Box sx={{ px: 2, py: 1 }}>
+                      <RadioGroup
+                        row
+                        value={checked.option}
+                        onChange={(e) => {
+                          setChecked((prev) => ({
+                            ...prev,
+                            option: e.target.value,
+                          }));
+                        }}
                         sx={{
-                          backgroundColor: "primary.main",
-                          height: 38,
                           display: "flex",
-                          alignItems: "center",
-                          px: 2,
+                          justifyContent: "space-between",
                         }}
                       >
-                        {/* Left title */}
-                        <Typography
-                          variant="subtitle2"
-                          fontWeight={600}
-                          color="white"
-                          sx={{ letterSpacing: "0.3px" }}
-                        >
-                          SHIPPING LABEL / RETURN INSTRUCTIONS
-                        </Typography>
-                      </Box>
+                        <Grid size={{ xs: 6 }}>
+                          <FormControlLabel
+                            value="courier"
+                            control={
+                              <Radio
+                                size="small"
+                                onClick={() => {
+                                  setChecked((prev) => ({
+                                    ...prev,
+                                    option: "courier",
+                                  }));
+                                  setOpenDialog(true); // ✅ ALWAYS opens
+                                }}
+                              />
+                            }
+                            label="Create Return Label"
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 6 }}>
+                          <FormControlLabel
+                            value="eCopy"
+                            control={<Radio size="small" />}
+                            label="E-Copy Only"
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 6 }}>
+                          <FormControlLabel
+                            value="upload"
+                            control={<Radio size="small" />}
+                            label="Upload Return Label"
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 6 }}>
+                          <FormControlLabel
+                            value="pickup"
+                            control={<Radio size="small" />}
+                            label="Pickup"
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 6 }}>
+                          <FormControlLabel
+                            value="mail"
+                            control={<Radio size="small" />}
+                            label="Enclose Label by mail"
+                          />
+                        </Grid>
+                      </RadioGroup>
 
-                      {/* Radio Buttons */}
-                      <Box sx={{ px: 2, py: 1 }}>
-                        <RadioGroup
-                          row
-                          value={checked.option}
-                          onChange={(e) => {
-                            setChecked((prev) => ({
-                              ...prev,
-                              option: e.target.value,
-                            }));
-                            handleShippingOptionChange(e.target.value);
-                          }}
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          <Grid size={{ xs: 6 }}>
-                            <FormControlLabel
-                              value="courier"
-                              control={
-                                <Radio
-                                  size="small"
-                                  onClick={() => {
-                                    setChecked((prev) => ({
-                                      ...prev,
-                                      option: "courier",
-                                    }));
-                                    handleShippingOptionChange("courier");
-                                    setOpenDialog(true); // ✅ ALWAYS opens
-                                  }}
-                                />
-                              }
-                              label="Create Return Label"
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 6 }}>
-                            <FormControlLabel
-                              value="eCopy"
-                              control={<Radio size="small" />}
-                              label="E-Copy Only"
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 6 }}>
-                            <FormControlLabel
-                              value="upload"
-                              control={<Radio size="small" />}
-                              label="Upload Return Label"
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 6 }}>
-                            <FormControlLabel
-                              value="pickup"
-                              control={<Radio size="small" />}
-                              label="Pickup"
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 6 }}>
-                            <FormControlLabel
-                              value="mail"
-                              control={<Radio size="small" />}
-                              label="Enclose Label by mail"
-                            />
-                          </Grid>
-                        </RadioGroup>
-
-                        {/* Collapsible Content */}
-                        <Collapse in={!!checked.option} timeout="auto">
-                          <Box mt={1} pl={4}>
-                            {checked.option === "upload" && (
-                              <Box mb={2}>
-                                <Typography
-                                  variant="body2"
-                                  color="text.secondary"
-                                >
-                                  * When creating a prepaid return label, please
-                                  use your company information (name, address,
-                                  phone) as the shipper/sender. Do Not use WCS
-                                  information (name, address, phone) as the
-                                  shipper/sender.
-                                </Typography>
-                                <Box
-                                  mt={1}
-                                  p={2}
-                                  sx={{
-                                    border: "1px dashed",
-                                    borderColor: "divider",
-                                    borderRadius: 2,
-                                    textAlign: "center",
-                                    cursor: "pointer",
-                                    "&:hover": { borderColor: "primary.main" },
-                                  }}
-                                >
-                                  <Typography
-                                    variant="body2"
-                                    color="primary.main"
-                                  >
-                                    <Box sx={{ mb: 1 }}>
-                                      <ValidatedFileUpload
-                                        label="Upload File"
-                                        fileNameProp={fileName}
-                                        onChange={handleSelectFile}
-                                      />
-                                    </Box>
-                                  </Typography>
-                                  {fileName && (
-                                    <Box
-                                      mt={2}
-                                      display="flex"
-                                      alignItems="center"
-                                      justifyContent="space-between"
-                                    >
-                                      <Box textAlign="left">
-                                        <Box fontWeight={500}>{fileName}</Box>
-                                      </Box>
-
-                                      <IconButton
-                                        size="small"
-                                        onClick={() => {
-                                          setUploadFileData("");
-                                          setFileName("");
-                                        }}
-                                      >
-                                        <DeleteIcon fontSize="small" />
-                                      </IconButton>
-                                    </Box>
-                                  )}
-                                </Box>
-                              </Box>
-                            )}
-
-                            {checked.option === "mail" && (
+                      {/* Collapsible Content */}
+                      <Collapse in={!!checked.option} timeout="auto">
+                        <Box mt={1} pl={4}>
+                          {checked.option === "upload" && (
+                            <Box mb={2}>
                               <Typography
                                 variant="body2"
                                 color="text.secondary"
-                                mb={2}
                               >
                                 * When creating a prepaid return label, please
                                 use your company information (name, address,
@@ -1502,80 +1454,112 @@ export default function OrderMilestonePage() {
                                 information (name, address, phone) as the
                                 shipper/sender.
                               </Typography>
-                            )}
-                            {checked.option === "courier" && region && (
                               <Box
-                                display="flex"
-                                alignItems="center"
-                                gap={1}
-                                flexWrap="wrap"
-                                mb={2}
+                                mt={1}
+                                p={2}
+                                sx={{
+                                  border: "1px dashed",
+                                  borderColor: "divider",
+                                  borderRadius: 2,
+                                  textAlign: "center",
+                                  cursor: "pointer",
+                                  "&:hover": { borderColor: "primary.main" },
+                                }}
                               >
-                                {/* Name */}
-                                <Typography fontWeight={600}>
-                                  {region.contactName}
+                                <Typography
+                                  variant="body2"
+                                  color="primary.main"
+                                >
+                                  <Box sx={{ mb: 1 }}>
+                                    <ValidatedFileUpload
+                                      label="Upload File"
+                                      fileNameProp={fileName}
+                                      onChange={handleSelectFile}
+                                    />
+                                  </Box>
                                 </Typography>
+                                {fileName && (
+                                  <Box
+                                    mt={2}
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="space-between"
+                                  >
+                                    <Box textAlign="left">
+                                      <Box fontWeight={500}>{fileName}</Box>
+                                    </Box>
 
-                                {/* Address */}
-                                <Box
-                                  display="flex"
-                                  alignItems="center"
-                                  gap={0.5}
-                                >
-                                  <Home fontSize="small" />
-                                  <Typography variant="body2">
-                                    {region.address}, {region.city},{" "}
-                                    {region.state}, {region.postalCode},{" "}
-                                    {region.country}
-                                  </Typography>
-                                </Box>
-
-                                {/* Phone */}
-                                <Box
-                                  display="flex"
-                                  alignItems="center"
-                                  gap={0.5}
-                                >
-                                  <Phone fontSize="small" />
-                                  <Typography variant="body2">
-                                    {region.phoneNumber}
-                                  </Typography>
-                                </Box>
-
-                                {/* Email */}
-                                <Box
-                                  display="flex"
-                                  alignItems="center"
-                                  gap={0.5}
-                                >
-                                  <Email fontSize="small" />
-                                  <Typography variant="body2">
-                                    {region.emailId}
-                                  </Typography>
-                                </Box>
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => {
+                                        setUploadFileData("");
+                                        setFileName("");
+                                      }}
+                                    >
+                                      <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                  </Box>
+                                )}
                               </Box>
-                            )}
-                          </Box>
-                        </Collapse>
-                      </Box>
-                    </Box>
+                            </Box>
+                          )}
 
-                    {/* Shipping Details Button */}
-                    <Box display="flex" justifyContent="flex-end">
-                      <Button
-                        variant="contained"
-                        sx={{
-                          backgroundColor: "#c30010",
-                          "&:hover": {
-                            backgroundColor: "#a0000d",
-                          },
-                        }}
-                        onClick={submitShippingDetails}
-                      >
-                        Save Shipping Details
-                      </Button>
+                          {checked.option === "mail" && (
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              mb={2}
+                            >
+                              * When creating a prepaid return label, please use
+                              your company information (name, address, phone) as
+                              the shipper/sender. Do Not use WCS information
+                              (name, address, phone) as the shipper/sender.
+                            </Typography>
+                          )}
+                          {checked.option === "courier" && region && (
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              gap={1}
+                              flexWrap="wrap"
+                              mb={2}
+                            >
+                              {/* Name */}
+                              <Typography fontWeight={600}>
+                                {region.contactName}
+                              </Typography>
+
+                              {/* Address */}
+                              <Box display="flex" alignItems="center" gap={0.5}>
+                                <Home fontSize="small" />
+                                <Typography variant="body2">
+                                  {region.address}, {region.city},{" "}
+                                  {region.state}, {region.postalCode},{" "}
+                                  {region.country}
+                                </Typography>
+                              </Box>
+
+                              {/* Phone */}
+                              <Box display="flex" alignItems="center" gap={0.5}>
+                                <Phone fontSize="small" />
+                                <Typography variant="body2">
+                                  {region.phoneNumber}
+                                </Typography>
+                              </Box>
+
+                              {/* Email */}
+                              <Box display="flex" alignItems="center" gap={0.5}>
+                                <Email fontSize="small" />
+                                <Typography variant="body2">
+                                  {region.emailId}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          )}
+                        </Box>
+                      </Collapse>
                     </Box>
-                  </Paper>
+                  </Box>
 
                   {/* Order Summary */}
                   <Box

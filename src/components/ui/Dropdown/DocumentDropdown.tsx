@@ -88,6 +88,15 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
       ? (onChange as (v: DocType[]) => void)(newValue as DocType[])
       : (onChange as (v: DocType | null) => void)(newValue as DocType);
   };
+  
+  const updateDocs = (newDocs: DocType[]) => {
+    setFilteredDocs((prev) => {
+      if (JSON.stringify(prev) === JSON.stringify(newDocs)) {
+        return prev;
+      }
+      return newDocs;
+    });
+  };
 
   useEffect(() => {
     const sortByName = (docs: DocType[]) =>
@@ -118,7 +127,7 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
 
     if (isBulkOrder) {
       const bulkPinnedDocIds = [78, 35, 36];
-      setFilteredDocs(sortPinnedThenName(docs, bulkPinnedDocIds));
+      updateDocs(sortPinnedThenName(docs, bulkPinnedDocIds));
     } else {
       setFilteredDocs(sortByName(docs));
     }

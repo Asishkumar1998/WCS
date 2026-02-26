@@ -35,10 +35,7 @@ import MultiDocumentUpload from "../Common/MultiDocumentUpload";
 import { AdditionalServices } from "@/dataset/constants/constants";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
-import {
-  createUSApostilleOrder,
-  uploadFile,
-} from "@/services/formsService";
+import { createUSApostilleOrder, uploadFile } from "@/services/formsService";
 import buildBulkMultiDocMultiCountryPayload from "../Common/BulkOrderType3Payload";
 import { CART_SERVICE_MAP } from "@/constants/serviceMap";
 import { getOrderIdOfCart } from "@/services/cartServices";
@@ -103,8 +100,7 @@ export default function BulkOrderingFormTypeThree() {
   );
 
   const mappedDocsCount = useMemo(
-    () =>
-      Object.values(mapping).reduce((acc, docs) => acc + docs.length, 0),
+    () => Object.values(mapping).reduce((acc, docs) => acc + docs.length, 0),
     [mapping],
   );
   const mappingTableMinWidth = useMemo(
@@ -224,18 +220,17 @@ export default function BulkOrderingFormTypeThree() {
 
         initialUploads[country] = {};
         docs.forEach((docId) => {
-          initialUploads[country][docId] =
-            prev[country]?.[docId] ?? {
-              uploadData: {
-                uploadedFiles: [],
-                nestedSelection: null,
-                numPages: "",
-                trackingNumberNested: "",
-                courierNested: null,
-              },
-              services: [],
-              reference: "",
-            };
+          initialUploads[country][docId] = prev[country]?.[docId] ?? {
+            uploadData: {
+              uploadedFiles: [],
+              nestedSelection: null,
+              numPages: "",
+              trackingNumberNested: "",
+              courierNested: null,
+            },
+            services: [],
+            reference: "",
+          };
         });
       });
 
@@ -284,11 +279,7 @@ export default function BulkOrderingFormTypeThree() {
     }));
   };
 
-  const toggleService = (
-    country: string,
-    docId: number,
-    service: string,
-  ) => {
+  const toggleService = (country: string, docId: number, service: string) => {
     setUploads((prev) => {
       const current =
         prev[country]?.[docId] ??
@@ -602,7 +593,7 @@ export default function BulkOrderingFormTypeThree() {
                   size="small"
                   sx={{
                     width: `max(100%, ${mappingTableMinWidth}px)`,
-                    tableLayout: "fixed",
+                    tableLayout: "auto",
                   }}
                 >
                   <TableHead>
@@ -622,7 +613,15 @@ export default function BulkOrderingFormTypeThree() {
                         <TableCell
                           key={docId}
                           align="center"
-                          sx={{ minWidth: 170, whiteSpace: "nowrap" }}
+                          // sx={{ minWidth: 170, whiteSpace: "nowrap" }}
+                          sx={{
+                            minWidth: 170,
+                            maxWidth: 220,
+                            whiteSpace: "normal",
+                            wordBreak: "break-word",
+                            lineHeight: 1.2,
+                            textAlign: "center",
+                          }}
                         >
                           {documentById.get(docId)?.docTypeName ?? docId}
                         </TableCell>
@@ -652,7 +651,9 @@ export default function BulkOrderingFormTypeThree() {
                                 checked={
                                   mapping[countryName]?.includes(docId) || false
                                 }
-                                onChange={() => toggleMapping(countryName, docId)}
+                                onChange={() =>
+                                  toggleMapping(countryName, docId)
+                                }
                               />
                             </TableCell>
                           ))}
@@ -828,9 +829,15 @@ export default function BulkOrderingFormTypeThree() {
                                         key={service}
                                         control={
                                           <Checkbox
-                                            checked={docData.services.includes(service)}
+                                            checked={docData.services.includes(
+                                              service,
+                                            )}
                                             onChange={() =>
-                                              toggleService(country, numericDocId, service)
+                                              toggleService(
+                                                country,
+                                                numericDocId,
+                                                service,
+                                              )
                                             }
                                           />
                                         }

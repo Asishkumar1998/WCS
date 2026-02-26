@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Drawer,
   IconButton,
@@ -15,6 +15,7 @@ import {
   Theme,
   tooltipClasses,
   ListItemButton,
+  Badge,
 } from "@mui/material";
 import {
   Home,
@@ -27,19 +28,21 @@ import {
   ChevronLeft,
   ExpandLess,
   ExpandMore,
-  Notifications,
   LibraryAdd,
   ShoppingCart,
 } from "@mui/icons-material";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import logo from "../../../../public/logo-new.png";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import { toggleDrawer } from "@/app/store/features/uiSlice";
 import { styled } from "@mui/material/styles";
 import { logoutUser } from "@/app/utils/authSerivce";
+import { CART_SERVICE_MAP } from "@/constants/serviceMap";
+import { getOrderDetails, getOrderIdOfCart } from "@/services/cartServices";
+import { getAuth } from "@/app/utils/auth";
 
 const drawerWidth = 240;
 const collapsedWidth = 60;
@@ -126,10 +129,83 @@ const SideDrawer = () => {
   const dispatch = useDispatch();
   const open = useSelector((state: RootState) => state.ui.drawerOpen);
   const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({});
+  const [userId, setUserId] = useState<string | null>(null);
+  const [docCount, setDocCount] = useState<number | null>(null);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isMobile = useMediaQuery((theme: Theme) =>
     theme.breakpoints.down("sm")
   );
+  const pathSegments = pathname.split("/").filter(Boolean);
+  let service = "us-authentication";
+
+  if (pathSegments[0] === "orders") {
+    if (pathSegments[1] === "new" && pathSegments[2]) {
+      service = pathSegments[2];
+    } else if (pathSegments[1] === "bulk-ordering") {
+      service = "bulk-ordering";
+    }
+  }
+
+  const serviceCart = searchParams.get("service");
+  const cartQueryService =
+    serviceCart && CART_SERVICE_MAP[serviceCart] ? serviceCart : null;
+  const currentCartServiceCandidate =
+    pathname.startsWith("/cart") && cartQueryService ? cartQueryService : service;
+  const currentCartService = CART_SERVICE_MAP[currentCartServiceCandidate]
+    ? currentCartServiceCandidate
+    : "us-authentication";
+
+  useEffect(() => {
+    const auth = getAuth();
+
+    if (auth) {
+      setUserId(auth.userId);
+    }
+  }, []);
+
+  useEffect(() => {
+    const getCartOrder = async () => {
+      try {
+        const basePayload = CART_SERVICE_MAP[currentCartService];
+        if (!basePayload) return;
+
+        const payload = {
+          userId: userId,
+          ...basePayload,
+        };
+        const orderId = await getOrderIdOfCart(payload);
+        if (orderId != null) {
+          const response = await getOrderDetails({ orderId: orderId });
+          const orderData = response?.[0];
+          if (!orderData || !Array.isArray(orderData.dockets)) {
+            setDocCount(null);
+            return;
+          }
+          const docsCount = orderData.dockets.reduce(
+            (count: number, docket: any) => {
+              if (!Array.isArray(docket.docs)) {
+                return count;
+              }
+              return count + docket.docs.length;
+            },
+            0,
+          );
+          setDocCount(docsCount);
+          return;
+        }
+        setDocCount(null);
+      } catch (error) {
+        console.error("Error in getCartOrder:", error);
+        setDocCount(null);
+      }
+    };
+
+    setDocCount(null);
+    if (userId) {
+      getCartOrder();
+    }
+  }, [currentCartService, userId]);
 
   const handleExpand = (itemText: string) => {
     if (!open) return;
@@ -141,9 +217,24 @@ const SideDrawer = () => {
 
   const renderNavItem = ({ text, icon, href, children }: any) => {
     const hasChildren = Array.isArray(children);
+    const resolvedHref =
+      text === "Cart" ? `/cart?service=${currentCartService}` : href;
+    const resolvedIcon =
+      text === "Cart" ? (
+        <Badge
+          badgeContent={docCount}
+          color="error"
+          invisible={!docCount}
+          max={99}
+        >
+          {icon}
+        </Badge>
+      ) : (
+        icon
+      );
 
     const isActive =
-      href && pathname === href
+      resolvedHref && pathname === resolvedHref.split("?")[0]
         ? true
         : hasChildren
         ? children.some((c: any) => pathname.startsWith(c.href))
@@ -152,7 +243,7 @@ const SideDrawer = () => {
     if (!hasChildren) {
       return (
         <Link
-          href={href || "#"}
+          href={resolvedHref || "#"}
           key={text}
           passHref
           style={{ textDecoration: "none", color: "inherit" }}
@@ -165,7 +256,7 @@ const SideDrawer = () => {
               }}
             >
               <ListItemIcon sx={{ color: "#fff", minWidth: "40px" }}>
-                {icon}
+                {resolvedIcon}
               </ListItemIcon>
               {open && <ListItemText primary={text} />}
             </ListItem>

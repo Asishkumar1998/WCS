@@ -24,6 +24,9 @@ const INPUT_MAP: any = {
   14: ["LOA", "POA"],
 };
 
+const GENERAL_CATEGORY_ID = 522;
+const FEDERAL_CATEGORY_ID = 521;
+
 export const AdditionalQuestions = ({
   country,
   states,
@@ -77,8 +80,31 @@ export const AdditionalQuestions = ({
   }, [resetQuestionId]);
 
   const stateOptions = useMemo(() => states?.map((s) => s.stateName), [states]);
-  if (docCategoryId !== 522) return null;
-  if (!resolvedQuestions.length) return null;
+
+  const visibleQuestions = useMemo(() => {
+    return resolvedQuestions.filter((q) => {
+
+      if (docCategoryId === GENERAL_CATEGORY_ID) {
+        return [1, 2, 15, 8, 12].includes(q.id);
+      }
+
+
+      if (docCategoryId === FEDERAL_CATEGORY_ID) {
+        return [8, 12].includes(q.id);
+      }
+
+      return false;
+    });
+  }, [resolvedQuestions, docCategoryId]);
+
+  if (
+    docCategoryId !== GENERAL_CATEGORY_ID &&
+    docCategoryId !== FEDERAL_CATEGORY_ID
+  ) {
+    return null;
+  }
+
+  if (!visibleQuestions.length) return null;
 
   return (
     <Grid container>
@@ -91,7 +117,7 @@ export const AdditionalQuestions = ({
             label="Additional Details *"
             inputComponent={() => (
               <Box sx={{ py: 1, width: "100%" }}>
-                {resolvedQuestions.map(
+                {visibleQuestions.map(
                   (
                     {
                       text,

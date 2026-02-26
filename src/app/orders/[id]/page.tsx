@@ -946,7 +946,7 @@ export default function OrdersPage() {
                         <strong>Est. Date of Completion</strong>
                       </TableCell>
                       <TableCell>
-                        <strong>Order Status</strong>
+                        <strong>Document Status</strong>
                       </TableCell>
                     </TableRow>
                   </TableHead>

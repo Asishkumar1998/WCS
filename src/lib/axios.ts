@@ -1,9 +1,10 @@
 // lib/axios.js
+import { API_BASE_URL } from "@/constants/api";
 import { getAuth } from "@/app/utils/auth";
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "https://wcsstestserver.azurewebsites.net/api/v1/",
+  baseURL: `${API_BASE_URL}/`,
   headers: {
     "Content-Type": "application/json",
   },

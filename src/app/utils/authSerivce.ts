@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { buildApiUrl } from "@/constants/api";
 
-const API_URL = "https://wcsstestserver.azurewebsites.net/api/v1/token";
+const API_URL = buildApiUrl("token");
 
 const loginUser = async (username: string, password: string) => {
     try {

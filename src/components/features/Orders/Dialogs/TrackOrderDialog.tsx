@@ -56,7 +56,7 @@ export default function TrackOrderDialog({
     const response = await getAllStops();
     setStops(response);
   };
-
+  
   const getOrderDetails = async () => {
     const response = await getOrder(Number(orderId));
     setOrderDetails(response[0]);
@@ -153,6 +153,53 @@ export default function TrackOrderDialog({
     return "pending";
   };
 
+  const getTrackingInfo = (docId: any) => {
+    if (!orderDetails?.dockets) return null;
+
+    for (const docket of orderDetails.dockets) {
+      const doc = docket.docs?.find((d: any) => d.docId === Number(docId));
+
+      if (doc && doc.trackCardNumber && doc.trackCardNumber !== 0) {
+        return {
+          trackingNumber: doc.trackCardNumber,
+          courierType: doc.courierType,
+        };
+      }
+    }
+    return null;
+  };
+
+  function redirectToSite(doc: any) {
+    if (!doc?.shippingTrackCardNumber) return;
+
+    const tracking = doc.shippingTrackCardNumber;
+    const courier = doc.shippingCourierType?.toLowerCase();
+
+    if (courier === "fedex") {
+      window.open(
+        "https://www.fedex.com/apps/fedextrack/?action=track&trackingnumber=" +
+          tracking,
+        "_blank",
+      );
+    } else if (courier === "ups") {
+      window.open(
+        "https://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=" +
+          tracking,
+        "_blank",
+      );
+    } else if (courier === "dhl") {
+      window.open(
+        "https://www.dhl.com/en/express/tracking.html?AWB=" + tracking,
+        "_blank",
+      );
+    } else if (courier === "usps") {
+      window.open(
+        "https://tools.usps.com/go/TrackConfirmAction?tLabels=" + tracking,
+        "_blank",
+      );
+    }
+  }
+
   return (
     <Dialog
       open={open}
@@ -178,12 +225,12 @@ export default function TrackOrderDialog({
         }}
       >
         Track Details (Order ID: {orderId})
-        <Typography
+        {/* <Typography
           variant="subtitle2"
           sx={{ color: "white", fontWeight: 400 }}
         >
           Doc Id: {docIds}
-        </Typography>
+        </Typography> */}
         {/* Close Icon */}
         <IconButton
           aria-label="close"
@@ -282,11 +329,37 @@ export default function TrackOrderDialog({
               const activeStep =
                 activeStepIndex === -1 ? allSteps.length : activeStepIndex;
 
+              const tracking = getTrackingInfo(docId);
+
               return (
                 <React.Fragment key={docId}>
                   <Typography variant="caption" color="text.secondary">
-                    Doc Id: {docId}
+                    <b> Doc Id:</b> {docId}
+                    {tracking && (
+                      <>
+                        {" "}
+                        | <b>Tracking No.:</b>{" "}
+                        <span
+                          style={{
+                            color: "#1976d2",
+                            cursor: "pointer",
+                            fontWeight: 500,
+                            textDecoration: "underline",
+                          }}
+                          onClick={() =>
+                            redirectToSite({
+                              shippingTrackCardNumber: tracking.trackingNumber,
+                              shippingCourierType: tracking.courierType,
+                            })
+                          }
+                        >
+                          {tracking.trackingNumber}
+                        </span>{" "}
+                        <b> ({tracking.courierType?.toUpperCase()})</b>
+                      </>
+                    )}
                   </Typography>
+
                   <Stepper activeStep={activeStep} alternativeLabel>
                     {allSteps.map((step, idx) => (
                       <Step key={idx} completed={step.completed}>
