@@ -333,7 +333,7 @@ export default function TrackOrderDialog({
 
               return (
                 <React.Fragment key={docId}>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2, display: "block" }}>
                     <b> Doc Id:</b> {docId}
                     {tracking && (
                       <>
