@@ -22,6 +22,8 @@ import { logoutUser } from "@/app/utils/authSerivce";
 import { CART_SERVICE_MAP } from "@/constants/serviceMap";
 import { getOrderDetails, getOrderIdOfCart } from "@/services/cartServices";
 import { getAuth } from "@/app/utils/auth";
+import { getWelcomeMessage } from "@/services/dashboardService";
+import WelcomeMessage from "@/components/features/Dashboard/WelcomeMessage";
 
 const drawerWidth = 240;
 const collapsedWidth = 60;
@@ -34,6 +36,26 @@ export default function Navbar() {
   const [query, setQuery] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [docCount, setDocCount] = useState<number | null>(null);
+  const [welcomeMessage, setWelcomeMessage] = useState<any>(null);
+  const [isWelcomeMessageOpen, setIsWelcomeMessageOpen] = useState(false);
+  const fetchWelcomeMessage = async (userId: Number) => {
+    try {
+      if (userId) {
+        const data = await getWelcomeMessage(Number(userId));
+        console.log("Welcome Message:", data);
+        if(data!==null){
+          setWelcomeMessage(data);
+        }
+        if(data===null || data.showWelcomeMessage>0){
+          setIsWelcomeMessageOpen(true);
+          setWelcomeMessage(null);
+        }
+      }
+  }
+    catch (error) {
+      console.error("Error fetching welcome message:", error);
+    }}
+
 
   useEffect(() => {
     const auth = getAuth();
@@ -43,6 +65,17 @@ export default function Navbar() {
     }
   }, []);
 
+    useEffect(() => {
+      if (userId) {
+        fetchWelcomeMessage( Number(userId));
+        if(welcomeMessage!==null && welcomeMessage.showWelcomeMessage>0){          
+          setIsWelcomeMessageOpen(true);
+        } else {
+          setIsWelcomeMessageOpen(false);
+          setWelcomeMessage(null);
+        }
+      }
+    }, [userId]);
   const pathName = usePathname();
   const pathSegments = pathName.split("/").filter(Boolean);
   let service = "us-authentication";
@@ -116,6 +149,7 @@ export default function Navbar() {
   }, [service, serviceCart, userId]);
 
   return (
+    <>
     <AppBar
       position="fixed"
       sx={{
@@ -216,5 +250,8 @@ export default function Navbar() {
         </Box>
       </Toolbar>
     </AppBar>
+      { isWelcomeMessageOpen && <WelcomeMessage />}
+    </>
+    
   );
 }
