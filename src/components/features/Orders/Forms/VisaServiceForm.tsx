@@ -118,6 +118,7 @@ export default function VisaServiceForm() {
   const [fileName, setFileName] = useState("");
   const [message, setMessage] = useState<string>("");
   const [loader, setLoader] = useState<boolean>(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -170,6 +171,15 @@ export default function VisaServiceForm() {
     init();
   }, [userId]);
 
+  const clearFieldErrors = (...keys: string[]) => {
+    setFieldErrors((prev) => {
+      if (keys.length === 0) return {};
+      const next = { ...prev };
+      keys.forEach((key) => delete next[key]);
+      return next;
+    });
+  };
+
   const visaTypeOptions = visaType.map((l) => l.lookupName);
   const passportTypeOptions = passportType.map((l) => l.lookupName);
   const stateOptions = states.map((l) => l?.stateName);
@@ -182,6 +192,7 @@ export default function VisaServiceForm() {
   }, [originCountry]);
 
   const handleVisaTypeChange = (selectedValue: string) => {
+    clearFieldErrors("typeOfVisa");
     const visaTypeId =
       visaType.find((s) => s.lookupName === selectedValue)?.lookupId ?? 0;
     setSelectedVisaType({
@@ -192,6 +203,7 @@ export default function VisaServiceForm() {
   };
 
   const handlePassportTypeChange = (selectedValue: string) => {
+    clearFieldErrors("typeOfPassport");
     const passportTypeId =
       passportType.find((s) => s.lookupName === selectedValue)?.lookupId ?? 0;
     setSelectedPassportType({
@@ -202,6 +214,7 @@ export default function VisaServiceForm() {
   };
 
   const handleStateChange = (selectedValue: string) => {
+    clearFieldErrors("state");
     const stateId =
       states.find((s) => s.stateName === selectedValue)?.stateId ?? 0;
     setSelectedState({
@@ -212,6 +225,7 @@ export default function VisaServiceForm() {
   };
 
   const handleEntryChange = (selectedValue: string) => {
+    clearFieldErrors("NumberOfEntries");
     let value = 1;
     if (selectedValue === "Single Entry") value = 1;
     else if (selectedValue === "Double Entry") value = 2;
@@ -234,6 +248,7 @@ export default function VisaServiceForm() {
 
   async function uploadAndStore(file: any) {
     if (!file) return;
+    clearFieldErrors("uploadDocument");
 
     if (file) {
       try {
@@ -265,34 +280,30 @@ export default function VisaServiceForm() {
   }, [form.passportIssuanceDate, form.passportValidity]);
 
   const submitOrder = async () => {
-    const { isValid, error } = validateVisaForm(form);
+    const { isValid, error, fieldErrors: validationFieldErrors } =
+      validateVisaForm(form);
+
+    const errors: Record<string, string> = {};
 
     if (!destinationCountry) {
-      showSnackbar("Destination Country is required", "error");
-      return;
+      errors.destinationCountry = "Destination Country is required";
     }
+
     if (!isValid) {
-      showSnackbar(error, "error");
+      Object.assign(errors, validationFieldErrors);
+    }
+
+    if (!uploadedDocumentId) {
+      errors.uploadDocument = "Add Documents is required";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      showSnackbar(Object.values(errors)[0] || error, "error");
       return;
     }
 
-    if(!uploadedDocumentId){
-      showSnackbar("Add Documents is required", "error");
-      return
-    }
-
-    if (
-      !form.passportIssuanceDate ||
-      !form.passportValidity ||
-      form.passportValidity.diff(form.passportIssuanceDate, "month") < 6
-    ) {
-      showSnackbar(
-        "Passport validity must be at least 6 months from date of issue",
-        "error",
-      );
-      return;
-    }
-
+    setFieldErrors({});
     setLoader(true);
     setMessage("Processing Checkout...");
     try {
@@ -365,7 +376,12 @@ export default function VisaServiceForm() {
             label="Destination Country for Visa"
             value={destinationCountry}
             required
-            onChange={setDestinationCountry}
+            error={Boolean(fieldErrors.destinationCountry)}
+            helperText={fieldErrors.destinationCountry || ""}
+            onChange={(value) => {
+              setDestinationCountry(value);
+              clearFieldErrors("destinationCountry");
+            }}
           />
         </Grid>
 
@@ -376,6 +392,8 @@ export default function VisaServiceForm() {
             options={visaTypeOptions}
             required
             value={selectedVisaType.value}
+            error={Boolean(fieldErrors.typeOfVisa)}
+            helperText={fieldErrors.typeOfVisa || ""}
             onChange={handleVisaTypeChange}
           />
         </Grid>
@@ -387,6 +405,8 @@ export default function VisaServiceForm() {
             options={passportTypeOptions}
             required
             value={selectedPassportType.value}
+            error={Boolean(fieldErrors.typeOfPassport)}
+            helperText={fieldErrors.typeOfPassport || ""}
             onChange={handlePassportTypeChange}
           />
         </Grid>
@@ -397,7 +417,12 @@ export default function VisaServiceForm() {
             label="Origin Country of Passport"
             value={originCountry}
             required
-            onChange={setOriginCountry}
+            error={Boolean(fieldErrors.originCountryOfPassPort)}
+            helperText={fieldErrors.originCountryOfPassPort || ""}
+            onChange={(value) => {
+              setOriginCountry(value);
+              clearFieldErrors("originCountryOfPassPort");
+            }}
             pinnedCountryIds={[190]}
           />
         </Grid>
@@ -410,12 +435,15 @@ export default function VisaServiceForm() {
                 label="Given Name"
                 value={form.applicantGivenName}
                 required
-                onChange={(e) =>
+                error={Boolean(fieldErrors.applicantGivenName)}
+                helperText={fieldErrors.applicantGivenName || ""}
+                onChange={(e) => {
+                  clearFieldErrors("applicantGivenName");
                   setForm((prev) => ({
                     ...prev,
                     applicantGivenName: e.target.value,
-                  }))
-                }
+                  }));
+                }}
                 sx={{
                   "& .MuiFormLabel-asterisk": {
                     color: "red",
@@ -428,9 +456,12 @@ export default function VisaServiceForm() {
                 label="Surname"
                 value={form.lastName}
                 required
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, lastName: e.target.value }))
-                }
+                error={Boolean(fieldErrors.lastName)}
+                helperText={fieldErrors.lastName || ""}
+                onChange={(e) => {
+                  clearFieldErrors("lastName");
+                  setForm((prev) => ({ ...prev, lastName: e.target.value }));
+                }}
                 sx={{
                   "& .MuiFormLabel-asterisk": {
                     color: "red",
@@ -453,9 +484,12 @@ export default function VisaServiceForm() {
             label="Passport Number"
             value={form.passportNumber}
             required
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, passportNumber: e.target.value }))
-            }
+            error={Boolean(fieldErrors.passportNumber)}
+            helperText={fieldErrors.passportNumber || ""}
+            onChange={(e) => {
+              clearFieldErrors("passportNumber");
+              setForm((prev) => ({ ...prev, passportNumber: e.target.value }));
+            }}
             sx={{
               "& .MuiFormLabel-asterisk": {
                 color: "red",
@@ -471,9 +505,12 @@ export default function VisaServiceForm() {
             maxDate={dayjs()}
             value={form.passportIssuanceDate}
             required
-            onChange={(value) =>
-              setForm((prev) => ({ ...prev, passportIssuanceDate: value }))
-            }
+            error={Boolean(fieldErrors.passportIssuanceDate)}
+            helperText={fieldErrors.passportIssuanceDate || ""}
+            onChange={(value) => {
+              clearFieldErrors("passportIssuanceDate", "passportValidity");
+              setForm((prev) => ({ ...prev, passportIssuanceDate: value }));
+            }}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
@@ -482,9 +519,12 @@ export default function VisaServiceForm() {
             minDate={dayjs()}
             value={form.passportValidity}
             required
-            onChange={(value) =>
-              setForm((prev) => ({ ...prev, passportValidity: value }))
-            }
+            error={Boolean(fieldErrors.passportValidity)}
+            helperText={fieldErrors.passportValidity || ""}
+            onChange={(value) => {
+              clearFieldErrors("passportValidity");
+              setForm((prev) => ({ ...prev, passportValidity: value }));
+            }}
           />
         </Grid>
 
@@ -495,6 +535,8 @@ export default function VisaServiceForm() {
             options={stateOptions}
             value={selectedState.value}
             required
+            error={Boolean(fieldErrors.state)}
+            helperText={fieldErrors.state || ""}
             onChange={handleStateChange}
           />
         </Grid>
@@ -506,6 +548,8 @@ export default function VisaServiceForm() {
             options={entries}
             value={entryType}
             required
+            error={Boolean(fieldErrors.NumberOfEntries)}
+            helperText={fieldErrors.NumberOfEntries || ""}
             onChange={handleEntryChange}
           />
         </Grid>
@@ -518,12 +562,15 @@ export default function VisaServiceForm() {
             maxDate={form.passportValidity ?? undefined}
             value={form.dateOfDeparture}
             required
-            onChange={(value) =>
+            error={Boolean(fieldErrors.dateOfDeparture)}
+            helperText={fieldErrors.dateOfDeparture || ""}
+            onChange={(value) => {
+              clearFieldErrors("dateOfDeparture");
               setForm((prev) => ({
                 ...prev,
                 dateOfDeparture: value,
-              }))
-            }
+              }));
+            }}
           />
         </Grid>
 
@@ -532,6 +579,8 @@ export default function VisaServiceForm() {
           <FileUploadBox
             label="Add Documents"
             required
+            error={Boolean(fieldErrors.uploadDocument)}
+            helperText={fieldErrors.uploadDocument || ""}
             onSelectFile={(file) => uploadAndStore(file)}
             fileName={fileName || ""}
           />
@@ -585,12 +634,15 @@ export default function VisaServiceForm() {
                 minDate={form.passportIssuanceDate ?? undefined}
                 maxDate={form.passportValidity ?? undefined}
                 value={form.expeditedDate}
-                onChange={(value) =>
+                error={Boolean(fieldErrors.expeditedDate)}
+                helperText={fieldErrors.expeditedDate || ""}
+                onChange={(value) => {
+                  clearFieldErrors("expeditedDate");
                   setForm((prev) => ({
                     ...prev,
                     expeditedDate: value,
-                  }))
-                }
+                  }));
+                }}
               />
             </Grid>
           </Grid>

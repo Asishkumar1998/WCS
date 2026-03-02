@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Typography,
@@ -59,7 +59,6 @@ import { shippingOptionMap } from "@/constants/shippingOptionMap";
 import { buildApiUrl } from "@/constants/api";
 import { getAllStops } from "@/services/TrackOrderService";
 import { getLookup, uploadFile } from "@/services/formsService";
-import { countries } from "@/dataset/countries";
 import axios from "axios";
 import dayjs from "dayjs";
 import { useSearchParams } from "next/navigation";
@@ -251,6 +250,20 @@ export default function OrderMilestonePage() {
 
   const dispatch = useDispatch<AppDispatch>();
   const sharedFormData = useSelector((state: RootState) => state.formsData);
+  const countryShortNameById = useMemo(() => {
+    return new Map(
+      (sharedFormData.countries ?? []).map((c: any) => [
+        Number(c.countryId),
+        c.countryShortName,
+      ]),
+    );
+  }, [sharedFormData.countries]);
+
+  const getCountryShortName = (countryId: any) => {
+    const normalizedId = Number(countryId);
+    if (Number.isNaN(normalizedId)) return "";
+    return countryShortNameById.get(normalizedId) ?? "";
+  };
 
   useEffect(() => {
     if (
@@ -1004,10 +1017,12 @@ export default function OrderMilestonePage() {
                             <Grid size={{ xs: 3 }}>
                               <Typography variant="subtitle1" fontWeight={600}>
                                 {(
-                                  countries?.find(
-                                    (c: any) => c.countryId === doc.countryId,
-                                  )?.countryShortName || doc.countryId
-                                ).toUpperCase()}
+                                  getCountryShortName(doc.countryId) ||
+                                  doc.countryId ||
+                                  ""
+                                )
+                                  .toString()
+                                  .toUpperCase()}
                               </Typography>
                             </Grid>
                             <Grid size={{ xs: 3 }}>
@@ -1635,6 +1650,7 @@ export default function OrderMilestonePage() {
                             (a: any) =>
                               a.addressId === customer?.billingAddressId,
                           );
+                          console.log("addr ----------> ", addr);
 
                           if (!addr) {
                             return <Typography variant="body2">-</Typography>;
@@ -1655,7 +1671,11 @@ export default function OrderMilestonePage() {
                               </Typography>
 
                               <Typography variant="body2">
-                                {[addr.zipCode, "India"]
+                                {[
+                                  addr.zipCode,
+                                  getCountryShortName(addr.countryId) ||
+                                    addr.country,
+                                ]
                                   .filter(Boolean)
                                   .join(", ")}
                               </Typography>

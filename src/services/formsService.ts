@@ -1,4 +1,5 @@
 import axiosInstance from "@/lib/axios";
+import { emitCartUpdated } from "@/lib/cartBadgeEvents";
 
 export const getCountries = async (payload: any) => {
   const response = await axiosInstance.get("countries", {
@@ -72,6 +73,7 @@ export const getInvoice = async (sageInvoiceReferenceNumber: any) => {
 
 export const postTranslationOrder = async (payload: any) => {
   const response = await axiosInstance.post("orders/", payload);
+  emitCartUpdated();
   return response.data;
 };
 
@@ -87,6 +89,7 @@ export const uploadFile = async (payload: any) => {
 
 export const createUSApostilleOrder = async (payload: any) => {
   const response = await axiosInstance.post("orders", payload);
+  emitCartUpdated();
   return response.data;
 };
 

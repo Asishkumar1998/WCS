@@ -3,6 +3,7 @@ import ADDITIONAL_QUESTION_COUNTRY_MAP from "@/dataset/additionalQuesWithCountry
 type ValidationResult = {
   isValid: boolean;
   error: string;
+  fieldErrors: Record<string, string>;
 };
 
 type Params = {
@@ -22,48 +23,48 @@ const validateUSApostilleForm = ({
   additionalQuestions,
   uploadDocValues,
 }: Params): ValidationResult => {
-  /* ---------------- Country ---------------- */
-  if (country !== undefined) {
-    if (!country) {
-      return { isValid: false, error: "Country is required" };
-    }
+  const fieldErrors: Record<string, string> = {};
+  let firstError = "";
+
+  const addError = (key: string, message: string) => {
+    if (!firstError) firstError = message;
+    fieldErrors[key] = message;
+  };
+
+  if (country !== undefined && !country) {
+    addError("country", "Country is required");
   }
 
-  /* ---------------- Document ---------------- */
-  if (document !== undefined) {
-    if (!document) {
-      return { isValid: false, error: "Document is required" };
-    }
+  if (document !== undefined && !document) {
+    addError("document", "Document is required");
   }
 
-  /* ---------------- Countries ---------------- */
-  if (countries !== undefined) {
-    if (!countries || countries.length === 0) {
-      return { isValid: false, error: "Please select at least one country" };
-    }
+  if (countries !== undefined && (!countries || countries.length === 0)) {
+    addError("countries", "Please select at least one country");
   }
 
-  /* ---------------- Upload Values ---------------- */
   if (uploadDocValues !== undefined) {
-    if (uploadDocValues?.nestedSelection === null) {
-      return {
-        isValid: false,
-        error: "Please Select Document Upload options",
-      };
+    const nestedSelection = uploadDocValues?.nestedSelection;
+    const hasSingleFile =
+      uploadDocValues?.uploadedFile !== null &&
+      uploadDocValues?.uploadedFile !== undefined;
+    const hasMultiFile =
+      Array.isArray(uploadDocValues?.uploadedFiles) &&
+      uploadDocValues.uploadedFiles.length > 0;
+
+    if (nestedSelection === null || nestedSelection === undefined) {
+      addError("uploadOption", "Please Select Document Upload options");
     }
 
     if (
-      uploadDocValues?.nestedSelection === "proceedWithAttached" &&
-      uploadDocValues?.uploadedFile === null
+      nestedSelection === "proceedWithAttached" &&
+      !hasSingleFile &&
+      !hasMultiFile
     ) {
-      return {
-        isValid: false,
-        error: "Please Upload Document",
-      };
+      addError("uploadDocument", "Please Upload Document");
     }
   }
 
-  /* ---------------- Additional Questions ---------------- */
   if (
     country &&
     additionalQuestions !== undefined &&
@@ -84,15 +85,20 @@ const validateUSApostilleForm = ({
       );
 
       if (!answered) {
-        return {
-          isValid: false,
-          error: "Please answer all required additional questions",
-        };
+        addError(
+          "additionalQuestions",
+          "Please answer all required additional questions",
+        );
+        break;
       }
     }
   }
 
-  return { isValid: true, error: "" };
+  return {
+    isValid: Object.keys(fieldErrors).length === 0,
+    error: firstError,
+    fieldErrors,
+  };
 };
 
 export default validateUSApostilleForm;

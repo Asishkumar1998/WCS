@@ -35,6 +35,8 @@ interface BaseDropdownProps {
   multiple?: boolean;
   open?: boolean;
   required?: boolean;
+  error?: boolean;
+  helperText?: string;
   onOpen?: () => void;
   onClose?: () => void;
   disabled?: boolean;
@@ -67,6 +69,8 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
   multiple = false,
   open,
   required = false,
+  error = false,
+  helperText = "",
   onOpen,
   onClose,
   disabled = false,
@@ -75,6 +79,10 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
 }) => {
   const { documentTypes } = useSelector((state: RootState) => state.formsData);
   const [filteredDocs, setFilteredDocs] = useState<DocType[]>([]);
+
+  const pinnedSet = new Set(
+    isBulkOrder ? [78, 35, 36] : (pinnedDocTypeIds ?? []),
+  );
 
   const handleChange = (_: any, newValue: any) => {
     // Close dropdown asynchronously to prevent MUI focus conflicts
@@ -88,7 +96,7 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
       ? (onChange as (v: DocType[]) => void)(newValue as DocType[])
       : (onChange as (v: DocType | null) => void)(newValue as DocType);
   };
-  
+
   const updateDocs = (newDocs: DocType[]) => {
     setFilteredDocs((prev) => {
       if (JSON.stringify(prev) === JSON.stringify(newDocs)) {
@@ -145,24 +153,37 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
         onOpen={disabled ? undefined : onOpen}
         onClose={disabled ? undefined : onClose}
         disabled={disabled} // disables the input and prevents opening
-        renderOption={(props, option, { selected }) =>
-          multiple ? (
+        renderOption={(props, option, { selected }) => {
+          const isPinned = pinnedSet.has(option.docTypeId);
+
+          return multiple ? (
             <li {...props} key={option.docTypeId}>
               <Checkbox
                 icon={icon}
                 checkedIcon={checkedIcon}
                 style={{ marginRight: 8 }}
                 checked={selected}
-                disabled={disabled} // disables checkbox selection
+                disabled={disabled}
               />
-              <ListItemText primary={option.docTypeName} />
+              <ListItemText
+                primary={option.docTypeName}
+                primaryTypographyProps={{
+                  fontWeight: isPinned ? 700 : 400,
+                }}
+              />
             </li>
           ) : (
-            <li {...props} key={option.docTypeId}>
+            <li
+              {...props}
+              key={option.docTypeId}
+              style={{
+                fontWeight: isPinned ? 700 : 400,
+              }}
+            >
               {option.docTypeName}
             </li>
-          )
-        }
+          );
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -170,9 +191,16 @@ const DocumentDropdown: React.FC<DropdownProps> = ({
             variant="outlined"
             required={required}
             disabled={disabled}
+            error={error}
+            helperText={helperText}
             InputLabelProps={{
               ...params.InputLabelProps,
               sx: {
+                "&.MuiInputLabel-shrink": {
+                  px: 0.5,
+                  borderRadius: 0.5,
+                  backgroundColor: "background.paper",
+                },
                 "& .MuiFormLabel-asterisk": {
                   color: "red",
                 },

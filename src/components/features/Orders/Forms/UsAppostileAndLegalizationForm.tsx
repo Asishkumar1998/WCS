@@ -52,9 +52,10 @@ import { updateOrder } from "@/services/paymentService";
 import { getAuth } from "@/app/utils/auth";
 import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
 import validateUSApostilleForm from "../Common/validateUSForm";
+import StatusStepper from "@/components/ui/Stepper/FormStepper";
 
-const STOP_DOCS_HAGUE_COUNTRIES = [6, 15, 28, 29, 30, 31, 35, 36];
-const STOP_DOCS_NON_HAGUE_COUNTRIES = [6, 12, 28, 29, 30, 31, 35, 36];
+const STOP_DOCS_HAGUE_COUNTRIES = [6, 15, 28, 29, 30, 31];
+const STOP_DOCS_NON_HAGUE_COUNTRIES = [6, 12, 28, 29, 30, 31];
 
 type Stop = {
   stopId: number;
@@ -148,6 +149,7 @@ export default function USAppostileAndLegalizationForm({
   const [allOOSDeptMappings, setAllOOSDeptMappings] = useState<any[]>([]);
   const [allOOSAddresses, setAllOOSAddresses] = useState<any[]>([]);
   const [documentStops, setDocumentStops] = useState<Stop[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const resetForm = () => {
     setCountry(null);
@@ -163,8 +165,18 @@ export default function USAppostileAndLegalizationForm({
     setForceOriginalMail(false);
     setSuppressNextDocOpen(false);
     setDocumentStops([]);
+    setFieldErrors({});
 
     setFormResetKey((prev) => prev + 1);
+  };
+
+  const clearFieldErrors = (...keys: string[]) => {
+    setFieldErrors((prev) => {
+      if (keys.length === 0) return {};
+      const next = { ...prev };
+      keys.forEach((key) => delete next[key]);
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -178,6 +190,7 @@ export default function USAppostileAndLegalizationForm({
 
   const handleDocumentSelect = (newValue: DocType | null) => {
     if (!newValue) return;
+    clearFieldErrors("document", "additionalQuestions");
 
     const id = newValue.docTypeId;
     const countryType = country.countryTypeId === 501 ? "HAGUE" : "NON_HAGUE";
@@ -196,10 +209,10 @@ export default function USAppostileAndLegalizationForm({
             warningMessage =
               "The Federal Government document type you selected require originals. Please mail originals to our office.";
             break;
-          case 35:
-            warningMessage =
-              "The Federal Government document type you selected require originals. Please mail originals to our office.";
-            break;
+          // case 35:
+          //   warningMessage =
+          //     "The Federal Government document type you selected require originals. Please mail originals to our office.";
+          //   break;
           case 36:
             warningMessage =
               "The Federal Government document type you selected require originals. Please mail originals to our office.";
@@ -312,13 +325,19 @@ export default function USAppostileAndLegalizationForm({
       }
     }
   };
-
+  
   const handleCountrySelect = (value: any) => {
     setCountry(value);
     setDocument(null);
     setAdditionalServices([]);
     setForceOriginalMail(false);
     setDocumentStops([]);
+    clearFieldErrors("country", "document", "additionalQuestions");
+  };
+
+  const handleAdditionalQuestionsChange = (questions: any[]) => {
+    setAdditionalQuestions(questions);
+    clearFieldErrors("additionalQuestions");
   };
 
   const getOriginState = () => {
@@ -556,6 +575,7 @@ export default function USAppostileAndLegalizationForm({
   }, [country, document]);
 
   const handleDocumentUpload = async (data: any) => {
+    clearFieldErrors("uploadOption", "uploadDocument");
     if (!data.uploadedFile) {
       lastUploadedRef.current = null;
     }
@@ -597,18 +617,21 @@ export default function USAppostileAndLegalizationForm({
       : null;
 
   const submitOrder = async (): Promise<boolean> => {
-    const { isValid, error } = validateUSApostilleForm({
+    const { isValid, error, fieldErrors: nextFieldErrors } =
+      validateUSApostilleForm({
       country,
       document,
       additionalQuestions,
       uploadDocValues,
-    });
+      });
 
     if (!isValid) {
+      setFieldErrors(nextFieldErrors);
       showSnackbar(error, "error");
       return false;
     }
 
+    setFieldErrors({});
     setIsSubmitting(true);
 
     let payload;
@@ -616,8 +639,8 @@ export default function USAppostileAndLegalizationForm({
       const countryId = country?.countryId;
       const docCategoryId = document?.docCategoryId;
       const docTypeId = document?.docTypeId;
-      const originState = additionalQuestions.find((q: any) => q.questionId === 2)
-        ?.answer;
+      const originState = Number(additionalQuestions.find((q: any) => q.questionId === 2)
+        ?.answer);
       const nusaccRequired =
         additionalQuestions.find((q: any) => q.questionId === 8)?.answer ===
         "Yes";
@@ -901,6 +924,8 @@ export default function USAppostileAndLegalizationForm({
               label="Select or Type Country"
               value={country}
               required
+              error={Boolean(fieldErrors.country)}
+              helperText={fieldErrors.country || ""}
               onChange={handleCountrySelect}
             />
           </Grid>
@@ -945,6 +970,8 @@ export default function USAppostileAndLegalizationForm({
               }}
               onClose={() => setDropdownOpen(false)}
               disabled={!country}
+              error={Boolean(fieldErrors.document)}
+              helperText={fieldErrors.document || ""}
             />
           </Grid>
 
@@ -1057,9 +1084,11 @@ export default function USAppostileAndLegalizationForm({
             <AdditionalQuestions
               country={country}
               states={states}
-              setAdditionalPreferences={setAdditionalQuestions}
+              setAdditionalPreferences={handleAdditionalQuestionsChange}
               resetQuestionId={showCartConflict ? 1 : null}
               docCategoryId={document?.docCategoryId}
+              error={Boolean(fieldErrors.additionalQuestions)}
+              helperText={fieldErrors.additionalQuestions || ""}
             />
           </Grid>
 
@@ -1070,6 +1099,15 @@ export default function USAppostileAndLegalizationForm({
                 onChange={handleDocumentUpload}
                 country={country}
                 forceOriginalMail={forceOriginalMail}
+                error={Boolean(
+                  fieldErrors.uploadOption || fieldErrors.uploadDocument,
+                )}
+                errorText={
+                  fieldErrors.uploadOption || fieldErrors.uploadDocument || ""
+                }
+                onInteraction={() =>
+                  clearFieldErrors("uploadOption", "uploadDocument")
+                }
               />
             </Box>
           </Grid>
@@ -1131,55 +1169,19 @@ export default function USAppostileAndLegalizationForm({
                 </Box>
 
                 <Box sx={{ p: 2 }}>
-                  <Box sx={{ display: "flex", alignItems: "flex-start", width: "100%" }}>
-                    {routeStops.map((stop: any, idx: number) => (
-                      <React.Fragment key={`${stop.stopId}-${idx}`}>
-                        <Box sx={{ flex: "1 1 0", minWidth: 0, textAlign: "center" }}>
-                          <Box
-                            sx={{
-                              width: 28,
-                              height: 28,
-                              borderRadius: "50%",
-                              bgcolor:
-                                stop.stopName === "New"
-                                  ? "success.main"
-                                  : stop.stopName === "Customer"
-                                    ? "primary.main"
-                                    : stop.isOOS
-                                      ? "warning.main"
-                                      : "grey.400",
-                              mx: "auto",
-                              mb: 0.5,
-                            }}
-                          />
-                          <Typography
-                            variant="caption"
-                            fontWeight={600}
-                            sx={{
-                              display: "block",
-                              lineHeight: 1.2,
-                              overflowWrap: "anywhere",
-                            }}
-                          >
-                            {stop.isOOS && stop.consulateName
+                  <Box sx={{ width: "100%", overflowX: "auto", pb: 0.5 }}>
+                    <Box sx={{ minWidth: `${Math.max(routeStops.length, 4) * 120}px` }}>
+                      <StatusStepper
+                        steps={routeStops.map((stop) => ({
+                          label:
+                            stop.isOOS && stop.consulateName
                               ? `${getDisplayStopName(stop.stopName)} (${stop.consulateName})`
-                              : getDisplayStopName(stop.stopName)}
-                          </Typography>
-                        </Box>
-
-                        {idx < routeStops.length - 1 && (
-                          <Box
-                            sx={{
-                              flex: "0 1 24px",
-                              height: 2,
-                              bgcolor: "divider",
-                              mt: "13px",
-                              mx: 0.5,
-                            }}
-                          />
-                        )}
-                      </React.Fragment>
-                    ))}
+                              : getDisplayStopName(stop.stopName),
+                        }))}
+                        activeStep={Math.max(routeStops.length - 1, 0)}
+                        orientation="horizontal"
+                      />
+                    </Box>
                   </Box>
                 </Box>
               </Box>
@@ -1187,7 +1189,7 @@ export default function USAppostileAndLegalizationForm({
           )}
         </Grid>
 
-        <Modal
+        {/* <Modal
           open={modal.open}
           onClose={() => {
             setModal((prev) => ({ ...prev, open: false }));
@@ -1203,7 +1205,7 @@ export default function USAppostileAndLegalizationForm({
             setDropdownOpen(false);
             setSuppressNextDocOpen(true);
           }}
-        />
+        /> */}
       </FormLayout>
     </>
   );

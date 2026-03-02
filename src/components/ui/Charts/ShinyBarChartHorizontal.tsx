@@ -41,7 +41,7 @@ export default function ShinyBarChartHorizontal({
   return (
     <Box width="100%">
       <Typography align="center" marginBottom={2} fontWeight={800}>
-        Document Share by Country (%)
+        Document Share (%) — Top 5 Countries
       </Typography>
       <BarChart
         height={250}

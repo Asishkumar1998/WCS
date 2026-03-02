@@ -9,10 +9,12 @@ import {
   Grid,
   Button,
   IconButton,
+  MenuItem,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useEffect, useState } from "react";
 import { addAddress, updateAddress } from "@/services/dashboardService";
+import { getCountries } from "@/services/formsService";
 
 type Address = {
   addressId?: number;
@@ -23,6 +25,7 @@ type Address = {
   zipCode?: string;
   zipcode?: string;
   number1?: string;
+  countryId?: number;
 };
 
 type Props = {
@@ -49,7 +52,25 @@ export default function AddressDialog({
     state: "",
     zipcode: "",
     number1: "",
+    countryId: "",
   });
+  const [countries, setCountries] = useState<any[]>([]);
+  const [countryError, setCountryError] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+
+    const loadCountries = async () => {
+      try {
+        const response = await getCountries({ active: 1 });
+        setCountries(Array.isArray(response) ? response : []);
+      } catch (err) {
+        console.error("Failed to load countries", err);
+      }
+    };
+
+    loadCountries();
+  }, [open]);
 
   /** Populate form on EDIT */
   useEffect(() => {
@@ -61,6 +82,7 @@ export default function AddressDialog({
         state: address.state || "",
         zipcode: address.zipCode || address.zipcode || "",
         number1: address.number1 || "",
+        countryId: address.countryId ? String(address.countryId) : "",
       });
     } else {
       setForm({
@@ -70,6 +92,7 @@ export default function AddressDialog({
         state: "",
         zipcode: "",
         number1: "",
+        countryId: "",
       });
     }
   }, [address]);
@@ -80,6 +103,11 @@ export default function AddressDialog({
     };
 
   const handleSave = async () => {
+    if (!form.countryId) {
+      setCountryError("Country is required");
+      return;
+    }
+
     const payload = {
       addressId: address?.addressId,
       addressLine1: form.addressLine1,
@@ -88,7 +116,7 @@ export default function AddressDialog({
       state: form.state,
       zipcode: form.zipcode,
       number1: form.number1,
-      countryId: 79,
+      countryId: Number(form.countryId),
       referenceId: customerId,
     };
 
@@ -173,7 +201,27 @@ export default function AddressDialog({
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <TextField fullWidth label="Country" value="India" disabled />
+            <TextField
+              select
+              fullWidth
+              label="Country"
+              value={form.countryId}
+              error={Boolean(countryError)}
+              helperText={countryError}
+              onChange={(e) => {
+                setForm((prev) => ({ ...prev, countryId: e.target.value }));
+                setCountryError("");
+              }}
+            >
+              {countries.map((country: any) => (
+                <MenuItem
+                  key={country.countryId}
+                  value={String(country.countryId)}
+                >
+                  {country.countryShortName}
+                </MenuItem>
+              ))}
+            </TextField>
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>

@@ -74,6 +74,7 @@ export default function BulkOrderingFormTypeThree() {
   const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const { showSnackbar } = useSnackbar();
   const [additionalServicesState] = useState(AdditionalServices);
 
@@ -92,6 +93,12 @@ export default function BulkOrderingFormTypeThree() {
       .map((d) => d.docTypeName);
 
     return [...pinned, ...rest];
+  }, [documentTypes]);
+
+  const pinnedDocumentNames = useMemo(() => {
+    return documentTypes
+      .filter((d) => PINNED_DOC_IDS.includes(d.docTypeId))
+      .map((d) => d.docTypeName);
   }, [documentTypes]);
 
   const documentById = useMemo(
@@ -148,6 +155,15 @@ export default function BulkOrderingFormTypeThree() {
     }
   }, [customerId]);
 
+  const clearFieldErrors = (...keys: string[]) => {
+    setFieldErrors((prev) => {
+      if (keys.length === 0) return {};
+      const next = { ...prev };
+      keys.forEach((key) => delete next[key]);
+      return next;
+    });
+  };
+
   useEffect(() => {
     setMapping((prev) => {
       const validCountries = new Set(
@@ -195,6 +211,7 @@ export default function BulkOrderingFormTypeThree() {
   }, [countries, documents]);
 
   const toggleMapping = (country: string, docId: number) => {
+    clearFieldErrors("mapping");
     setMapping((prev) => {
       const existing = prev[country] || [];
       return {
@@ -208,10 +225,15 @@ export default function BulkOrderingFormTypeThree() {
 
   const openUploadDialog = () => {
     if (mappedDocsCount === 0) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        mapping: "Please map at least one document",
+      }));
       showSnackbar("Please map at least one document", "error");
       return;
     }
 
+    clearFieldErrors("mapping");
     setUploads((prev) => {
       const initialUploads: UploadsState = {};
 
@@ -244,6 +266,7 @@ export default function BulkOrderingFormTypeThree() {
     docId: number,
     data: any,
   ) => {
+    clearFieldErrors("uploadEntries");
     setUploads((prev) => ({
       ...prev,
       [country]: {
@@ -359,9 +382,11 @@ export default function BulkOrderingFormTypeThree() {
   const handleDialogSave = () => {
     const uploadError = validateUploads();
     if (uploadError) {
+      setFieldErrors((prev) => ({ ...prev, uploadEntries: uploadError }));
       showSnackbar(uploadError, "error");
       return;
     }
+    clearFieldErrors("uploadEntries");
     setDialogOpen(false);
   };
 
@@ -378,18 +403,32 @@ export default function BulkOrderingFormTypeThree() {
   };
 
   const submitOrder = async (): Promise<boolean> => {
+    const errors: Record<string, string> = {};
     const mappingError = validateMappings();
     if (mappingError) {
-      showSnackbar(mappingError, "error");
-      return false;
+      if (countries.length === 0) {
+        errors.countries = "Please select at least one country";
+      }
+      if (documents.length === 0) {
+        errors.documents = "Please select at least one document";
+      }
+      if (!errors.countries && !errors.documents) {
+        errors.mapping = mappingError;
+      }
     }
 
     const uploadError = validateUploads();
     if (uploadError) {
-      showSnackbar(uploadError, "error");
+      errors.uploadEntries = uploadError;
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      showSnackbar(Object.values(errors)[0], "error");
       return false;
     }
 
+    setFieldErrors({});
     try {
       setLoader(true);
       setLoaderMessage("Processing checkout...");
@@ -528,12 +567,17 @@ export default function BulkOrderingFormTypeThree() {
             <CountrySelect
               label="Select Countries"
               value={countries}
-              onChange={setCountries}
+              onChange={(value) => {
+                setCountries(value);
+                clearFieldErrors("countries", "mapping");
+              }}
               multiple
               disabledCountryIds={[
                 3, 53, 82, 88, 93, 97, 130, 144, 196, 199, 205,
               ]}
               required
+              error={Boolean(fieldErrors.countries)}
+              helperText={fieldErrors.countries || ""}
             />
           </Grid>
 
@@ -541,6 +585,7 @@ export default function BulkOrderingFormTypeThree() {
             <Dropdown
               label="Select or Type Document"
               options={documentOptions}
+              pinnedOptions={pinnedDocumentNames}
               value={documents
                 .map((id) => documentById.get(id)?.docTypeName)
                 .filter(Boolean)}
@@ -554,9 +599,12 @@ export default function BulkOrderingFormTypeThree() {
                   .filter((id): id is number => typeof id === "number");
 
                 setDocuments(selectedIds);
+                clearFieldErrors("documents", "mapping", "uploadEntries");
               }}
               multiple
               required
+              error={Boolean(fieldErrors.documents)}
+              helperText={fieldErrors.documents || ""}
             />
           </Grid>
 
@@ -663,6 +711,14 @@ export default function BulkOrderingFormTypeThree() {
                   </TableBody>
                 </Table>
               </Box>
+              {fieldErrors.mapping && (
+                <Typography
+                  variant="caption"
+                  sx={{ mt: 0.75, display: "block", color: "error.main" }}
+                >
+                  {fieldErrors.mapping}
+                </Typography>
+              )}
             </Grid>
           )}
 
@@ -670,12 +726,23 @@ export default function BulkOrderingFormTypeThree() {
             <Button
               variant="outlined"
               fullWidth
-              sx={{ height: 56 }}
+              sx={{
+                height: 56,
+                borderColor: fieldErrors.uploadEntries ? "error.main" : undefined,
+              }}
               disabled={mappedDocsCount === 0}
               onClick={openUploadDialog}
             >
               Upload Selected Documents
             </Button>
+            {fieldErrors.uploadEntries && (
+              <Typography
+                variant="caption"
+                sx={{ mt: 0.75, display: "block", color: "error.main" }}
+              >
+                {fieldErrors.uploadEntries}
+              </Typography>
+            )}
           </Grid>
 
           <Grid size={{ xs: 12 }}>

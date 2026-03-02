@@ -2,6 +2,7 @@ import {
   Autocomplete,
   Box,
   FormControl,
+  FormHelperText,
   FormControlLabel,
   IconButton,
   InputLabel,
@@ -19,10 +20,16 @@ export default function DocumentUpload({
   country,
   onChange,
   forceOriginalMail = false,
+  error = false,
+  errorText = "",
+  onInteraction,
 }: {
   country?: any;
   onChange?: (data: any) => void;
   forceOriginalMail?: boolean;
+  error?: boolean;
+  errorText?: string;
+  onInteraction?: () => void;
 }) {
   const [nestedSelection, setNestedSelection] = useState<
     "proceedWithAttached" | "originalMailedNested" | null
@@ -33,6 +40,7 @@ export default function DocumentUpload({
   const [trackingNumberNested, setTrackingNumberNested] = useState("");
   const [courierNested, setCourierNested] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
+  const clearValidationError = () => onInteraction?.();
 
   useEffect(() => {
     onChange?.({
@@ -59,11 +67,13 @@ export default function DocumentUpload({
   }, [forceOriginalMail]);
 
   const handleFileChange = (file: File | null) => {
+    clearValidationError();
     setUploadedFile(file);
     setFileName(file?.name || "");
   };
 
   const removeFile = () => {
+    clearValidationError();
     setUploadedFile(null);
     setFileName("");
     setNestedSelection(null);
@@ -76,15 +86,20 @@ export default function DocumentUpload({
     <FormControl
       fullWidth
       sx={{
-        border: "1px solid #C7C9CD",
+        border: "1px solid",
+        borderColor: error ? "error.main" : "#C7C9CD",
         borderRadius: 1,
       }}
       variant="outlined"
       required
+      error={error}
     >
       <InputLabel
         shrink
         sx={{
+          px: 0.5,
+          borderRadius: 0.5,
+          backgroundColor: "background.paper",
           "& .MuiFormLabel-asterisk": {
             color: "red",
           },
@@ -141,6 +156,7 @@ export default function DocumentUpload({
         <RadioGroup
           value={nestedSelection}
           onChange={(e) => {
+            clearValidationError();
             const value = e.target.value as any;
             if (forceOriginalMail && value === "proceedWithAttached") return;
             setNestedSelection(value);
@@ -163,7 +179,10 @@ export default function DocumentUpload({
               type="number"
               value={numPages}
               inputProps={{ min: 0 }}
-              onChange={(e) => setNumPages(e.target.value)}
+              onChange={(e) => {
+                clearValidationError();
+                setNumPages(e.target.value);
+              }}
               size="small"
               sx={{ width: { xs: "100%", sm: "90%" }, marginLeft: 3.5 }}
             />
@@ -194,7 +213,10 @@ export default function DocumentUpload({
                 <TextField
                   label="Tracking number to WCS"
                   value={trackingNumberNested}
-                  onChange={(e) => setTrackingNumberNested(e.target.value)}
+                  onChange={(e) => {
+                    clearValidationError();
+                    setTrackingNumberNested(e.target.value);
+                  }}
                   size="small"
                   sx={{ flex: 1, width: "100%" }}
                 />
@@ -203,7 +225,10 @@ export default function DocumentUpload({
                 <Autocomplete
                   options={couriers}
                   value={courierNested}
-                  onChange={(_, value) => setCourierNested(value)}
+                  onChange={(_, value) => {
+                    clearValidationError();
+                    setCourierNested(value);
+                  }}
                   renderInput={(params) => (
                     <TextField {...params} label="Courier" size="small" />
                   )}
@@ -214,6 +239,7 @@ export default function DocumentUpload({
           )}
         </RadioGroup>
       </Box>
+      {error && <FormHelperText>{errorText}</FormHelperText>}
     </FormControl>
   );
 }

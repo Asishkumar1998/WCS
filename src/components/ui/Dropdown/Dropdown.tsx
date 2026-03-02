@@ -15,8 +15,11 @@ interface BaseDropdownProps {
   multiple?: boolean;
   disabled?: boolean;
   required?: boolean;
+  error?: boolean;
+  helperText?: string;
   style?: any;
   variant?: any;
+  pinnedOptions?: string[];
 }
 
 interface SingleDropdownProps extends BaseDropdownProps {
@@ -42,11 +45,16 @@ const Dropdown: React.FC<DropdownProps> = ({
   value,
   onChange,
   required = false,
+  error = false,
+  helperText = "",
   multiple = false,
   disabled = false,
   style = null,
-  variant = "outlined"
+  variant = "outlined",
+  pinnedOptions = [],
 }) => {
+  const pinnedSet = new Set(pinnedOptions);
+
   return (
     <FormControl fullWidth>
       <Autocomplete
@@ -61,6 +69,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         disabled={disabled} // disable the input
         renderOption={(props, option, { selected }) => {
           const { key, ...rest } = props;
+          const isPinned = pinnedSet.has(option);
           return multiple ? (
             <li key={key} {...rest}>
               <Checkbox
@@ -70,10 +79,19 @@ const Dropdown: React.FC<DropdownProps> = ({
                 checked={selected}
                 disabled={disabled} // disable checkbox
               />
-              <ListItemText primary={option} />
+              <ListItemText
+                primary={option}
+                primaryTypographyProps={{
+                  fontWeight: isPinned ? 700 : 400,
+                }}
+              />
             </li>
           ) : (
-            <li key={key} {...rest}>
+            <li
+              key={key}
+              {...rest}
+              style={{ fontWeight: isPinned ? 700 : 400 }}
+            >
               {option}
             </li>
           );
@@ -85,9 +103,16 @@ const Dropdown: React.FC<DropdownProps> = ({
             variant="outlined"
             disabled={disabled}
             required={required}
+            error={error}
+            helperText={helperText}
             InputLabelProps={{
               ...params.InputLabelProps,
               sx: {
+                "&.MuiInputLabel-shrink": {
+                  px: 0.5,
+                  borderRadius: 0.5,
+                  backgroundColor: "background.paper",
+                },
                 "& .MuiFormLabel-asterisk": {
                   color: "red",
                 },

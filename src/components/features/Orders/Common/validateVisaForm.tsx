@@ -3,6 +3,7 @@ import { Dayjs } from "dayjs";
 type ValidationResult = {
   isValid: boolean;
   error: string;
+  fieldErrors: Record<string, string>;
 };
 
 const validateVisaForm = (form: any): ValidationResult => {
@@ -20,52 +21,72 @@ const validateVisaForm = (form: any): ValidationResult => {
     { key: "dateOfDeparture", label: "Date of Departure" },
   ];
 
-  for (const field of requiredChecks) {
-    if (!form[field.key]) {
-      return {
-        isValid: false,
-        error: `${field.label} is required`,
-      };
+  const fieldErrors: Record<string, string> = {};
+  let firstError = "";
+
+  const addError = (key: string, message: string) => {
+    if (!firstError) firstError = message;
+    fieldErrors[key] = message;
+  };
+
+  requiredChecks.forEach((field) => {
+    const value = form[field.key];
+    const isEmpty =
+      value === null ||
+      value === undefined ||
+      value === "" ||
+      (typeof value === "number" && value === 0);
+
+    if (isEmpty) {
+      addError(field.key, `${field.label} is required`);
     }
-  }
+  });
 
-  // Passport validity ≥ 6 months from issue date
-  const issueDate: Dayjs = form.passportIssuanceDate;
-  const validityDate: Dayjs = form.passportValidity;
+  const issueDate: Dayjs | null = form.passportIssuanceDate;
+  const validityDate: Dayjs | null = form.passportValidity;
 
-  if (validityDate.diff(issueDate, "month") < 6) {
-    return {
-      isValid: false,
-      error:
-        "Passport validity must be at least 6 months from the date of issue",
-    };
-  }
-
-  // Date of Departure & Expedited date bounds (safety)
   if (
-    form.dateOfDeparture.isBefore(issueDate) ||
-    form.dateOfDeparture.isAfter(validityDate)
+    issueDate &&
+    validityDate &&
+    validityDate.diff(issueDate, "month") < 6
   ) {
-    return {
-      isValid: false,
-      error:
-        "Date of Departure must be between Passport Issue Date and Passport Validity Date",
-    };
+    addError(
+      "passportValidity",
+      "Passport validity must be at least 6 months from the date of issue",
+    );
+  }
+
+  if (
+    form.dateOfDeparture &&
+    issueDate &&
+    validityDate &&
+    (form.dateOfDeparture.isBefore(issueDate) ||
+      form.dateOfDeparture.isAfter(validityDate))
+  ) {
+    addError(
+      "dateOfDeparture",
+      "Date of Departure must be between Passport Issue Date and Passport Validity Date",
+    );
   }
 
   if (
     form.expeditedDate &&
+    issueDate &&
+    validityDate &&
     (form.expeditedDate.isBefore(issueDate) ||
       form.expeditedDate.isAfter(validityDate))
   ) {
-    return {
-      isValid: false,
-      error:
-        "Expedited Service Date must be between Passport Issue Date and Passport Validity Date",
-    };
+    addError(
+      "expeditedDate",
+      "Expedited Service Date must be between Passport Issue Date and Passport Validity Date",
+    );
   }
 
-  return { isValid: true, error: "" };
+  return {
+    isValid: Object.keys(fieldErrors).length === 0,
+    error: firstError,
+    fieldErrors,
+  };
 };
 
 export default validateVisaForm;

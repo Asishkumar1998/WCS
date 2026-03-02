@@ -1,4 +1,5 @@
 import axiosInstance from "@/lib/axios";
+import { emitCartUpdated } from "@/lib/cartBadgeEvents";
 
 export const createPaymentInitiated = async (payload: any) => {
   const response = await axiosInstance.post("payments", payload);
@@ -22,6 +23,7 @@ export const updatePayment = async (payload: any) => {
 
 export const updateOrder = async (orderId: number, payload: any) => {
   const response = await axiosInstance.put(`orders/${orderId}`, payload);
+  emitCartUpdated();
   return response.data;
 };
 

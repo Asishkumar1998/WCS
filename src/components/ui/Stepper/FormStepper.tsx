@@ -26,6 +26,7 @@ interface StatusStepperProps {
   steps: StepData[];
   activeStep: number;
   title?: string;
+  orientation?: "vertical" | "horizontal";
 }
 
 // ===== Custom Connector =====
@@ -46,13 +47,21 @@ interface StatusStepperProps {
 // }));
 const CustomConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
-    top: 22,
+    top: 16,
+    left: "calc(-50% + 16px)",
+    right: "calc(50% + 16px)",
   },
   [`&.${stepConnectorClasses.vertical}`]: {
     marginLeft: 16,
   },
   [`& .${stepConnectorClasses.line}`]: {
     borderColor: theme.palette.divider,
+  },
+  [`&.${stepConnectorClasses.horizontal} .${stepConnectorClasses.line}`]: {
+    borderTopWidth: 3,
+    borderRadius: 1,
+  },
+  [`&.${stepConnectorClasses.vertical} .${stepConnectorClasses.line}`]: {
     borderLeftWidth: 3,
     minHeight: 24,
   },
@@ -116,9 +125,12 @@ export default function StatusStepper({
   steps,
   activeStep,
   title,
+  orientation = "vertical",
 }: StatusStepperProps) {
+  const isHorizontal = orientation === "horizontal";
+
   return (
-    <Box sx={{ width: "100%", p: 2, textAlign: "center" }}>
+    <Box sx={{ width: "100%", p: 2, textAlign: isHorizontal ? "left" : "center" }}>
       {/* Title */}
       {title && (
         <Typography
@@ -136,10 +148,23 @@ export default function StatusStepper({
 
       {/* Stepper */}
       <Stepper
-        // alternativeLabel
+        alternativeLabel={isHorizontal}
         activeStep={activeStep}
         connector={<CustomConnector />}
-        orientation="vertical"
+        orientation={orientation}
+        sx={
+          isHorizontal
+            ? {
+                "& .MuiStepLabel-label": {
+                  whiteSpace: "normal",
+                  textAlign: "center",
+                },
+                "& .MuiStepLabel-labelContainer": {
+                  mt: 0.5,
+                },
+              }
+            : undefined
+        }
       >
         {steps.map((step, idx) => (
           <Step key={idx}>
@@ -152,7 +177,18 @@ export default function StatusStepper({
                 />
               )}
             >
-              <Typography variant="body2" fontWeight={600}>
+              <Typography
+                variant="body2"
+                fontWeight={600}
+                sx={
+                  isHorizontal
+                    ? {
+                        fontSize: "0.75rem",
+                        lineHeight: 1.2,
+                      }
+                    : undefined
+                }
+              >
                 {step.label}
               </Typography>
               {step.subLabel && (

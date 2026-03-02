@@ -19,6 +19,8 @@ interface CountrySelectProps {
   multiple?: boolean;
   fullWidth?: boolean;
   required?: boolean;
+  error?: boolean;
+  helperText?: string;
   value: Country | Country[] | null;
   onChange: (value: Country | Country[] | null) => void;
   style?: React.CSSProperties;
@@ -37,6 +39,8 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
   multiple = false,
   fullWidth = true,
   required = false,
+  error = false,
+  helperText = "",
   value = null,
   onChange,
   style = {},
@@ -174,9 +178,16 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
             label={label}
             variant="outlined"
             required={required}
+            error={error}
+            helperText={helperText}
             InputLabelProps={{
               ...params.InputLabelProps,
               sx: {
+                "&.MuiInputLabel-shrink": {
+                  px: 0.5,
+                  borderRadius: 0.5,
+                  backgroundColor: "background.paper",
+                },
                 "& .MuiFormLabel-asterisk": {
                   color: "red",
                 },
