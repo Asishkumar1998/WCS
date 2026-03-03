@@ -39,7 +39,7 @@ export default function Navbar() {
   const [docCount, setDocCount] = useState<number | null>(null);
   const [welcomeMessage, setWelcomeMessage] = useState<any>(null);
   const [isWelcomeMessageOpen, setIsWelcomeMessageOpen] = useState(false);
-  const fetchWelcomeMessage = async (userId: Number) => {
+  const fetchWelcomeMessage = async (userId: number) => {
     try {
       if (userId) {
         const data = await getWelcomeMessage(Number(userId));

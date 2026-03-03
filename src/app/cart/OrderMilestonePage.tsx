@@ -158,6 +158,8 @@ const initialForm = {
   regionName: "",
 };
 
+const E_COPY_REGION_ID = -1;
+
 export default function OrderMilestonePage() {
   const [allDocs, setAllDocs] = useState<any>([]);
   const [paymentType, setPaymentType] = useState("");
@@ -819,7 +821,12 @@ export default function OrderMilestonePage() {
         useUserCourier: mappedShippingOption.useUserCourier,
         labelByMail: mappedShippingOption.labelByMail,
         pickupOrDropOff: mappedShippingOption.pickupOrDropOff,
-        regionId: selectedOption === "courier" ? regionIdForCourier : 0,
+        regionId:
+          selectedOption === "courier"
+            ? regionIdForCourier
+            : selectedOption === "eCopy"
+              ? E_COPY_REGION_ID
+              : 0,
         regionNote:
           selectedOption === "courier" ? regionAddressIdForCourier : "",
         invoiceReference: normalizedInvoiceReference,
@@ -883,7 +890,8 @@ export default function OrderMilestonePage() {
     if (orderDetails.useUserCourier === true) return "upload";
     if (orderDetails.labelByMail === true) return "mail";
     if (orderDetails.pickupOrDropOff === true) return "pickup";
-    if (orderDetails.regionId && orderDetails.regionId !== 0) return "courier";
+    if (orderDetails.regionId === E_COPY_REGION_ID) return "eCopy";
+    if (orderDetails.regionId && orderDetails.regionId > 0) return "courier";
 
     return ""; // ← nothing selected
   };

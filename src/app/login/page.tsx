@@ -369,21 +369,30 @@ const CustomerLogin = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Bottom Branding */}
       <Box
         sx={{
           position: "absolute",
-          bottom: 24,
-          right: 24,
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
+          bottom: 16,
+          left: "50%",
+          transform: "translateX(-50%)",
+          textAlign: "center",
           color: "#fff",
+          px: 2,
+          fontSize: "0.875rem",
         }}
       >
-        <Image src="/logo-wcs.png" alt="WCS" width={60} height={45} />
-        <Typography variant="body2">Powered by WCS</Typography>
+        *This website is best viewed in Google Chrome.{" "}
+        <Link
+          href="https://www.google.com/chrome/"
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{ color: "#c8002e" }}
+        >
+          Click Here
+        </Link>{" "}
+        to Download Google Chrome
       </Box>
+
     </Box>
   );
 };

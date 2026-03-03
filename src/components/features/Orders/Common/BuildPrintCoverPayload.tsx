@@ -20,7 +20,7 @@ export const buildPrintCoverPayload = async (
   const docs = order?.dockets?.flatMap((d: any) => d.docs ?? []) ?? [];
 
   let region: any = undefined;
-  if (order.regionId != 0) {
+  if (order.regionId > 0) {
     const regionResponse = await getRegionAddress(order.regionNote);
     region = regionResponse?.[0];
   }

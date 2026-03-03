@@ -314,7 +314,10 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                     { text: "\n\nReturn/Shipping Instructions: " },
                     {
                       text:
-                        data?.shppingInstructions?.regionId
+                        data?.shppingInstructions?.regionId === -1
+                          ? "\nE-Copy Only"
+                          : data?.shppingInstructions?.regionId &&
+                              data?.shppingInstructions?.regionId > 0
                           ? "\n*Use WCS Courier Account for additional fee"
                           : data.shppingInstructions?.useUserCourier
                             ? "\n*Use Prepaid Label Uploaded"
@@ -327,7 +330,11 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                       italics: true,
                     },
                     {
-                      text: data.shppingInstructions?.regionId ? "\n\nReturn Address: " : "",
+                      text:
+                        data.shppingInstructions?.regionId &&
+                        data.shppingInstructions?.regionId > 0
+                          ? "\n\nReturn Address: "
+                          : "",
                       italics: true,
                     },
                     {
