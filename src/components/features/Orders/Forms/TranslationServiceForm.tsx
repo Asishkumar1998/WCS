@@ -48,6 +48,7 @@ export default function TranslationServiceForm() {
   const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
   const [loader, setLoader] = useState(false);
   const [loaderMessage, setLoaderMessage] = useState<string>("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -62,6 +63,15 @@ export default function TranslationServiceForm() {
   }, []);
 
   const { showSnackbar } = useSnackbar();
+
+  const clearFieldErrors = (...keys: string[]) => {
+    setFieldErrors((prev) => {
+      if (keys.length === 0) return {};
+      const next = { ...prev };
+      keys.forEach((key) => delete next[key]);
+      return next;
+    });
+  };
 
   const fetchLanguages = async () => {
     const response = await getLookup({ lookupType: "TranslationLanguage" });
@@ -79,12 +89,14 @@ export default function TranslationServiceForm() {
     else handleTranslatedLangChange("");
 
     setOriginalLang(selectedName);
+    clearFieldErrors("originalLang");
     const found = languages.find((l) => l.lookupName === selectedName);
     setOriginalLangId(found ? found.lookupId : null);
   };
 
   const handleTranslatedLangChange = (selectedName: string) => {
     setTranslatedLang(selectedName);
+    clearFieldErrors("translatedLang");
     const found = languages.find((l) => l.lookupName === selectedName);
     setTranslatedLangId(found ? found.lookupId : null);
   };
@@ -101,6 +113,7 @@ export default function TranslationServiceForm() {
       else if (type === "shippingLabel") setShippingLabel(undefined);
       return;
     }
+    if (type === "attachments") clearFieldErrors("attachments");
 
     if (file) {
       try {
@@ -122,32 +135,43 @@ export default function TranslationServiceForm() {
   }
 
   const submitOrder = async () => {
-    if (
-      originalLangId == null ||
-      translatedLangId == null ||
-      attachments == undefined
-    ) {
-      showSnackbar("Please complete all required fields", "error");
-    } else {
-      setLoader(true);
-      setLoaderMessage("Processing Checkout...");
-      try {
-        const payload = buildTranslationPayload({
-          originalLangId,
-          translatedLangId,
-          attachments,
-          coverLetter,
-          shippingLabel,
-        });
-        await postTranslationOrder(payload);
-        window.location.href = "/cart?service=translation-service";
-      } catch (error) {
-        showSnackbar("Failed to submit order", "error");
-        console.error(error);
-      } finally {
-        setLoader(false);
-        setLoaderMessage("");
-      }
+    const errors: Record<string, string> = {};
+
+    if (originalLangId == null) {
+      errors.originalLang = "Original Language is required";
+    }
+    if (translatedLangId == null) {
+      errors.translatedLang = "Translated Language is required";
+    }
+    if (attachments == undefined) {
+      errors.attachments = "Add Documents is required";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      showSnackbar(Object.values(errors)[0], "error");
+      return;
+    }
+
+    setFieldErrors({});
+    setLoader(true);
+    setLoaderMessage("Processing Checkout...");
+    try {
+      const payload = buildTranslationPayload({
+        originalLangId,
+        translatedLangId,
+        attachments,
+        coverLetter,
+        shippingLabel,
+      });
+      await postTranslationOrder(payload);
+      window.location.href = "/cart?service=translation-service";
+    } catch (error) {
+      showSnackbar("Failed to submit order", "error");
+      console.error(error);
+    } finally {
+      setLoader(false);
+      setLoaderMessage("");
     }
   };
 
@@ -232,6 +256,8 @@ export default function TranslationServiceForm() {
             options={languageOptions}
             value={originalLang}
             required
+            error={Boolean(fieldErrors.originalLang)}
+            helperText={fieldErrors.originalLang || ""}
             onChange={handleOriginalLangChange}
           />
         </Grid>
@@ -241,6 +267,8 @@ export default function TranslationServiceForm() {
             options={translateLanguageOptions}
             value={translatedLang}
             required
+            error={Boolean(fieldErrors.translatedLang)}
+            helperText={fieldErrors.translatedLang || ""}
             onChange={handleTranslatedLangChange}
             disabled={originalLang !== "English"}
           />
@@ -250,6 +278,8 @@ export default function TranslationServiceForm() {
           <FileUploadBox
             label="Add Documents"
             required
+            error={Boolean(fieldErrors.attachments)}
+            helperText={fieldErrors.attachments || ""}
             onSelectFile={(file) => uploadAndStore(file, "attachments")}
             fileName={attachments?.[0]?.documentName || ""}
           />

@@ -81,6 +81,7 @@ export default function BulkOrderingFormTypeTwo() {
   const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [docEntries, setDocEntries] = useState<DocumentEntry[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -88,6 +89,15 @@ export default function BulkOrderingFormTypeTwo() {
   const [disabled, setDisabled] = useState(false);
   const { documentTypes } = useSelector((state: RootState) => state.formsData);
   const { showSnackbar } = useSnackbar();
+
+  const clearFieldErrors = (...keys: string[]) => {
+    setFieldErrors((prev) => {
+      if (keys.length === 0) return {};
+      const next = { ...prev };
+      keys.forEach((key) => delete next[key]);
+      return next;
+    });
+  };
 
   const PINNED_DOC_IDS = [78, 35, 36];
 
@@ -106,6 +116,12 @@ export default function BulkOrderingFormTypeTwo() {
       .map((d) => d.docTypeName);
 
     return [...pinned, ...rest];
+  }, [documentTypes]);
+
+  const pinnedDocumentNames = useMemo(() => {
+    return documentTypes
+      .filter((d) => PINNED_DOC_IDS.includes(d.docTypeId))
+      .map((d) => d.docTypeName);
   }, [documentTypes]);
 
   const selectedDocs = useMemo(
@@ -175,6 +191,7 @@ export default function BulkOrderingFormTypeTwo() {
   };
 
   const handleUploadDataChange = (index: number, data: any) => {
+    clearFieldErrors("uploadEntries");
     setDocEntries((prev) => {
       const updated = [...prev];
       updated[index] = {
@@ -271,9 +288,11 @@ export default function BulkOrderingFormTypeTwo() {
   const handleDialogSave = () => {
     const error = validateUploadEntries();
     if (error) {
+      setFieldErrors((prev) => ({ ...prev, uploadEntries: error }));
       showSnackbar(error, "error");
       return;
     }
+    clearFieldErrors("uploadEntries");
     setDialogOpen(false);
   };
 
@@ -290,34 +309,40 @@ export default function BulkOrderingFormTypeTwo() {
   };
 
   const submitOrder = async (): Promise<boolean> => {
-    const { isValid, error } = validateUSApostilleForm({
+    const errors: Record<string, string> = {};
+
+    const { isValid, fieldErrors: validationFieldErrors } =
+      validateUSApostilleForm({
       country,
       additionalQuestions: shouldRenderGeneralAdditionalQuestions
         ? generalAdditionalQuestions
         : undefined,
-    });
+      });
 
     if (!country) {
-      showSnackbar("Country is required", "error");
-      return false;
+      errors.country = "Country is required";
     }
 
     if (documents.length === 0) {
-      showSnackbar("Please select at least one document", "error");
-      return false;
+      errors.documents = "Please select at least one document";
     }
 
     if (!isValid) {
-      showSnackbar(error, "error");
-      return false;
+      Object.assign(errors, validationFieldErrors);
     }
 
     const uploadError = validateUploadEntries();
     if (uploadError) {
-      showSnackbar(uploadError, "error");
+      errors.uploadEntries = uploadError;
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      showSnackbar(Object.values(errors)[0], "error");
       return false;
     }
 
+    setFieldErrors({});
     try {
       setLoader(true);
       setLoaderMessage("Processing checkout...");
@@ -400,8 +425,13 @@ export default function BulkOrderingFormTypeTwo() {
             <CountrySelect
               label="Select or Type Country"
               value={country}
-              onChange={setCountry}
+              onChange={(value) => {
+                setCountry(value);
+                clearFieldErrors("country", "additionalQuestions");
+              }}
               required
+              error={Boolean(fieldErrors.country)}
+              helperText={fieldErrors.country || ""}
             />
           </Grid>
 
@@ -410,6 +440,7 @@ export default function BulkOrderingFormTypeTwo() {
             <Dropdown
               label="Select or Type Document"
               options={documentOptions}
+              pinnedOptions={pinnedDocumentNames}
               value={documents
                 .map(
                   (id) =>
@@ -426,9 +457,12 @@ export default function BulkOrderingFormTypeTwo() {
                   .filter((id): id is number => typeof id === "number");
 
                 setDocuments(selectedIds);
+                clearFieldErrors("documents", "uploadEntries");
               }}
               multiple
               required
+              error={Boolean(fieldErrors.documents)}
+              helperText={fieldErrors.documents || ""}
             />
           </Grid>
 
@@ -438,8 +472,13 @@ export default function BulkOrderingFormTypeTwo() {
               <AdditionalQuestions
                 country={country}
                 states={states}
-                setAdditionalPreferences={setGeneralAdditionalQuestions}
+                setAdditionalPreferences={(value: any[]) => {
+                  setGeneralAdditionalQuestions(value);
+                  clearFieldErrors("additionalQuestions");
+                }}
                 docCategoryId={522}
+                error={Boolean(fieldErrors.additionalQuestions)}
+                helperText={fieldErrors.additionalQuestions || ""}
               />
               <Typography
                 variant="body2"
@@ -461,6 +500,7 @@ export default function BulkOrderingFormTypeTwo() {
                 width: "100%",
                 height: 56,
                 py: 1,
+                borderColor: fieldErrors.uploadEntries ? "error.main" : undefined,
                 "&.Mui-disabled": {
                   color: "grey.500",
                 },
@@ -468,6 +508,14 @@ export default function BulkOrderingFormTypeTwo() {
             >
               Upload Selected Documents
             </Button>
+            {fieldErrors.uploadEntries && (
+              <Typography
+                variant="caption"
+                sx={{ mt: 0.75, display: "block", color: "error.main" }}
+              >
+                {fieldErrors.uploadEntries}
+              </Typography>
+            )}
           </Grid>
 
           {/* Additional Services - single line on desktop, wraps only on mobile */}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Tabs,
@@ -38,6 +38,7 @@ import AddressDialog from "@/components/features/Orders/Dialogs/AddressDialog";
 import { getAuth } from "../utils/auth";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
+import { getCountries } from "@/services/formsService";
 
 function TabPanel({
   children,
@@ -59,6 +60,7 @@ export default function ProfilePage() {
   const [tab, setTab] = useState(0);
   const [profileData, setProfileData] = React.useState<any>(null);
   const [addresses, setAddresses] = useState<any[]>([]);
+  const [countries, setCountries] = useState<any[]>([]);
   const [defaultShippingId, setDefaultShippingId] = useState<number | null>(
     null,
   );
@@ -101,6 +103,15 @@ export default function ProfilePage() {
     setProfileData(profileResponse);
   };
 
+  const getCountriesData = async () => {
+    try {
+      const response = await getCountries({ active: 1 });
+      setCountries(Array.isArray(response) ? response : []);
+    } catch (error) {
+      console.error("Failed to fetch countries", error);
+    }
+  };
+
   const getCustomerAddresses = async () => {
     try {
       setLoader(true);
@@ -126,8 +137,24 @@ export default function ProfilePage() {
     if (customerId && userId) {
       getProfileData();
       getCustomerAddresses();
+      getCountriesData();
     }
   }, [customerId, userId]);
+
+  const countryShortNameById = useMemo(() => {
+    return new Map(
+      countries.map((country: any) => [
+        Number(country.countryId),
+        country.countryShortName,
+      ]),
+    );
+  }, [countries]);
+
+  const getCountryShortName = (countryId: any) => {
+    const normalizedId = Number(countryId);
+    if (Number.isNaN(normalizedId)) return "";
+    return countryShortNameById.get(normalizedId) ?? "";
+  };
 
   useEffect(() => {
     if (!profileData) return;
@@ -248,7 +275,7 @@ export default function ProfilePage() {
         <TabPanel value={tab} index={0}>
           {profileData &&
             (() => {
-              const { user, customer } = profileData;
+              const { user, customer, billAddress } = profileData;
 
               return (
                 <>
@@ -502,7 +529,11 @@ export default function ProfilePage() {
                           <TextField
                             fullWidth
                             label="Country"
-                            value="India"
+                            value={
+                              getCountryShortName(billAddress?.countryId) ||
+                              billAddress?.country ||
+                              ""
+                            }
                             disabled
                           />
                         </Grid>
@@ -628,7 +659,7 @@ export default function ProfilePage() {
                       color="text.secondary"
                       gutterBottom
                     >
-                      India
+                      {getCountryShortName(addr.countryId) || addr.country || "-"}
                     </Typography>
 
                     {addr.number1 && (

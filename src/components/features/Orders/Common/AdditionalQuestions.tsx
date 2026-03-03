@@ -7,6 +7,7 @@ import { InfoOutlined } from "@mui/icons-material";
 import {
   Box,
   FormControl,
+  FormHelperText,
   FormControlLabel,
   Grid,
   InputLabel,
@@ -33,9 +34,13 @@ export const AdditionalQuestions = ({
   setAdditionalPreferences,
   resetQuestionId,
   docCategoryId,
+  error = false,
+  helperText = "",
 }: AdditionalQuestionsComponent & {
   resetQuestionId?: number | null;
   docCategoryId?: number | null;
+  error?: boolean;
+  helperText?: string;
 }) => {
   const [answers, setAnswers] = useState<Record<number, string>>({});
 
@@ -109,12 +114,22 @@ export const AdditionalQuestions = ({
   return (
     <Grid container>
       <Grid size={{ xs: 12 }}>
-        <FormControl fullWidth variant="outlined">
-          <InputLabel shrink>Additional Details *</InputLabel>
+        <FormControl fullWidth variant="outlined" error={error}>
+          <InputLabel
+            shrink
+            sx={{
+              px: 0.5,
+              borderRadius: 0.5,
+              backgroundColor: "background.paper",
+            }}
+          >
+            Additional Details *
+          </InputLabel>
 
           <OutlinedInput
             notched
             label="Additional Details *"
+            error={error}
             inputComponent={() => (
               <Box sx={{ py: 1, width: "100%" }}>
                 {visibleQuestions.map(
@@ -310,6 +325,7 @@ export const AdditionalQuestions = ({
               </Box>
             )}
           />
+          {error && <FormHelperText>{helperText}</FormHelperText>}
         </FormControl>
       </Grid>
     </Grid>

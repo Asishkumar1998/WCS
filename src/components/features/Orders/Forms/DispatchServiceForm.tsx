@@ -64,6 +64,7 @@ export default function DispatchServiceForm() {
   const [uploadDocValues, setUploadDocValues] = useState<any>();
   const [trackingNo, setTrackingNo] = useState<any>(null);
   const [courierType, setCourierType] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -76,8 +77,18 @@ export default function DispatchServiceForm() {
     setAdditionalServicesState([...AdditionalServices]);
     setDisabled(false);
     setDropdownOpen(false);
+    setFieldErrors({});
 
     setFormResetKey((prev) => prev + 1);
+  };
+
+  const clearFieldErrors = (...keys: string[]) => {
+    setFieldErrors((prev) => {
+      if (keys.length === 0) return {};
+      const next = { ...prev };
+      keys.forEach((key) => delete next[key]);
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -90,6 +101,7 @@ export default function DispatchServiceForm() {
   }, []);
 
   const handleDocumentUpload = async (data: any) => {
+    clearFieldErrors("uploadOption", "uploadDocument");
     setUploadDocValues(data);
     setNumberOfPages(data?.numberOfPages);
     if (data.trackingNumberNested !== "")
@@ -118,25 +130,31 @@ export default function DispatchServiceForm() {
   };
 
   const submitOrder = async (): Promise<boolean> => {
+    const errors: Record<string, string> = {};
+
     if (!country) {
-      showSnackbar("Please Select Country", "error");
-      return false;
+      errors.country = "Please Select Country";
     }
     if (!document) {
-      showSnackbar("Please Select Document", "error");
-      return false;
+      errors.document = "Please Select Document";
     }
-    if (uploadDocValues.nestedSelection === null) {
-      showSnackbar("Please Select Document Upload options", "error");
-      return false;
+    if (!uploadDocValues?.nestedSelection) {
+      errors.uploadOption = "Please Select Document Upload options";
     }
     if (
-      uploadDocValues.nestedSelection === "proceedWithAttached" &&
-      uploadDocValues.uploadedFile === null
+      uploadDocValues?.nestedSelection === "proceedWithAttached" &&
+      !uploadDocValues?.uploadedFile
     ) {
-      showSnackbar("Please Upload Document", "error");
+      errors.uploadDocument = "Please Upload Document";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      showSnackbar(Object.values(errors)[0], "error");
       return false;
     }
+
+    setFieldErrors({});
 
     setIsSubmitting(true);
     let payload;
@@ -226,6 +244,7 @@ export default function DispatchServiceForm() {
     if (!newValue) return;
     setDocument(newValue);
     setDisabled(false);
+    clearFieldErrors("document");
   };
 
   const getServiceTooltip = (service: string) => {
@@ -251,7 +270,12 @@ export default function DispatchServiceForm() {
               label="Select or Type Country"
               required
               value={country}
-              onChange={setCountry}
+              error={Boolean(fieldErrors.country)}
+              helperText={fieldErrors.country || ""}
+              onChange={(value) => {
+                setCountry(value);
+                clearFieldErrors("country", "document");
+              }}
             />
           </Grid>
 
@@ -268,6 +292,8 @@ export default function DispatchServiceForm() {
               onOpen={() => setDropdownOpen(true)}
               onClose={() => setDropdownOpen(false)}
               disabled={!country}
+              error={Boolean(fieldErrors.document)}
+              helperText={fieldErrors.document || ""}
             />
           </Grid>
 
@@ -391,6 +417,15 @@ export default function DispatchServiceForm() {
               <DocumentUpload
                 onChange={handleDocumentUpload}
                 country={country}
+                error={Boolean(
+                  fieldErrors.uploadOption || fieldErrors.uploadDocument,
+                )}
+                errorText={
+                  fieldErrors.uploadOption || fieldErrors.uploadDocument || ""
+                }
+                onInteraction={() =>
+                  clearFieldErrors("uploadOption", "uploadDocument")
+                }
               />
             </Box>
           </Grid>

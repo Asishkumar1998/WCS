@@ -72,8 +72,18 @@ export default function BulkOrderingFormTypeOne() {
   const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const { showSnackbar } = useSnackbar();
+
+  const clearFieldErrors = (...keys: string[]) => {
+    setFieldErrors((prev) => {
+      if (keys.length === 0) return {};
+      const next = { ...prev };
+      keys.forEach((key) => delete next[key]);
+      return next;
+    });
+  };
 
   useEffect(() => {
     const auth = getAuth();
@@ -148,9 +158,11 @@ export default function BulkOrderingFormTypeOne() {
     if (!newValue) return;
     setDocument(newValue);
     setDisabled(false);
+    clearFieldErrors("document");
   };
 
   const handleDocumentUpload = async (data: any) => {
+    clearFieldErrors("uploadOption", "uploadDocument");
     if (!data.uploadedFile) {
       lastUploadedRef.current = null;
     }
@@ -186,16 +198,20 @@ export default function BulkOrderingFormTypeOne() {
   };
 
   const submitOrder = async () => {
-    const { isValid, error } = validateUSApostilleForm({
+    const { isValid, error, fieldErrors: validationFieldErrors } =
+      validateUSApostilleForm({
       countries,
       document,
       uploadDocValues,
-    });
+      });
 
     if (!isValid) {
+      setFieldErrors(validationFieldErrors);
       showSnackbar(error, "error");
       return false;
     }
+
+    setFieldErrors({});
     try {
       // Ensure each country has service mapping
       for (const country of countries) {
@@ -283,6 +299,8 @@ export default function BulkOrderingFormTypeOne() {
               label="Select or Type Document"
               value={document}
               required
+              error={Boolean(fieldErrors.document)}
+              helperText={fieldErrors.document || ""}
               onChange={handleDocumentSelect}
               open={dropdownOpen}
               onOpen={() => setDropdownOpen(true)}
@@ -296,12 +314,17 @@ export default function BulkOrderingFormTypeOne() {
             <CountrySelect
               label="Select Countries"
               value={countries}
-              onChange={setCountries}
+              onChange={(value) => {
+                setCountries(value);
+                clearFieldErrors("countries");
+              }}
               multiple
               disabledCountryIds={[
                 3, 53, 82, 88, 93, 97, 130, 144, 196, 199, 205,
               ]}
               required
+              error={Boolean(fieldErrors.countries)}
+              helperText={fieldErrors.countries || ""}
             />
           </Grid>
 
@@ -356,7 +379,19 @@ export default function BulkOrderingFormTypeOne() {
           {/* Document Upload */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ display: "flex", width: "100%" }}>
-              <DocumentUpload onChange={handleDocumentUpload} country="" />
+              <DocumentUpload
+                onChange={handleDocumentUpload}
+                country=""
+                error={Boolean(
+                  fieldErrors.uploadOption || fieldErrors.uploadDocument,
+                )}
+                errorText={
+                  fieldErrors.uploadOption || fieldErrors.uploadDocument || ""
+                }
+                onInteraction={() =>
+                  clearFieldErrors("uploadOption", "uploadDocument")
+                }
+              />
             </Box>
           </Grid>
 

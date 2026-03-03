@@ -42,6 +42,10 @@ export default function GlobalAuthenticationForm() {
   const [userId, setUserId] = useState<string | null>(null);
   const [loader, setLoader] = useState(false);
   const [loaderMessage, setLoaderMessage] = useState<string>("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [docUploadErrors, setDocUploadErrors] = useState<
+    Record<number, string>
+  >({});
 
   useEffect(() => {
     const auth = getAuth();
@@ -89,8 +93,19 @@ export default function GlobalAuthenticationForm() {
     }
   }, [documents.length]);
 
+  const clearFieldErrors = (...keys: string[]) => {
+    setFieldErrors((prev) => {
+      if (keys.length === 0) return {};
+      const next = { ...prev };
+      keys.forEach((key) => delete next[key]);
+      return next;
+    });
+  };
+
   /* Handle numeric input */
   const handlePagesChange = (value: string) => {
+    clearFieldErrors("pagesCount", "documents");
+    setDocUploadErrors({});
     if (value === "") {
       setPagesCount("");
       setDocuments([]);
@@ -136,6 +151,13 @@ export default function GlobalAuthenticationForm() {
       return;
     }
 
+    setDocUploadErrors((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+    clearFieldErrors("documents");
+
     try {
       const formData = new FormData();
       formData.append("file_0", file);
@@ -170,26 +192,46 @@ export default function GlobalAuthenticationForm() {
   };
 
   const handleSubmit = async () => {
+    const errors: Record<string, string> = {};
+    const nextDocUploadErrors: Record<number, string> = {};
+
     const hasMissingUploads = documents.some(
       (doc) => !doc.attachments || doc.attachments.length === 0,
     );
     if (!origin) {
-      showSnackbar("Origin Country required", "error");
-      return;
+      errors.origin = "Origin Country required";
     }
     if (!destination) {
-      showSnackbar("Destination Country required", "error");
-      return;
+      errors.destination = "Destination Country required";
     }
     if (!pagesCount) {
-      showSnackbar("Number of Documents required", "error");
-      return;
+      errors.pagesCount = "Number of Documents required";
     }
     if (hasMissingUploads) {
-      showSnackbar("Please upload document for all document entries", "error");
+      errors.documents = "Please upload document for all document entries";
+      documents.forEach((doc, index) => {
+        if (!doc.attachments || doc.attachments.length === 0) {
+          nextDocUploadErrors[index] = "Upload File is required";
+        }
+      });
+    }
+
+    if (
+      Object.keys(errors).length > 0 ||
+      Object.keys(nextDocUploadErrors).length > 0
+    ) {
+      setFieldErrors(errors);
+      setDocUploadErrors(nextDocUploadErrors);
+      const firstError =
+        Object.values(errors)[0] || Object.values(nextDocUploadErrors)[0];
+      if (firstError) {
+        showSnackbar(firstError, "error");
+      }
       return;
     }
 
+    setFieldErrors({});
+    setDocUploadErrors({});
     setLoader(true);
     setLoaderMessage("Processing Checkout...");
 
@@ -277,7 +319,12 @@ export default function GlobalAuthenticationForm() {
             label="Origin Country"
             required
             value={origin}
-            onChange={setOrigin}
+            error={Boolean(fieldErrors.origin)}
+            helperText={fieldErrors.origin || ""}
+            onChange={(value) => {
+              setOrigin(value);
+              clearFieldErrors("origin");
+            }}
           />
         </Grid>
 
@@ -286,7 +333,12 @@ export default function GlobalAuthenticationForm() {
             label="Destination Country"
             required
             value={destination}
-            onChange={setDestination}
+            error={Boolean(fieldErrors.destination)}
+            helperText={fieldErrors.destination || ""}
+            onChange={(value) => {
+              setDestination(value);
+              clearFieldErrors("destination");
+            }}
           />
         </Grid>
 
@@ -298,6 +350,8 @@ export default function GlobalAuthenticationForm() {
             type="number"
             value={pagesCount}
             required
+            error={Boolean(fieldErrors.pagesCount)}
+            helperText={fieldErrors.pagesCount || ""}
             InputLabelProps={{
               sx: {
                 "& .MuiFormLabel-asterisk": {
@@ -386,6 +440,9 @@ export default function GlobalAuthenticationForm() {
                       <Grid size={{ xs: 12, md: 6.5 }}>
                         <FileUploadBox
                           label="Upload File"
+                          required
+                          error={Boolean(docUploadErrors[index])}
+                          helperText={docUploadErrors[index] || ""}
                           fileName={doc.attachments?.[0]?.fileName || ""}
                           onSelectFile={(file) => uploadAndStore(file, index)}
                         />

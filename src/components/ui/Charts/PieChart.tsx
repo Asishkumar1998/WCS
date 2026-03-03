@@ -16,7 +16,7 @@ export default function CustomPieChart({ data }: { data: ChartItem[] }) {
   return (
     <Box width={"100%"}>
       <Typography align="center" marginBottom={5} fontWeight={800}>
-        Country-Based Document Volume
+        Document Volume — Top 5 Countries
       </Typography>
       <PieChart
         series={[

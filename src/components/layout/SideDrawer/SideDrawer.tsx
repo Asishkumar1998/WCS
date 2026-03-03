@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Drawer,
   IconButton,
@@ -34,7 +34,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
-import logo from "../../../../public/logo-new.png";
+import logo from "../../../../public/WCS-Logo-PNG.png";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import { toggleDrawer } from "@/app/store/features/uiSlice";
@@ -43,6 +43,7 @@ import { logoutUser } from "@/app/utils/authSerivce";
 import { CART_SERVICE_MAP } from "@/constants/serviceMap";
 import { getOrderDetails, getOrderIdOfCart } from "@/services/cartServices";
 import { getAuth } from "@/app/utils/auth";
+import { CART_UPDATED_EVENT } from "@/lib/cartBadgeEvents";
 
 const drawerWidth = 240;
 const collapsedWidth = 60;
@@ -164,48 +165,63 @@ const SideDrawer = () => {
     }
   }, []);
 
-  useEffect(() => {
-    const getCartOrder = async () => {
-      try {
-        const basePayload = CART_SERVICE_MAP[currentCartService];
-        if (!basePayload) return;
-
-        const payload = {
-          userId: userId,
-          ...basePayload,
-        };
-        const orderId = await getOrderIdOfCart(payload);
-        if (orderId != null) {
-          const response = await getOrderDetails({ orderId: orderId });
-          const orderData = response?.[0];
-          if (!orderData || !Array.isArray(orderData.dockets)) {
-            setDocCount(null);
-            return;
-          }
-          const docsCount = orderData.dockets.reduce(
-            (count: number, docket: any) => {
-              if (!Array.isArray(docket.docs)) {
-                return count;
-              }
-              return count + docket.docs.length;
-            },
-            0,
-          );
-          setDocCount(docsCount);
-          return;
-        }
+  const getCartOrder = useCallback(async () => {
+    try {
+      if (!userId) {
         setDocCount(null);
-      } catch (error) {
-        console.error("Error in getCartOrder:", error);
-        setDocCount(null);
+        return;
       }
-    };
 
-    setDocCount(null);
-    if (userId) {
-      getCartOrder();
+      const basePayload = CART_SERVICE_MAP[currentCartService];
+      if (!basePayload) {
+        setDocCount(null);
+        return;
+      }
+
+      const payload = {
+        userId: userId,
+        ...basePayload,
+      };
+      const orderId = await getOrderIdOfCart(payload);
+      if (orderId == null) {
+        setDocCount(null);
+        return;
+      }
+
+      const response = await getOrderDetails({ orderId: orderId });
+      const orderData = response?.[0];
+      if (!orderData || !Array.isArray(orderData.dockets)) {
+        setDocCount(null);
+        return;
+      }
+      const docsCount = orderData.dockets.reduce((count: number, docket: any) => {
+        if (!Array.isArray(docket.docs)) {
+          return count;
+        }
+        return count + docket.docs.length;
+      }, 0);
+      setDocCount(docsCount || null);
+    } catch (error) {
+      console.error("Error in getCartOrder:", error);
+      setDocCount(null);
     }
   }, [currentCartService, userId]);
+
+  useEffect(() => {
+    setDocCount(null);
+    void getCartOrder();
+  }, [getCartOrder]);
+
+  useEffect(() => {
+    const handleCartUpdated = () => {
+      void getCartOrder();
+    };
+
+    window.addEventListener(CART_UPDATED_EVENT, handleCartUpdated);
+    return () => {
+      window.removeEventListener(CART_UPDATED_EVENT, handleCartUpdated);
+    };
+  }, [getCartOrder]);
 
   const handleExpand = (itemText: string) => {
     if (!open) return;
@@ -373,8 +389,8 @@ const SideDrawer = () => {
             <div
               style={{
                 position: "relative",
-                width: open ? 77 : 50,
-                height: open ? 50 : 30, // Adjust height to match actual aspect ratio
+                width: open ? 110 : 50,
+                height: open ? 90 : 40,
               }}
             >
               <Image
@@ -382,7 +398,7 @@ const SideDrawer = () => {
                 alt="Logo"
                 fill
                 style={{
-                  objectFit: "contain", // keeps aspect ratio intact
+                  objectFit: "contain",
                 }}
                 priority
               />

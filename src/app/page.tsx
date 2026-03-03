@@ -100,14 +100,13 @@ export default function HomePage() {
 
           <ChartsWrapper />
 
-          {/* UPDATES */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <UpdatesSection updates={updates} />
-          </Grid>
-
           {/* NEWS */}
           <Grid size={{ xs: 12, md: 6 }}>
             <NewsSection news={news} />
+          </Grid>
+          {/* UPDATES */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <UpdatesSection updates={updates} />
           </Grid>
         </Grid>
       </Box>
@@ -134,11 +133,11 @@ export default function HomePage() {
 
           {/* Updates + News */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <UpdatesSection updates={updates} />
+            <NewsSection news={news} />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <NewsSection news={news} />
+            <UpdatesSection updates={updates} />
           </Grid>
         </Grid>
       </Box>

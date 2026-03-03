@@ -37,6 +37,11 @@ export const updatePassword = async (userId: number, payload: any) => {
   }
 }
 
+export const forgotPassword = async (email: string) => {
+  const response = await axios.put("users/forgotPassword", { "email": email });
+  return response.data;
+};
+
 export const getCountries = async () => {
   const response = await axios.get("countries");
   return response.data;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -24,6 +24,7 @@ import { getOrderDetails, getOrderIdOfCart } from "@/services/cartServices";
 import { getAuth } from "@/app/utils/auth";
 import { getWelcomeMessage } from "@/services/dashboardService";
 import WelcomeMessage from "@/components/features/Dashboard/WelcomeMessage";
+import { CART_UPDATED_EVENT } from "@/lib/cartBadgeEvents";
 
 const drawerWidth = 240;
 const collapsedWidth = 60;
@@ -108,45 +109,66 @@ export default function Navbar() {
     }
   };
 
-  const getCartOrder = async () => {
+  const getCartOrder = useCallback(async () => {
     try {
+      if (!userId) {
+        setDocCount(null);
+        return;
+      }
+
       const basePayload = serviceCart
         ? CART_SERVICE_MAP[serviceCart]
         : CART_SERVICE_MAP[service];
 
-      console.log(basePayload);
-
       if (!basePayload) {
-        return <div>Invalid service selected.</div>;
+        setDocCount(null);
+        return;
       }
       const payload = {
         userId: userId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);
-      if (orderId != null) {
-        const response = await getOrderDetails({ orderId: orderId });
-        const orderData = response[0];
-        const docsCount = orderData.dockets.reduce(
-          (count: number, docket: any) => {
-            if (!Array.isArray(docket.docs)) {
-              return count;
-            }
-            return count + docket.docs.length;
-          },
-          0,
-        );
-        setDocCount(docsCount);
+      if (orderId == null) {
+        setDocCount(null);
+        return;
       }
+
+      const response = await getOrderDetails({ orderId: orderId });
+      const orderData = response?.[0];
+      if (!orderData || !Array.isArray(orderData.dockets)) {
+        setDocCount(null);
+        return;
+      }
+
+      const docsCount = orderData.dockets.reduce((count: number, docket: any) => {
+        if (!Array.isArray(docket.docs)) {
+          return count;
+        }
+        return count + docket.docs.length;
+      }, 0);
+      setDocCount(docsCount || null);
     } catch (error) {
       console.error("Error in getCartOrder:", error);
+      setDocCount(null);
     }
-  };
+  }, [service, serviceCart, userId]);
 
   useEffect(() => {
-    if (userId) getCartOrder();
     setDocCount(null);
-  }, [service, serviceCart, userId]);
+    void getCartOrder();
+  }, [getCartOrder]);
+
+  useEffect(() => {
+    const handleCartUpdated = () => {
+      void getCartOrder();
+    };
+
+    window.addEventListener(CART_UPDATED_EVENT, handleCartUpdated);
+    return () => {
+      window.removeEventListener(CART_UPDATED_EVENT, handleCartUpdated);
+    };
+  }, [getCartOrder]);
 
   return (
     <>

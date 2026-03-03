@@ -1,6 +1,7 @@
 import {
   Box,
   FormControl,
+  FormHelperText,
   IconButton,
   InputLabel,
   OutlinedInput,
@@ -9,19 +10,22 @@ import ValidatedFileUpload from "./ValidatedFileUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import React from "react";
 
-const staticBorderSx = {
+const getBorderSx = (error: boolean) => ({
   "& .MuiOutlinedInput-root": {
     "& fieldset": {
-      border: "1px solid #C7C9CD",
+      border: "1px solid",
+      borderColor: error ? "#d32f2f" : "#C7C9CD",
     },
     "&:hover fieldset": {
-      border: "1px solid #C7C9CD",
+      border: "1px solid",
+      borderColor: error ? "#d32f2f" : "#C7C9CD",
     },
     "&.Mui-focused fieldset": {
-      border: "1px solid #C7C9CD",
+      border: "1px solid",
+      borderColor: error ? "#d32f2f" : "#C7C9CD",
     },
   },
-};
+});
 
 const UploadInputContent = ({
   fileName,
@@ -96,11 +100,15 @@ UploadInputComponent.displayName = "UploadInputComponent";
 export const FileUploadBox = ({
   label,
   required = false,
+  error = false,
+  helperText = "",
   fileName,
   onSelectFile,
 }: {
   label: string;
   required?: boolean;
+  error?: boolean;
+  helperText?: string;
   fileName?: string
   onSelectFile?: (file: File | null) => void;
 }) => {
@@ -115,12 +123,16 @@ export const FileUploadBox = ({
     <FormControl
       fullWidth
       variant="outlined"
-      sx={staticBorderSx}
+      sx={getBorderSx(error)}
       required={required}
+      error={error}
     >
       <InputLabel
         shrink
         sx={{
+          px: 0.5,
+          borderRadius: 0.5,
+          backgroundColor: "background.paper",
           "& .MuiFormLabel-asterisk": {
             color: "red",
           },
@@ -132,6 +144,7 @@ export const FileUploadBox = ({
       <OutlinedInput
         notched
         label={label}
+        error={error}
         inputComponent={UploadInputComponent as any}
         inputProps={{
           fileName,
@@ -139,6 +152,7 @@ export const FileUploadBox = ({
           onRemoveFile: removeFile,
         }}
       />
+      {error && <FormHelperText>{helperText}</FormHelperText>}
     </FormControl>
   );
 };
