@@ -57,3 +57,8 @@ export const getGraphData = async (userId: number) => {
   const response = await axiosInstance.get(`orders/GetGraphData?userId=${userId}`);
   return response.data;
 }
+
+export const getWelcomeMessage = async (userId: number) => {
+  const response = await axiosInstance.get(`loginWelcomeMessages?userId=${userId}`);
+  return response.data[0];
+}
