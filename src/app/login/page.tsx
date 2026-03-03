@@ -4,8 +4,13 @@ import React, { useState } from "react";
 import {
   Box,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   IconButton,
+  InputLabel,
   InputAdornment,
   Link,
   OutlinedInput,
@@ -17,7 +22,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { loginUser } from "../utils/authSerivce";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
-import { getCustomerId } from "@/services/userService";
+import { forgotPassword, getCustomerId } from "@/services/userService";
 import ReCAPTCHA from "@/components/features/Orders/Common/ClientRecaptcha";
 
 const CustomerLogin = () => {
@@ -28,6 +33,9 @@ const CustomerLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [captchaValid, setCaptchaValid] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
 
   const handleSubmit = async () => {
     if (!captchaValid) {
@@ -53,6 +61,37 @@ const CustomerLogin = () => {
       showSnackbar("Invalid email or password", "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenForgotPassword = () => {
+    setForgotPasswordEmail(form.email || "");
+    setForgotPasswordOpen(true);
+  };
+
+  const handleForgotPassword = async () => {
+    const email = forgotPasswordEmail.trim();
+    if (!email) {
+      showSnackbar("Please provide email.", "warning");
+      return;
+    }
+
+    setForgotPasswordLoading(true);
+    try {
+      const response = await forgotPassword(email);
+      if (response?.status === "success") {
+        showSnackbar(
+          `We have sent mail to ${email} along with the one time credentials. Request you to check your mail.`,
+          "success"
+        );
+      } else {
+        showSnackbar(response?.err || "Unable to process request.", "error");
+      }
+      setForgotPasswordOpen(false);
+    } catch {
+      showSnackbar("Unable to process request.", "error");
+    } finally {
+      setForgotPasswordLoading(false);
     }
   };
 
@@ -281,11 +320,54 @@ const CustomerLogin = () => {
             
           </Typography>
 
-          {/* <Typography variant="body2" color="#fff" sx={{ cursor: "pointer" }}>
+          <Typography
+            variant="body2"
+            color="#fff"
+            sx={{ cursor: "pointer", fontWeight: 600 }}
+            onClick={handleOpenForgotPassword}
+          >
             Forgot password?
-          </Typography> */}
+          </Typography>
         </Box>
       </Box>
+
+      <Dialog
+        open={forgotPasswordOpen}
+        onClose={() => !forgotPasswordLoading && setForgotPasswordOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Forgot Password</DialogTitle>
+        <DialogContent>
+          <InputLabel sx={{ mb: 1, mt: 1 }}>Email Address</InputLabel>
+          <OutlinedInput
+            fullWidth
+            type="email"
+            value={forgotPasswordEmail}
+            onChange={(e) => setForgotPasswordEmail(e.target.value)}
+            placeholder="Email Address"
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setForgotPasswordOpen(false)}
+            disabled={forgotPasswordLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleForgotPassword}
+            disabled={forgotPasswordLoading}
+            sx={{
+              backgroundColor: "#c8102e",
+              "&:hover": { backgroundColor: "#a50d25" },
+            }}
+          >
+            {forgotPasswordLoading ? "Processing..." : "Forgot Password"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Bottom Branding */}
       <Box
