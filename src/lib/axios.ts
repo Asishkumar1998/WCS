@@ -15,7 +15,7 @@ axiosInstance.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname;
-      if (path !== "/signup" && path !=="/thankyou") {
+      if (path !== "/signup" && path !=="/thankyou" && path !== "/login") {
         const auth = getAuth();
         if (!auth) {
           window.location.href = "/login";

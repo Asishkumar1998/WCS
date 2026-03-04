@@ -54,9 +54,8 @@ export default function CustomizedDialogs() {
           flexWrap={"nowrap"}
           alignItems={"center"}
           justifyContent={"space-between"}
-          
         >
-          <Typography variant="h6" component="div"> Welcome to the WCS Customer Portal</Typography>
+          <Typography variant="h6" component="div"> Welcome to the New WCS Customer Portal! </Typography>
           
           <IconButton
           aria-label="close"
@@ -74,19 +73,23 @@ export default function CustomizedDialogs() {
         </IconButton> */}
         <DialogContent dividers>
           <Typography gutterBottom pt={1} pr={1} pl={1}>
-            We’re excited to introduce our newly updated portal, designed to
-            improve your experience and streamline order processing.
+            We’re pleased to introduce our <strong>newly enhanced portal</strong>, redesigned to make your experience faster, easier, and more efficient.
           </Typography>
+          <br />
           <Typography gutterBottom pr={1} pl={1}>
-            Please take a moment to review the updated layout, including the
-            revised document type selections and enhanced upload features.
+            The updated platform features <strong>improved navigation, refined document-type selections, bulk-ordering capabilities, expanded service options,</strong> and a more seamless upload process.
           </Typography>
+          <br/>
           <Typography gutterBottom pr={1} pl={1}>
-            If you experience any issues or have questions, our support team is
-            happy to assist you.
+           We invite you to explore the new layout and take advantage of these enhancements.
           </Typography>
+          <br/>
+          <Typography gutterBottom pr={1} pl={1}>
+           If you have any questions or need assistance, please contact us <a href="wcs@wcss.com" style={{color:"#1868DB"}}>wcs@wcss.com</a>.
+          </Typography>
+          <br/>
           <Typography gutterBottom pb={1} pr={1} pl={1}>
-            Thank you for your continued partnership.
+            Thank you for your continued trust and partnership.
           </Typography>
         </DialogContent>
         <DialogActions>
