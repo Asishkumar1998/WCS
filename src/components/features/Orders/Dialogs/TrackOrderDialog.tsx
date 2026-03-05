@@ -61,6 +61,7 @@ export default function TrackOrderDialog({
     const response = await getOrder(Number(orderId));
     setOrderDetails(response[0]);
 
+    if (response[0].regionId === -1) setReturnInstructions("E-Copy Only");
     if (response[0].useUserCourier)
       setReturnInstructions("Use Prepaid Label Uploaded");
     if (response[0].labelByMail)
@@ -76,7 +77,7 @@ export default function TrackOrderDialog({
   }, [open]);
 
   useEffect(() => {
-    if (orderDetails?.regionId && orderDetails?.regionNote) {
+    if (orderDetails?.regionId > 0 && orderDetails?.regionNote) {
       const fetchRegionAddress = async () => {
         const response = await getRegionNoteAddress(
           orderDetails.customerId,

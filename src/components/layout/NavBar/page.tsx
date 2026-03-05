@@ -43,6 +43,7 @@ export default function Navbar() {
   const pathName = usePathname();
   
   const fetchWelcomeMessage = async (userId: Number) => {
+  const fetchWelcomeMessage = async (userId: number) => {
     try {
       if (userId) {
         const data = await getWelcomeMessage(Number(userId));

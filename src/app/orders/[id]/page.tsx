@@ -287,10 +287,15 @@ export default function OrdersPage() {
   }, []);
 
   useEffect(() => {
-    if (filters.orderId && id !== "all") {
+    if (
+      userId &&
+      filters.orderId &&
+      id !== "all" &&
+      filters.orderId === String(id)
+    ) {
       displayData();
     }
-  }, [filters.orderId, id]);
+  }, [filters.orderId, id, userId]);
 
   const toggleExpand = (id: number) => {
     setExpanded((prev) =>

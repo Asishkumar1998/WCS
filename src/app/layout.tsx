@@ -13,6 +13,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { SnackbarProvider } from "@/components/ui/Snakebar/SnackbarProvider";
 import { useEffect, useState } from "react";
 import { getAuth } from "./utils/auth";
+import Script from "next/script";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -66,6 +67,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${roboto.variable}`}>
+        {pathname === "/login" && (
+          <>
+            <Script
+              src="https://seal.godaddy.com/getSeal?sealID=DXP8dPL4iK9BQhiIblVRlrORv2iWSDAA1l11hG2wU6h4gQskGKKSgB58Fcm7"
+              strategy="afterInteractive"
+            />
+            <span id="siteseal" className="godaddy-seal-position" />
+          </>
+        )}
         {shouldRenderApp ? (
           <AppRouterCacheProvider>
             <Provider store={store}>

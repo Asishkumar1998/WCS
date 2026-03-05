@@ -247,6 +247,7 @@ export default function AddressDialog({
               onChange={handleChange("addressLine1")}
               error={Boolean(errors.addressLine1)}
               helperText={errors.addressLine1}
+              sx={{ marginTop: "5px" }}
             />
           </Grid>
 
@@ -256,6 +257,7 @@ export default function AddressDialog({
               label="Address Line 2"
               value={form.addressLine2}
               onChange={handleChange("addressLine2")}
+              sx={{ marginTop: "5px" }}
             />
           </Grid>
 

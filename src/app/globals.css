@@ -49,3 +49,9 @@ a {
   width: 0px;
   height: 0px;
 }
+
+.godaddy-seal-position {
+  position: absolute;
+  right: 0;
+  z-index: 999;
+}

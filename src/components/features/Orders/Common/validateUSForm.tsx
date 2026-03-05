@@ -31,11 +31,19 @@ const validateUSApostilleForm = ({
     fieldErrors[key] = message;
   };
 
-  if (country !== undefined && !country) {
+  const hasValidCountry =
+    !!country && typeof country === "object" && Number(country.countryId) > 0;
+
+  const hasValidDocument =
+    !!document &&
+    typeof document === "object" &&
+    Number(document.docTypeId) > 0;
+
+  if (!hasValidCountry) {
     addError("country", "Country is required");
   }
 
-  if (document !== undefined && !document) {
+  if (!hasValidDocument) {
     addError("document", "Document is required");
   }
 
@@ -66,7 +74,7 @@ const validateUSApostilleForm = ({
   }
 
   if (
-    country &&
+    hasValidCountry &&
     additionalQuestions !== undefined &&
     document?.docCategoryId === 522
   ) {

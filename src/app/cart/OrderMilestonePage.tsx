@@ -87,6 +87,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../store/store";
 import { fetchFormsSharedData } from "../store/features/formsSlice";
 import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
+import { emitCartUpdated } from "@/lib/cartBadgeEvents";
 
 interface CardDetails {
   amount: number | null;
@@ -157,6 +158,8 @@ const initialForm = {
   emailId: "",
   regionName: "",
 };
+
+const E_COPY_REGION_ID = -1;
 
 export default function OrderMilestonePage() {
   const [allDocs, setAllDocs] = useState<any>([]);
@@ -376,7 +379,8 @@ export default function OrderMilestonePage() {
         setOrderInCart(false);
       }
       showSnackbar("Document deleted successfully", "success");
-      getCartOrder();
+      await getCartOrder();
+      emitCartUpdated();
     } catch (error) {
       showSnackbar("Failed to delete document", "error");
       console.error("Delete doc failed:", error);
@@ -617,6 +621,12 @@ export default function OrderMilestonePage() {
   const cardTypeImg = getCardTypeForCardNumber(card?.cardNumber).img;
 
   const handlePayNow = async () => {
+    const selectedOption = checked.option;
+    if (!selectedOption) {
+      showSnackbar("Please select Shipping Label/Return Instructions", "error");
+      return false;
+    }
+
     if (!isPolicyAccepted) {
       showSnackbar("Please accept Cancellation & Refund Policy.", "error");
       return;
@@ -755,16 +765,16 @@ export default function OrderMilestonePage() {
     showSuccess?: boolean;
   } = {}) => {
     const selectedOption = checked.option;
-    if (!selectedOption) {
-      showSnackbar("Please select Shipping Label/Return Instructions", "error");
-      return false;
-    }
+    // if (!selectedOption) {
+    //   showSnackbar("Please select Shipping Label/Return Instructions", "error");
+    //   return false;
+    // }
 
     const normalizedInvoiceReference = invoiceReference?.trim() ?? "";
-    if (!normalizedInvoiceReference) {
-      showSnackbar("Please enter invoice reference or PO number", "error");
-      return false;
-    }
+    // if (!normalizedInvoiceReference) {
+    //   showSnackbar("Please enter invoice reference or PO number", "error");
+    //   return false;
+    // }
 
     const mappedShippingOption =
       shippingOptionMap[selectedOption as keyof typeof shippingOptionMap];
@@ -819,7 +829,12 @@ export default function OrderMilestonePage() {
         useUserCourier: mappedShippingOption.useUserCourier,
         labelByMail: mappedShippingOption.labelByMail,
         pickupOrDropOff: mappedShippingOption.pickupOrDropOff,
-        regionId: selectedOption === "courier" ? regionIdForCourier : 0,
+        regionId:
+          selectedOption === "courier"
+            ? regionIdForCourier
+            : selectedOption === "eCopy"
+              ? E_COPY_REGION_ID
+              : 0,
         regionNote:
           selectedOption === "courier" ? regionAddressIdForCourier : "",
         invoiceReference: normalizedInvoiceReference,
@@ -883,7 +898,8 @@ export default function OrderMilestonePage() {
     if (orderDetails.useUserCourier === true) return "upload";
     if (orderDetails.labelByMail === true) return "mail";
     if (orderDetails.pickupOrDropOff === true) return "pickup";
-    if (orderDetails.regionId && orderDetails.regionId !== 0) return "courier";
+    if (orderDetails.regionId === E_COPY_REGION_ID) return "eCopy";
+    if (orderDetails.regionId && orderDetails.regionId > 0) return "courier";
 
     return ""; // ← nothing selected
   };
@@ -1034,7 +1050,7 @@ export default function OrderMilestonePage() {
                             </Grid>
                             <Grid size={{ xs: 4 }}>
                               <Typography variant="subtitle1">
-                                Customer Ref: <b>{doc.internalReference}</b>
+                                Customer Ref: {doc.visa && doc.visa.length > 0 ? <b>{doc.visa[0].customerReference}</b> : <b>{doc.internalReference}</b>}
                               </Typography>
                             </Grid>
                             <Grid size={{ xs: 1 }}>
