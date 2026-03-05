@@ -24,6 +24,7 @@ import { loginUser } from "../utils/authSerivce";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import { forgotPassword, getCustomerId } from "@/services/userService";
 import ReCAPTCHA from "@/components/features/Orders/Common/ClientRecaptcha";
+import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
 
 const CustomerLogin = () => {
   const router = useRouter();
@@ -31,6 +32,7 @@ const CustomerLogin = () => {
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
+  const [message, setMesage] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [captchaValid, setCaptchaValid] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
@@ -77,6 +79,7 @@ const CustomerLogin = () => {
     }
 
     setForgotPasswordLoading(true);
+    setMesage("Processing forgot password request...");
     try {
       const response = await forgotPassword(email);
       if (response?.status === "success") {
@@ -88,7 +91,8 @@ const CustomerLogin = () => {
         showSnackbar(response?.err || "Unable to process request.", "error");
       }
       setForgotPasswordOpen(false);
-    } catch {
+    } catch(error) {
+      console.log("Forgot password API error:", error);
       showSnackbar("Unable to process request.", "error");
     } finally {
       setForgotPasswordLoading(false);
@@ -364,6 +368,7 @@ const CustomerLogin = () => {
               "&:hover": { backgroundColor: "#a50d25" },
             }}
           >
+            <OverlayLoader open={forgotPasswordLoading} message={message} />
             {forgotPasswordLoading ? "Processing..." : "Forgot Password"}
           </Button>
         </DialogActions>

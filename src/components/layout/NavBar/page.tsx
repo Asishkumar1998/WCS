@@ -39,6 +39,9 @@ export default function Navbar() {
   const [docCount, setDocCount] = useState<number | null>(null);
   const [welcomeMessage, setWelcomeMessage] = useState<any>(null);
   const [isWelcomeMessageOpen, setIsWelcomeMessageOpen] = useState(false);
+
+  const pathName = usePathname();
+  
   const fetchWelcomeMessage = async (userId: number) => {
     try {
       if (userId) {
@@ -67,7 +70,7 @@ export default function Navbar() {
   }, []);
 
     useEffect(() => {
-      if (userId) {
+      if (userId && pathName === "/") {
         fetchWelcomeMessage( Number(userId));
         if(welcomeMessage!==null && welcomeMessage.showWelcomeMessage>0){          
           setIsWelcomeMessageOpen(true);
@@ -77,7 +80,6 @@ export default function Navbar() {
         }
       }
     }, [userId]);
-  const pathName = usePathname();
   const pathSegments = pathName.split("/").filter(Boolean);
   let service = "us-authentication";
 

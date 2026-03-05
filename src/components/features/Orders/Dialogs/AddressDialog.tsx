@@ -54,8 +54,18 @@ export default function AddressDialog({
     number1: "",
     countryId: "",
   });
+
+  const [errors, setErrors] = useState({
+    addressLine1: "",
+    city: "",
+    state: "",
+    zipcode: "",
+    number1: "",
+    countryId: "",
+  });
+
   const [countries, setCountries] = useState<any[]>([]);
-  const [countryError, setCountryError] = useState("");
+  // const [countryError, setCountryError] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -74,6 +84,7 @@ export default function AddressDialog({
 
   /** Populate form on EDIT */
   useEffect(() => {
+    if (!open) return;
     if (address) {
       setForm({
         addressLine1: address.addressLine1 || "",
@@ -83,6 +94,15 @@ export default function AddressDialog({
         zipcode: address.zipCode || address.zipcode || "",
         number1: address.number1 || "",
         countryId: address.countryId ? String(address.countryId) : "",
+      });
+
+      setErrors({
+        addressLine1: "",
+        city: "",
+        state: "",
+        zipcode: "",
+        number1: "",
+        countryId: "",
       });
     } else {
       setForm({
@@ -94,19 +114,74 @@ export default function AddressDialog({
         number1: "",
         countryId: "",
       });
+
+      setErrors({
+        addressLine1: "",
+        city: "",
+        state: "",
+        zipcode: "",
+        number1: "",
+        countryId: "",
+      });
     }
-  }, [address]);
+  }, [address, open]);
 
   const handleChange =
     (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((prev) => ({ ...prev, [key]: e.target.value }));
+      const value = e.target.value;
+      setForm((prev) => ({ ...prev, [key]: value }));
+      setErrors((prev) => ({
+        ...prev,
+        [key]: "", // Clear error on change
+      }));
     };
 
+  // const handleSave = async () => {
+  //   if (!form.countryId) {
+  //     setCountryError("Country is required");
+  //     return;
+  //   }
+
+  //   const payload = {
+  //     addressId: address?.addressId,
+  //     addressLine1: form.addressLine1,
+  //     addressLine2: form.addressLine2,
+  //     city: form.city,
+  //     state: form.state,
+  //     zipcode: form.zipcode,
+  //     number1: form.number1,
+  //     countryId: Number(form.countryId),
+  //     referenceId: customerId,
+  //   };
+
+  //   try {
+  //     if (isEdit && address?.addressId) {
+  //       await updateAddress(address.addressId, payload);
+  //     } else {
+  //       await addAddress(payload);
+  //     }
+
+  //     onSuccess();
+  //     onClose();
+  //   } catch (err) {
+  //     console.error("Address save failed", err);
+  //   }
+  // };
+
   const handleSave = async () => {
-    if (!form.countryId) {
-      setCountryError("Country is required");
-      return;
-    }
+    const newErrors: any = {};
+
+    if (!form.addressLine1)
+      newErrors.addressLine1 = "Address Line 1 is required";
+    if (!form.city) newErrors.city = "City is required";
+    if (!form.state) newErrors.state = "State is required";
+    if (!form.zipcode) newErrors.zipcode = "Zip Code is required";
+    if (!form.number1) newErrors.number1 = "Phone Number is required";
+    if (!form.countryId) newErrors.countryId = "Country is required";
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
 
     const payload = {
       addressId: address?.addressId,
@@ -127,6 +202,15 @@ export default function AddressDialog({
         await addAddress(payload);
       }
 
+      setForm({
+        addressLine1: "",
+        addressLine2: "",
+        city: "",
+        state: "",
+        zipcode: "",
+        number1: "",
+        countryId: "",
+      });
       onSuccess();
       onClose();
     } catch (err) {
@@ -161,6 +245,8 @@ export default function AddressDialog({
               label="Address Line 1"
               value={form.addressLine1}
               onChange={handleChange("addressLine1")}
+              error={Boolean(errors.addressLine1)}
+              helperText={errors.addressLine1}
               sx={{ marginTop: "5px" }}
             />
           </Grid>
@@ -181,6 +267,8 @@ export default function AddressDialog({
               label="City"
               value={form.city}
               onChange={handleChange("city")}
+              error={Boolean(errors.city)}
+              helperText={errors.city}
             />
           </Grid>
 
@@ -190,6 +278,8 @@ export default function AddressDialog({
               label="State"
               value={form.state}
               onChange={handleChange("state")}
+              error={Boolean(errors.state)}
+              helperText={errors.state}
             />
           </Grid>
 
@@ -199,6 +289,8 @@ export default function AddressDialog({
               label="Zip Code"
               value={form.zipcode}
               onChange={handleChange("zipcode")}
+              error={Boolean(errors.zipcode)}
+              helperText={errors.zipcode}
             />
           </Grid>
 
@@ -208,11 +300,17 @@ export default function AddressDialog({
               fullWidth
               label="Country"
               value={form.countryId}
-              error={Boolean(countryError)}
-              helperText={countryError}
+              // error={Boolean(countryError)}
+              // helperText={countryError}
+              // onChange={(e) => {
+              //   setForm((prev) => ({ ...prev, countryId: e.target.value }));
+              //   setCountryError("");
+              // }}
+              error={Boolean(errors.countryId)}
+              helperText={errors.countryId}
               onChange={(e) => {
                 setForm((prev) => ({ ...prev, countryId: e.target.value }));
-                setCountryError("");
+                setErrors((prev) => ({ ...prev, countryId: "" }));
               }}
             >
               {countries.map((country: any) => (
@@ -232,6 +330,8 @@ export default function AddressDialog({
               label="Phone Number"
               value={form.number1}
               onChange={handleChange("number1")}
+              error={Boolean(errors.number1)}
+              helperText={errors.number1}
             />
           </Grid>
         </Grid>

@@ -519,6 +519,11 @@ const CustomerSignup = () => {
                           "& .MuiFormLabel-asterisk": {
                             color: "red",
                           },
+                          "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+                            px: 0,
+                            borderRadius: 0,
+                            backgroundColor: "transparent",
+                          },
                           "& .MuiInputLabel-root": {
                             color: form[field.name as keyof typeof form]
                               ? "transparent"
@@ -562,6 +567,11 @@ const CustomerSignup = () => {
                           "& fieldset": { border: "none" },
                           "& .MuiFormLabel-asterisk": {
                             color: "red",
+                          },
+                          "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+                            px: 0,
+                            borderRadius: 0,
+                            backgroundColor: "transparent",
                           },
                           "& .MuiInputLabel-root": {
                             color: form[field.name as keyof typeof form]
