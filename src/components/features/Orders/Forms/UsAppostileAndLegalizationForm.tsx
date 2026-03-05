@@ -1165,7 +1165,7 @@ export default function USAppostileAndLegalizationForm({
                 }}
               >
                 <Box sx={{ p: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
-                  <Typography fontWeight={700}>Processing Steps & Timelines</Typography>
+                  <Typography fontWeight={700}>Processing Steps</Typography>
                 </Box>
 
                 <Box sx={{ p: 2 }}>
