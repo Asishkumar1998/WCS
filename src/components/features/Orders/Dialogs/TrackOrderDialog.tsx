@@ -12,6 +12,7 @@ import {
   Divider,
   IconButton,
   Paper,
+  StepConnector,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import {
@@ -56,7 +57,7 @@ export default function TrackOrderDialog({
     const response = await getAllStops();
     setStops(response);
   };
-  
+
   const getOrderDetails = async () => {
     const response = await getOrder(Number(orderId));
     setOrderDetails(response[0]);
@@ -170,6 +171,40 @@ export default function TrackOrderDialog({
     return null;
   };
 
+  function getDocDescription(docId: any) {
+    if (!orderDetails?.dockets) return null;
+
+    for (const docket of orderDetails.dockets) {
+      const doc = docket.docs?.find((d: any) => d.docId === Number(docId));
+
+      if (doc) {
+        if ("description" in doc) {
+          return doc.description;
+        }
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  function getTimesForDocs(docId: any) {
+    if (!orderDetails?.dockets) return null;
+
+    for (const docket of orderDetails.dockets) {
+      const doc = docket.docs?.find((d: any) => d.docId === Number(docId));
+
+      if (doc) {
+        return {
+          createdAt: doc.createdAt,
+          estDate: doc.estCompletionDate,
+        };
+      }
+    }
+
+    return null;
+  }
+
   function redirectToSite(doc: any) {
     if (!doc?.shippingTrackCardNumber) return;
 
@@ -263,11 +298,12 @@ export default function TrackOrderDialog({
         ) : (
           <Box>
             {Object.entries(stopsByDoc).map(([docId, files]) => {
+              const docTimes = getTimesForDocs(docId);
               const baseSteps = [
                 {
                   label: "Order Placed",
                   date:
-                    new Date(files[0]?.createdAt).toLocaleDateString("en-US", {
+                    new Date(docTimes?.createdAt).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
@@ -279,7 +315,7 @@ export default function TrackOrderDialog({
                 {
                   label: "Process Started",
                   date:
-                    new Date(files[0]?.createdAt).toLocaleDateString("en-US", {
+                    new Date(docTimes?.createdAt).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
@@ -296,7 +332,7 @@ export default function TrackOrderDialog({
                 const status = getStopStatus(details);
 
                 return {
-                  label: meta.stopName || `Stop ${details.stopNumber}`,
+                  label: meta.description || `Stop ${details.stopNumber}`,
                   date: null,
                   description: meta.processDays
                     ? `Est. Processing time: ${meta.processDays} days`
@@ -313,9 +349,14 @@ export default function TrackOrderDialog({
               const finalStep = {
                 label: "Shipped / Completed",
                 date:
-                  lastStop?.actReceiveBackDate ||
-                  lastStop?.estReceiveBackDate ||
-                  "",
+                  new Date(docTimes?.estDate).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  }) || "",
+                // lastStop?.actReceiveBackDate ||
+                // lastStop?.estReceiveBackDate ||
+                // "",
                 description: "",
                 completed: finalCompleted,
               };
@@ -331,11 +372,17 @@ export default function TrackOrderDialog({
                 activeStepIndex === -1 ? allSteps.length : activeStepIndex;
 
               const tracking = getTrackingInfo(docId);
+              const description = getDocDescription(docId);
 
               return (
                 <React.Fragment key={docId}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2, display: "block" }}>
-                    <b> Doc Id:</b> {docId}
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 2, display: "block" }}
+                  >
+                    <b> Doc Id:</b> {docId}{" "}
+                    {description ? `| ${description}` : null}{" "}
                     {tracking && (
                       <>
                         {" "}
@@ -361,10 +408,39 @@ export default function TrackOrderDialog({
                     )}
                   </Typography>
 
-                  <Stepper activeStep={activeStep} alternativeLabel>
+                  <Stepper
+                    activeStep={activeStep}
+                    alternativeLabel
+                    connector={
+                      <StepConnector
+                        sx={{
+                          "& .MuiStepConnector-line": {
+                            borderColor: "#e0e0e0", // default grey
+                          },
+                          "&.Mui-active .MuiStepConnector-line": {
+                            borderColor: "green",
+                          },
+                          "&.Mui-completed .MuiStepConnector-line": {
+                            borderColor: "green",
+                          },
+                        }}
+                      />
+                    }
+                  >
                     {allSteps.map((step, idx) => (
                       <Step key={idx} completed={step.completed}>
-                        <StepLabel>
+                        <StepLabel
+                          StepIconProps={{
+                            sx: {
+                              "&.Mui-active": {
+                                color: "green",
+                              },
+                              "&.Mui-completed": {
+                                color: "green",
+                              },
+                            },
+                          }}
+                        >
                           <Typography fontWeight="bold">
                             {step.label}
                           </Typography>
