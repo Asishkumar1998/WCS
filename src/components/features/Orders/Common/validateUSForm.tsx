@@ -43,7 +43,7 @@ const validateUSApostilleForm = ({
     addError("country", "Country is required");
   }
 
-  if (!hasValidDocument) {
+  if (document !== undefined && !hasValidDocument) {
     addError("document", "Document is required");
   }
 
@@ -76,13 +76,21 @@ const validateUSApostilleForm = ({
   if (
     hasValidCountry &&
     additionalQuestions !== undefined &&
-    document?.docCategoryId === 522
+    (document === undefined || document?.docCategoryId === 522)
   ) {
+    const countryTypeName = String(country?.countryTypeName ?? "")
+      .trim()
+      .toLowerCase();
+    const isHagueCountry =
+      Number(country?.countryTypeId) === 501 || countryTypeName === "hague";
+    const optionalQuestionIds = isHagueCountry
+      ? [...OPTIONAL_QUESTION_IDS, 2]
+      : OPTIONAL_QUESTION_IDS;
     const requiredQuestionIds =
       ADDITIONAL_QUESTION_COUNTRY_MAP[country.countryId] || [];
 
     for (const qId of requiredQuestionIds) {
-      if (OPTIONAL_QUESTION_IDS.includes(qId)) continue;
+      if (optionalQuestionIds.includes(qId)) continue;
 
       const answered = additionalQuestions?.find(
         (q) =>

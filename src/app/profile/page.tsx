@@ -22,6 +22,7 @@ import {
   FormLabel,
   RadioGroup,
   Radio,
+  MenuItem,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -93,6 +94,7 @@ export default function ProfilePage() {
     city: "",
     state: "",
     zipCode: "",
+    countryId: "",
     paymentOption: "",
     upoNumber: "",
     apContact: "",
@@ -170,6 +172,7 @@ export default function ProfilePage() {
       city: billAddress?.city || "",
       state: billAddress?.state || "",
       zipCode: billAddress?.zipCode || "",
+      countryId: String(billAddress?.countryId || ""),
       paymentOption: profileData?.user.paymentOption || "",
       upoNumber: profileData?.user.upoNumber || "",
       apContact: profileData?.user.apContact || "",
@@ -204,7 +207,7 @@ export default function ProfilePage() {
           city: form.city,
           state: form.state,
           zipCode: form.zipCode,
-          countryId: billAddress.countryId,
+          countryId: Number(form.countryId) || billAddress.countryId,
           referenceId: customer.customerId,
         },
       ],
@@ -275,7 +278,7 @@ export default function ProfilePage() {
         <TabPanel value={tab} index={0}>
           {profileData &&
             (() => {
-              const { user, customer, billAddress } = profileData;
+              const { user, customer } = profileData;
 
               return (
                 <>
@@ -527,15 +530,26 @@ export default function ProfilePage() {
                         </Grid>
                         <Grid size={{ xs: 12, md: 6 }}>
                           <TextField
+                            select
                             fullWidth
                             label="Country"
-                            value={
-                              getCountryShortName(billAddress?.countryId) ||
-                              billAddress?.country ||
-                              ""
+                            value={form.countryId}
+                            onChange={(e) =>
+                              setForm((prev) => ({
+                                ...prev,
+                                countryId: e.target.value,
+                              }))
                             }
-                            disabled
-                          />
+                          >
+                            {countries.map((country) => (
+                              <MenuItem
+                                key={country.countryId}
+                                value={String(country.countryId)}
+                              >
+                                {country.countryShortName}
+                              </MenuItem>
+                            ))}
+                          </TextField>
                         </Grid>
                       </Grid>
 

@@ -93,6 +93,13 @@ export default function Navbar() {
 
   const searchParams = useSearchParams();
   const serviceCart = searchParams.get("service") as string;
+  const cartQueryService =
+    serviceCart && CART_SERVICE_MAP[serviceCart] ? serviceCart : null;
+  const currentCartServiceCandidate =
+    pathName.startsWith("/cart") && cartQueryService ? cartQueryService : service;
+  const currentCartService = CART_SERVICE_MAP[currentCartServiceCandidate]
+    ? currentCartServiceCandidate
+    : "us-authentication";
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -118,9 +125,7 @@ export default function Navbar() {
         return;
       }
 
-      const basePayload = serviceCart
-        ? CART_SERVICE_MAP[serviceCart]
-        : CART_SERVICE_MAP[service];
+      const basePayload = CART_SERVICE_MAP[currentCartService];
 
       if (!basePayload) {
         setDocCount(null);
@@ -154,7 +159,7 @@ export default function Navbar() {
       console.error("Error in getCartOrder:", error);
       setDocCount(null);
     }
-  }, [service, serviceCart, userId]);
+  }, [currentCartService, userId]);
 
   useEffect(() => {
     setDocCount(null);
@@ -240,7 +245,7 @@ export default function Navbar() {
             </Tooltip>
             <Tooltip title="View Cart" arrow>
               <IconButton
-                onClick={() => router.replace(`/cart?service=${service}`)}
+                onClick={() => router.replace(`/cart?service=${currentCartService}`)}
                 color="inherit"
               >
                 <Badge
