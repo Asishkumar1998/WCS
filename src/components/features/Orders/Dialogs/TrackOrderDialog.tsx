@@ -30,14 +30,6 @@ interface TrackOrderDialogProps {
   returnInstructions?: string;
   processStartByDocId?: any;
 }
-type TrackStep = {
-  label: string;
-  date?: string | Date | null;
-  description?: string;
-  status?: "pending" | "in_transit" | "processing" | "completed";
-  completed: boolean;
-};
-
 export default function TrackOrderDialog({
   open,
   onClose,
@@ -182,6 +174,29 @@ export default function TrackOrderDialog({
     return null;
   };
 
+  const getTimesForDocs = (docId: number | string) => {
+    const doc = getDocumentDetails(Number(docId));
+    return {
+      createdAt: doc?.createdAt || orderDetails?.createdAt || null,
+      estDate:
+        doc?.estDateOfCompletion ||
+        doc?.estReceiveBackDate ||
+        orderDetails?.estDateOfCompletion ||
+        null,
+    };
+  };
+
+  const formatDate = (value?: string | Date | null) => {
+    if (!value) return "";
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return "";
+    return parsed.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   function redirectToSite(doc: any) {
     if (!doc?.shippingTrackCardNumber) return;
 
@@ -279,24 +294,14 @@ export default function TrackOrderDialog({
               const baseSteps = [
                 {
                   label: "Order Placed",
-                  date:
-                    new Date(docTimes?.createdAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    }) || "",
+                  date: formatDate(docTimes?.createdAt),
                   description: "",
                   completed: true,
                   isBase: true,
                 },
                 {
                   label: "Process Started",
-                  date:
-                    new Date(docTimes?.createdAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    }) || "",
+                  date: formatDate(docTimes?.createdAt),
                   description: "",
                   completed: processStartByDocId[docId] === "" ? false : true,
                   isBase: true,
@@ -330,12 +335,7 @@ export default function TrackOrderDialog({
 
               const finalStep = {
                 label: "Shipped / Completed",
-                date:
-                  new Date(docTimes?.estDate).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  }) || "",
+                date: formatDate(docTimes?.estDate),
                 // lastStop?.actReceiveBackDate ||
                 // lastStop?.estReceiveBackDate ||
                 // "",
