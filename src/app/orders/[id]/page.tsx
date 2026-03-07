@@ -215,8 +215,8 @@ export default function OrdersPage() {
     countryId: null,
     countryTypeId: null,
     orderStatusId: null,
-    fromDate: dayjs().subtract(90, "day"),
-    toDate: dayjs(),
+    fromDate: null,
+    toDate: null,
     userId: Number(userId),
     pageNumber: 1,
     rowsPerPage: 10,
@@ -461,6 +461,13 @@ export default function OrdersPage() {
     if (country) {
       (payload as any).countryId =
         country.value ?? country.countryId ?? country;
+    }
+
+    if(!(payload as any).fromDate){
+      (payload as any).fromDate = dayjs("2018-01-01");
+    }
+    if(!(payload as any).toDate){
+      (payload as any).toDate = dayjs();
     }
 
     try {
@@ -732,8 +739,8 @@ export default function OrdersPage() {
                   countryId: null,
                   countryTypeId: null,
                   orderStatusId: null,
-                  fromDate: dayjs().subtract(90, "day"),
-                  toDate: dayjs(),
+                  fromDate: null,
+                  toDate: null,
                   userId: Number(userId),
                   pageNumber: 1,
                   rowsPerPage: 10,
@@ -827,8 +834,8 @@ export default function OrdersPage() {
                   countryId: null,
                   countryTypeId: null,
                   orderStatusId: null,
-                  fromDate: dayjs().subtract(90, "day"),
-                  toDate: dayjs(),
+                  fromDate: null,
+                  toDate: null,
                   userId: Number(userId),
                   pageNumber: 1,
                   rowsPerPage: 10,
