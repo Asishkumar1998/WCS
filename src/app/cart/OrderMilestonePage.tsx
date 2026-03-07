@@ -194,6 +194,11 @@ export default function OrderMilestonePage() {
   const [addressErrors, setAddressErrors] = useState<Record<string, string>>(
     {},
   );
+  const [sectionErrors, setSectionErrors] = useState<{
+    shippingOption?: string;
+    paymentType?: string;
+    policy?: string;
+  }>({});
 
   const [checked, setChecked] = useState<{
     option: string | null;
@@ -622,19 +627,32 @@ export default function OrderMilestonePage() {
 
   const handlePayNow = async () => {
     const selectedOption = checked.option;
+    const nextSectionErrors: {
+      shippingOption?: string;
+      paymentType?: string;
+      policy?: string;
+    } = {};
+
     if (!selectedOption) {
-      showSnackbar("Please select Shipping Label/Return Instructions", "error");
+      nextSectionErrors.shippingOption =
+        "Please select Shipping Label/Return Instructions";
+    }
+    if (!isPolicyAccepted) {
+      nextSectionErrors.policy =
+        "Please accept Cancellation & Refund Policy.";
+    }
+    if (paymentType == "") {
+      nextSectionErrors.paymentType = "Please select payment type";
+    }
+
+    if (Object.keys(nextSectionErrors).length > 0) {
+      setSectionErrors(nextSectionErrors);
+      showSnackbar(Object.values(nextSectionErrors)[0] || "Missing fields", "error");
       return false;
     }
 
-    if (!isPolicyAccepted) {
-      showSnackbar("Please accept Cancellation & Refund Policy.", "error");
-      return;
-    }
-    if (paymentType == "") {
-      showSnackbar("Please select payment type", "error");
-      return;
-    }
+    setSectionErrors({});
+
     if (showCard) {
       const nameErr = validateName(card.cardHolderName);
       const numErr = validateCardNumber(card.cardNumber);
@@ -1412,6 +1430,10 @@ export default function OrderMilestonePage() {
                         row
                         value={checked.option}
                         onChange={(e) => {
+                          setSectionErrors((prev) => ({
+                            ...prev,
+                            shippingOption: undefined,
+                          }));
                           setChecked((prev) => ({
                             ...prev,
                             option: e.target.value,
@@ -1469,6 +1491,15 @@ export default function OrderMilestonePage() {
                           />
                         </Grid>
                       </RadioGroup>
+                      {sectionErrors.shippingOption && (
+                        <Typography
+                          variant="caption"
+                          color="error"
+                          sx={{ display: "block", mt: 0.5 }}
+                        >
+                          {sectionErrors.shippingOption}
+                        </Typography>
+                      )}
 
                       {/* Collapsible Content */}
                       <Collapse in={!!checked.option} timeout="auto">
@@ -1745,9 +1776,15 @@ export default function OrderMilestonePage() {
                       control={
                         <Checkbox
                           checked={isPolicyAccepted}
-                          onChange={(e) =>
-                            setIsPolicyAccepted(e.target.checked)
-                          }
+                          onChange={(e) => {
+                            setIsPolicyAccepted(e.target.checked);
+                            if (e.target.checked) {
+                              setSectionErrors((prev) => ({
+                                ...prev,
+                                policy: undefined,
+                              }));
+                            }
+                          }}
                         />
                       }
                       label={
@@ -1757,6 +1794,15 @@ export default function OrderMilestonePage() {
                         </Typography>
                       }
                     />
+                    {sectionErrors.policy && (
+                      <Typography
+                        variant="caption"
+                        color="error"
+                        sx={{ display: "block", mt: 0.5 }}
+                      >
+                        {sectionErrors.policy}
+                      </Typography>
+                    )}
                   </Card>
 
                   {/* Payment Card */}
@@ -1783,7 +1829,13 @@ export default function OrderMilestonePage() {
                       <RadioGroup
                         row
                         value={paymentType}
-                        onChange={(e) => setPaymentType(e.target.value)}
+                        onChange={(e) => {
+                          setPaymentType(e.target.value);
+                          setSectionErrors((prev) => ({
+                            ...prev,
+                            paymentType: undefined,
+                          }));
+                        }}
                       >
                         <Grid size={{ xs: 6 }}>
                           <FormControlLabel
@@ -1814,6 +1866,15 @@ export default function OrderMilestonePage() {
                           />
                         </Grid>
                       </RadioGroup>
+                      {sectionErrors.paymentType && (
+                        <Typography
+                          variant="caption"
+                          color="error"
+                          sx={{ display: "block", mt: 0.5 }}
+                        >
+                          {sectionErrors.paymentType}
+                        </Typography>
+                      )}
 
                       {showCard && (
                         <>

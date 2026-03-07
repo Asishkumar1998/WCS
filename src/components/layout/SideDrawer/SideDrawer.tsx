@@ -57,7 +57,7 @@ const navItems = [
   {
     text: "My Orders",
     icon: <Assignment />,
-    children: [{ text: "All Orders", href: "/orders/all" }],
+    href: "/orders/all",
   },
   {
     text: "New Order",
@@ -129,7 +129,9 @@ const SubmenuList = styled("div")(({ theme }) => ({
 const SideDrawer = () => {
   const dispatch = useDispatch();
   const open = useSelector((state: RootState) => state.ui.drawerOpen);
-  const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({});
+  const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({
+    "New Order": true,
+  });
   const [userId, setUserId] = useState<string | null>(null);
   const [docCount, setDocCount] = useState<number | null>(null);
   const pathname = usePathname();

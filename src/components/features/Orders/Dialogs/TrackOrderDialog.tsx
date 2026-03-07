@@ -171,39 +171,16 @@ export default function TrackOrderDialog({
     return null;
   };
 
-  function getDocDescription(docId: any) {
+  const getDocumentDetails = (docId: number) => {
     if (!orderDetails?.dockets) return null;
 
     for (const docket of orderDetails.dockets) {
       const doc = docket.docs?.find((d: any) => d.docId === Number(docId));
-
-      if (doc) {
-        if ("description" in doc) {
-          return doc.description;
-        }
-        return null;
-      }
+      if (doc) return doc;
     }
 
     return null;
-  }
-
-  function getTimesForDocs(docId: any) {
-    if (!orderDetails?.dockets) return null;
-
-    for (const docket of orderDetails.dockets) {
-      const doc = docket.docs?.find((d: any) => d.docId === Number(docId));
-
-      if (doc) {
-        return {
-          createdAt: doc.createdAt,
-          estDate: doc.estCompletionDate,
-        };
-      }
-    }
-
-    return null;
-  }
+  };
 
   function redirectToSite(doc: any) {
     if (!doc?.shippingTrackCardNumber) return;
@@ -328,11 +305,16 @@ export default function TrackOrderDialog({
 
               const dynamicSteps = files.map((details: any) => {
                 const meta = stopsMap[details.stopId] || {};
+                const fullStopLabel =
+                  meta.description ||
+                  meta.stopFullName ||
+                  meta.stopLongName ||
+                  meta.stopName;
 
                 const status = getStopStatus(details);
 
                 return {
-                  label: meta.description || `Stop ${details.stopNumber}`,
+                  label: fullStopLabel || `Stop ${details.stopNumber}`,
                   date: null,
                   description: meta.processDays
                     ? `Est. Processing time: ${meta.processDays} days`
@@ -372,17 +354,19 @@ export default function TrackOrderDialog({
                 activeStepIndex === -1 ? allSteps.length : activeStepIndex;
 
               const tracking = getTrackingInfo(docId);
-              const description = getDocDescription(docId);
+              const docDetails = getDocumentDetails(Number(docId));
+              const docDescription = docDetails?.description?.trim();
 
               return (
                 <React.Fragment key={docId}>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 2, display: "block" }}
-                  >
-                    <b> Doc Id:</b> {docId}{" "}
-                    {description ? `| ${description}` : null}{" "}
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2, display: "block" }}>
+                    <b> Doc Id:</b> {docId}
+                    {docDescription && (
+                      <>
+                        {" "}
+                        | <b>Description:</b> {docDescription}
+                      </>
+                    )}
                     {tracking && (
                       <>
                         {" "}

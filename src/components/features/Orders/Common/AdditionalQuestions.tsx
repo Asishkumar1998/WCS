@@ -43,6 +43,11 @@ export const AdditionalQuestions = ({
   helperText?: string;
 }) => {
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  const countryTypeName = String((country as any)?.countryTypeName ?? "")
+    .trim()
+    .toLowerCase();
+  const isHagueCountry =
+    Number(country?.countryTypeId) === 501 || countryTypeName === "hague";
 
   const resolvedQuestions = useMemo(() => {
     const ids = ADDITIONAL_QUESTION_COUNTRY_MAP[country?.countryId] ?? [];
@@ -263,7 +268,7 @@ export const AdditionalQuestions = ({
                                   );
                                 }
                               }}
-                              required
+                              required={!isHagueCountry}
                             />
                           ) : id === 12 ? (
                             <FormControl fullWidth size="small">
