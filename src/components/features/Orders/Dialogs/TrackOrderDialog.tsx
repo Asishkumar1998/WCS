@@ -178,8 +178,9 @@ export default function TrackOrderDialog({
     const doc = getDocumentDetails(Number(docId));
     return {
       createdAt: doc?.createdAt || orderDetails?.createdAt || null,
+      processStart: doc?.processStart || null,
       estDate:
-        doc?.estDateOfCompletion ||
+        doc?.estCompletionDate ||
         doc?.estReceiveBackDate ||
         orderDetails?.estDateOfCompletion ||
         null,
@@ -301,7 +302,7 @@ export default function TrackOrderDialog({
                 },
                 {
                   label: "Process Started",
-                  date: formatDate(docTimes?.createdAt),
+                  date: formatDate(docTimes?.processStart),
                   description: "",
                   completed: processStartByDocId[docId] === "" ? false : true,
                   isBase: true,
@@ -339,15 +340,15 @@ export default function TrackOrderDialog({
                 // lastStop?.actReceiveBackDate ||
                 // lastStop?.estReceiveBackDate ||
                 // "",
-                description: "",
                 completed: finalCompleted,
+                description: !lastStop?.actReceiveBackDate ? "Est. Completion Date" : "Completion Date",
               };
 
               const allSteps = [...baseSteps, ...dynamicSteps, finalStep];
 
               // Calculate active step (first incomplete step)
               const activeStepIndex = allSteps.findIndex(
-                (step) => !step.completed,
+                (step) => step.completed,
               );
               // If all completed, show as complete (activeStep = allSteps.length)
               const activeStep =
@@ -359,7 +360,11 @@ export default function TrackOrderDialog({
 
               return (
                 <React.Fragment key={docId}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2, display: "block" }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 2, display: "block" }}
+                  >
                     <b> Doc Id:</b> {docId}
                     {docDescription && (
                       <>
@@ -428,10 +433,31 @@ export default function TrackOrderDialog({
                           <Typography fontWeight="bold">
                             {step.label}
                           </Typography>
+                          {step.description && (
+                            <Typography
+                              variant="caption"
+                              // color="text.secondary"
+                              sx={{
+                                color:
+                                  step.completed || idx === activeStep
+                                    ? "green"
+                                    : "text.secondary",
+                              }}
+                              display="block"
+                            >
+                              {step.description}
+                            </Typography>
+                          )}
                           {step.date && (
                             <Typography
                               variant="caption"
-                              color="text.secondary"
+                              // color="text.secondary"
+                              sx={{
+                                color:
+                                  step.completed || idx === activeStep
+                                    ? "green"
+                                    : "text.secondary",
+                              }}
                             >
                               {new Date(step.date).toLocaleDateString("en-US", {
                                 year: "numeric",
@@ -440,15 +466,7 @@ export default function TrackOrderDialog({
                               })}
                             </Typography>
                           )}
-                          {step.description && (
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              display="block"
-                            >
-                              {step.description}
-                            </Typography>
-                          )}
+                          
                         </StepLabel>
                       </Step>
                     ))}
