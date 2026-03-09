@@ -3,6 +3,7 @@ import { LEGACY_PORTAL_LOGIN_URL, buildApiUrl } from "@/constants/api";
 
 const API_URL = buildApiUrl("token");
 const SSO_EXCHANGE_URL = buildApiUrl("auth/exchange-customer-handoff");
+const LOGOUT_URL = buildApiUrl("auth/logout");
 
 type RawAuthResponse = {
     authToken?: string;
@@ -88,8 +89,33 @@ const loginWithHandoffCode = async (code: string) => {
 
 const logoutUser = async () => {
     console.log("Logging out...");
-    sessionStorage.removeItem("auth");
-    window.location.href = LEGACY_PORTAL_LOGIN_URL;
+    try {
+        const authRaw = sessionStorage.getItem("auth");
+        const auth = authRaw ? JSON.parse(authRaw) : null;
+        const token = auth?.restApiToken;
+
+        if (token) {
+            await axios.post(
+                LOGOUT_URL,
+                {},
+                {
+                    headers: {
+                        Authorization: token,
+                        "Content-Type": "application/json",
+                    },
+                },
+            );
+        }
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            console.log("Logout API error:", error.response?.data || error.message);
+        } else {
+            console.log("Unexpected logout error:", error);
+        }
+    } finally {
+        sessionStorage.removeItem("auth");
+        window.location.href = `${LEGACY_PORTAL_LOGIN_URL}?logout=1`;
+    }
 }
 
 export { loginUser, loginWithHandoffCode, logoutUser };
