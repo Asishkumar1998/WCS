@@ -1,5 +1,5 @@
-// const DEFAULT_API_BASE_URL = "https://wcsstestserver.azurewebsites.net/api/v1";
-const DEFAULT_API_BASE_URL = "http://localhost:12982/api/v1/";
+const DEFAULT_API_BASE_URL = "https://wcsstestserver.azurewebsites.net/api/v1";
+// const DEFAULT_API_BASE_URL = "http://localhost:12982/api/v1/";
 const DEFAULT_LEGACY_PORTAL_LOGIN_URL = "https://wcsstestclient.azurewebsites.net/security/login";
 
 const normalizeApiBaseUrl = (url: string) => url.replace(/\/+$/, "");
