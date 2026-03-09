@@ -51,7 +51,15 @@ export default function TrackOrderDialog({
   };
 
   const getOrderDetails = async () => {
-    const response = await getOrder(Number(orderId));
+    if (!orderId || orderId <= 0) {
+      return;
+    }
+
+    const response = await getOrder(orderId);
+    if (!Array.isArray(response) || response.length === 0) {
+      return;
+    }
+
     setOrderDetails(response[0]);
 
     if (response[0].regionId === -1) setReturnInstructions("E-Copy Only");
@@ -65,9 +73,13 @@ export default function TrackOrderDialog({
   };
 
   useEffect(() => {
+    if (!open) {
+      return;
+    }
+
     getStops();
     getOrderDetails();
-  }, [open]);
+  }, [open, orderId]);
 
   useEffect(() => {
     if (orderDetails?.regionId > 0 && orderDetails?.regionNote) {

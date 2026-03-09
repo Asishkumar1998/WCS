@@ -1,5 +1,5 @@
 // lib/axios.js
-import { API_BASE_URL } from "@/constants/api";
+import { API_BASE_URL, LEGACY_PORTAL_LOGIN_URL } from "@/constants/api";
 import { getAuth } from "@/app/utils/auth";
 import axios from "axios";
 
@@ -15,10 +15,11 @@ axiosInstance.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname;
-      if (path !== "/signup" && path !=="/thankyou" && path !== "/login") {
+      if (path !== "/signup" && path !=="/thankyou" && path !== "/login" && path !== "/sso") {
         const auth = getAuth();
         if (!auth) {
-          window.location.href = "/login";
+          sessionStorage.removeItem("auth");
+          window.location.href = LEGACY_PORTAL_LOGIN_URL;
           return Promise.reject("Session expired");
         }
 
@@ -41,7 +42,7 @@ axiosInstance.interceptors.response.use(
       console.warn("Unauthorized! Token may have expired");
       if (typeof window !== "undefined") {
         sessionStorage.removeItem("auth");
-        window.location.href = "/login";
+        window.location.href = LEGACY_PORTAL_LOGIN_URL;
       }
     }
     return Promise.reject(error);
