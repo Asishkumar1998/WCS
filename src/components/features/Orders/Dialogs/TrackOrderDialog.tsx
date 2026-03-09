@@ -178,8 +178,9 @@ export default function TrackOrderDialog({
     const doc = getDocumentDetails(Number(docId));
     return {
       createdAt: doc?.createdAt || orderDetails?.createdAt || null,
+      processStart: doc?.processStart || null,
       estDate:
-        doc?.estDateOfCompletion ||
+        doc?.estCompletionDate ||
         doc?.estReceiveBackDate ||
         orderDetails?.estDateOfCompletion ||
         null,
@@ -301,7 +302,7 @@ export default function TrackOrderDialog({
                 },
                 {
                   label: "Process Started",
-                  date: formatDate(docTimes?.createdAt),
+                  date: formatDate(docTimes?.processStart),
                   description: "",
                   completed: processStartByDocId[docId] === "" ? false : true,
                   isBase: true,
@@ -347,7 +348,7 @@ export default function TrackOrderDialog({
 
               // Calculate active step (first incomplete step)
               const activeStepIndex = allSteps.findIndex(
-                (step) => !step.completed,
+                (step) => step.completed,
               );
               // If all completed, show as complete (activeStep = allSteps.length)
               const activeStep =
