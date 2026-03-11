@@ -27,6 +27,7 @@ interface StatusStepperProps {
   activeStep: number;
   title?: string;
   orientation?: "vertical" | "horizontal";
+  uniformColor?: boolean; // if true, all steps use the same color regardless of state
 }
 
 // ===== Custom Connector =====
@@ -45,7 +46,9 @@ interface StatusStepperProps {
 //     backgroundColor: theme.palette.success.main,
 //   },
 // }));
-const CustomConnector = styled(StepConnector)(({ theme }) => ({
+const CustomConnector = styled(StepConnector)<{
+   uniformColor?: boolean;
+}>(({ theme,uniformColor  }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
     top: 16,
     left: "calc(-50% + 16px)",
@@ -69,19 +72,21 @@ const CustomConnector = styled(StepConnector)(({ theme }) => ({
     borderColor: theme.palette.primary.main,
   },
   [`&.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
-    borderColor: theme.palette.success.main,
+    borderColor:uniformColor? theme.palette.primary.main:theme.palette.success.main,
   },
 }));
 
 // ===== Custom Step Icon =====
 const StepIconRoot = styled("div")<{
-  ownerState: { active?: boolean; completed?: boolean };
+  ownerState: { active?: boolean; completed?: boolean; isCart?:boolean };
 }>(({ theme, ownerState }) => ({
   backgroundColor: ownerState.active
     ? theme.palette.primary.main
-    : ownerState.completed
-      ? theme.palette.success.main
-      : theme.palette.grey[300],
+    : ownerState.completed 
+      ?ownerState.isCart
+        ? theme.palette.success.main
+        : theme.palette.primary.main
+    : theme.palette.grey[300],
   color: "#fff",
   display: "flex",
   borderRadius: "50%",
@@ -90,13 +95,15 @@ const StepIconRoot = styled("div")<{
   justifyContent: "center",
   alignItems: "center",
   transition: "all 0.3s ease",
-  boxShadow: ownerState.active
-    ? `0 0 8px ${theme.palette.primary.main}`
+  boxShadow: ownerState.active 
+    ?ownerState.isCart 
+      ? `0 0 8px ${theme.palette.primary.main}`
+      :"none"
     : "none",
 }));
 
 function CustomStepIcon(props: any) {
-  const { active, completed, icon, iconMap, totalSteps } = props;
+  const { active, completed, icon, iconMap, totalSteps,uniformColor } = props;
 
   const defaultIcons: Record<number, React.ReactNode> = {
     1: <FlagCircleIcon fontSize="small" />,
@@ -108,13 +115,13 @@ function CustomStepIcon(props: any) {
   // If this is the last step, always show the check icon
   const isLastStep = icon === totalSteps;
   const displayIcon = isLastStep ? (
-    <CheckCircleIcon fontSize="small" />
+   <CheckCircleIcon fontSize="small" /> 
   ) : (
-    iconMap?.[icon] || defaultIcons[icon] || defaultIcons[1]
+   (iconMap?.[icon] || defaultIcons[icon] || defaultIcons[1])
   );
 
   return (
-    <StepIconRoot ownerState={{ active, completed }}>
+    <StepIconRoot ownerState={{ active, completed, isCart: !uniformColor }}>
       {displayIcon}
     </StepIconRoot>
   );
@@ -126,6 +133,7 @@ export default function StatusStepper({
   activeStep,
   title,
   orientation = "vertical",
+  uniformColor = false,
 }: StatusStepperProps) {
   const isHorizontal = orientation === "horizontal";
 
@@ -150,7 +158,7 @@ export default function StatusStepper({
       <Stepper
         alternativeLabel={isHorizontal}
         activeStep={activeStep}
-        connector={<CustomConnector />}
+        connector={<CustomConnector uniformColor={uniformColor} />}
         orientation={orientation}
         sx={
           isHorizontal
@@ -171,6 +179,7 @@ export default function StatusStepper({
             <StepLabel
               StepIconComponent={(props) => (
                 <CustomStepIcon
+                  uniformColor={uniformColor}
                   {...props}
                   iconMap={steps.map((s) => s.icon)}
                   totalSteps={steps.length}
