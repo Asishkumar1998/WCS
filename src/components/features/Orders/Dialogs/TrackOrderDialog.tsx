@@ -189,11 +189,11 @@ export default function TrackOrderDialog({
   const getTimesForDocs = (docId: number | string) => {
     const doc = getDocumentDetails(Number(docId));
     return {
+      statusName: doc?.docStatusName,
       createdAt: doc?.createdAt || orderDetails?.createdAt || null,
       processStart: doc?.processStart || null,
-      estDate:
+      estDate: doc?.docStatusName==="Completed"? doc?.actReceiveBackDate :
         doc?.estCompletionDate ||
-        doc?.estReceiveBackDate ||
         orderDetails?.estDateOfCompletion ||
         null,
     };
@@ -352,8 +352,8 @@ export default function TrackOrderDialog({
                 // lastStop?.actReceiveBackDate ||
                 // lastStop?.estReceiveBackDate ||
                 // "",
-                completed: finalCompleted,
-                description: !lastStop?.actReceiveBackDate ? "Est. Completion Date" : "Completion Date",
+                completed: docTimes?.statusName==="Completed" && finalCompleted,
+                description: docTimes?.statusName!=="Completed"? "Est. Completion Date" : "Completion Date",
               };
 
               const allSteps = [...baseSteps, ...dynamicSteps, finalStep];
