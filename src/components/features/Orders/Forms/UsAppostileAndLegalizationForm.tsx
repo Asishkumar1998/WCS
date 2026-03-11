@@ -68,6 +68,7 @@ type Stop = {
   oosReferenceId?: number | null;
   consulateName?: string | null;
   stopAddress?: any;
+  description?: string ;
 };
 
 type ApplicableStop = {
@@ -1172,11 +1173,12 @@ export default function USAppostileAndLegalizationForm({
                   <Box sx={{ width: "100%", overflowX: "auto", pb: 0.5 }}>
                     <Box sx={{ minWidth: `${Math.max(routeStops.length, 4) * 120}px` }}>
                       <StatusStepper
+                        uniformColor={true}
                         steps={routeStops.map((stop) => ({
                           label:
                             stop.isOOS && stop.consulateName
                               ? `${getDisplayStopName(stop.stopName)} (${stop.consulateName})`
-                              : getDisplayStopName(stop.stopName),
+                              : getDisplayStopName(stop.description || stop.stopName),
                         }))}
                         activeStep={Math.max(routeStops.length - 1, 0)}
                         orientation="horizontal"
