@@ -26,6 +26,7 @@ function buildUSApostillePayload({
   additionalComments,
   trackingNo,
   courierType,
+  nestedSelection,
 }: {
   countryId: any;
   docCategoryId: any;
@@ -40,9 +41,17 @@ function buildUSApostillePayload({
   additionalComments: any;
   trackingNo: any;
   courierType: any;
+  nestedSelection?: "proceedWithAttached" | "originalMailedNested" | null;
 }) {
   const userId = getAuthValue("userId");
   const customerId = getAuthValue("customerId");
+  const hasAttachments = Array.isArray(uploadedDoc) && uploadedDoc.length > 0;
+  const shouldProcessAttached =
+    nestedSelection != null
+      ? nestedSelection === "proceedWithAttached"
+      : hasAttachments;
+  const attachments = shouldProcessAttached ? (uploadedDoc ?? []) : [];
+
   return {
     customerId: customerId,
     orderOriginId: 611,
@@ -67,9 +76,9 @@ function buildUSApostillePayload({
             noOfPhotoCopyPages:
               numberOfPages === "" ? undefined : numberOfPages,
             noOfProducts: numberOfProducts,
-            isSoftCopyGiven: uploadedDoc ? 651 : 652,
-            attachments: uploadedDoc ?? [],
-            isGeneralSoftCopy: uploadedDoc ? 651 : 652,
+            isSoftCopyGiven: shouldProcessAttached ? 651 : 652,
+            attachments,
+            isGeneralSoftCopy: shouldProcessAttached ? 651 : 652,
             isPhotocopyInclude: 651,
             CIAmount: "0",
             additionalDOX: "",
@@ -119,6 +128,7 @@ const buildUSApostillePayloadFromExistingOrder = ({
   additionalComments,
   trackingNo,
   courierType,
+  nestedSelection,
 }: {
   basePayload: any;
   countryId: any;
@@ -134,9 +144,16 @@ const buildUSApostillePayloadFromExistingOrder = ({
   additionalComments: any;
   trackingNo: any;
   courierType: any;
+  nestedSelection?: "proceedWithAttached" | "originalMailedNested" | null;
 }) => {
   if (!basePayload) return basePayload;
   const selectedCountryId = countryId;
+  const hasAttachments = Array.isArray(uploadedDoc) && uploadedDoc.length > 0;
+  const shouldProcessAttached =
+    nestedSelection != null
+      ? nestedSelection === "proceedWithAttached"
+      : hasAttachments;
+  const attachments = shouldProcessAttached ? (uploadedDoc ?? []) : [];
 
   const newDoc = {
     countryId: countryId,
@@ -153,9 +170,9 @@ const buildUSApostillePayloadFromExistingOrder = ({
     noOfPages: numberOfPages === "" ? undefined : numberOfPages,
     noOfPhotoCopyPages: numberOfPages === "" ? undefined : numberOfPages,
     noOfProducts: numberOfProducts,
-    isSoftCopyGiven: 651,
-    attachments: uploadedDoc,
-    isGeneralSoftCopy: 651,
+    isSoftCopyGiven: shouldProcessAttached ? 651 : 652,
+    attachments,
+    isGeneralSoftCopy: shouldProcessAttached ? 651 : 652,
     isPhotocopyInclude: 651,
     CIAmount: "0",
     additionalDOX: "",

@@ -578,10 +578,10 @@ export default function USAppostileAndLegalizationForm({
     clearFieldErrors("uploadOption", "uploadDocument");
     if (!data.uploadedFile) {
       lastUploadedRef.current = null;
+      setUploadedDoc(null);
     }
-    if (data.trackingNumberNested !== "")
-      setTrackingNo(data.trackingNumberNested);
-    setCourierType(data.courierNested);
+    setTrackingNo(data.trackingNumberNested || null);
+    setCourierType(data.courierNested || null);
     setUploadDocValues(data);
     setNumberOfPages(data?.numPages);
     const file: File | null = data?.uploadedFile;
@@ -659,6 +659,7 @@ export default function USAppostileAndLegalizationForm({
           additionalComments,
           trackingNo,
           courierType,
+          nestedSelection: uploadDocValues?.nestedSelection ?? null,
         });
         await createUSApostilleOrder(payload);
         showSnackbar("Order created successfully", "success");
@@ -678,6 +679,7 @@ export default function USAppostileAndLegalizationForm({
           additionalComments,
           trackingNo,
           courierType,
+          nestedSelection: uploadDocValues?.nestedSelection ?? null,
         });
         await updateOrder(payload.orderId, payload);
       }

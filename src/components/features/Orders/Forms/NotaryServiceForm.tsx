@@ -109,12 +109,15 @@ export default function NotaryServiceForm() {
     clearFieldErrors("uploadOption", "uploadDocument");
     setUploadDocValues(data);
     setNumberOfPages(data?.numPages);
-    if (data.trackingNumberNested !== "")
-      setTrackingNo(data.trackingNumberNested);
-    setCourierType(data.courierNested);
+    setTrackingNo(data.trackingNumberNested || null);
+    setCourierType(data.courierNested || null);
 
     const file: File | null = data?.uploadedFile;
-    if (!file) return;
+    if (!file) {
+      lastUploadedRef.current = null;
+      setAttachment(undefined);
+      return;
+    }
 
     const fileKey = `${file.name}-${file.size}`;
 
@@ -175,6 +178,7 @@ export default function NotaryServiceForm() {
           isNotary: true,
           trackingNo,
           courierType,
+          nestedSelection: uploadDocValues?.nestedSelection ?? null,
         });
         const response = await postTranslationOrder(payload);
         if (noOfNotarizedDoc != 0) {
@@ -195,6 +199,7 @@ export default function NotaryServiceForm() {
           isNotary: true,
           trackingNo,
           courierType,
+          nestedSelection: uploadDocValues?.nestedSelection ?? null,
         });
         const response = await updateOrder(payload.orderId, payload);
         const allDocsAfter = response[0].dockets.flatMap((d: any) => d.docs);

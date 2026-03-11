@@ -103,12 +103,15 @@ export default function DispatchServiceForm() {
   const handleDocumentUpload = async (data: any) => {
     clearFieldErrors("uploadOption", "uploadDocument");
     setUploadDocValues(data);
-    setNumberOfPages(data?.numberOfPages);
-    if (data.trackingNumberNested !== "")
-      setTrackingNo(data.trackingNumberNested);
-    setCourierType(data.courierNested);
+    setNumberOfPages(data?.numPages);
+    setTrackingNo(data.trackingNumberNested || null);
+    setCourierType(data.courierNested || null);
     const file = data?.uploadedFile;
-    if (!file) return;
+    if (!file) {
+      lastUploadedRef.current = null;
+      setAttachment(undefined);
+      return;
+    }
 
     const fileKey = `${file.name}-${file.size}`;
 
@@ -170,6 +173,7 @@ export default function DispatchServiceForm() {
           isNotary: false,
           trackingNo,
           courierType,
+          nestedSelection: uploadDocValues?.nestedSelection ?? null,
         });
         await postTranslationOrder(payload);
       } else {
@@ -184,6 +188,7 @@ export default function DispatchServiceForm() {
           isNotary: false,
           trackingNo,
           courierType,
+          nestedSelection: uploadDocValues?.nestedSelection ?? null,
         });
         await updateOrder(payload.orderId, payload);
       }

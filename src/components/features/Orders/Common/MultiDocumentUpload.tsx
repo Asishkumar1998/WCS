@@ -247,12 +247,34 @@ export default function MultiDocumentUpload({ country, onChange, value }: Props)
 
         <RadioGroup
           value={current.nestedSelection}
-          onChange={(e) =>
+          onChange={(e) => {
+            const selected = e.target.value as NestedSelection;
+
+            if (selected === "originalMailedNested") {
+              apply({
+                ...current,
+                nestedSelection: selected,
+                uploadedFiles: [],
+                numPages: "",
+              });
+              return;
+            }
+
+            if (selected === "proceedWithAttached") {
+              apply({
+                ...current,
+                nestedSelection: selected,
+                trackingNumberNested: "",
+                courierNested: null,
+              });
+              return;
+            }
+
             apply({
               ...current,
-              nestedSelection: e.target.value as NestedSelection,
-            })
-          }
+              nestedSelection: selected,
+            });
+          }}
         >
           <FormControlLabel
             value="proceedWithAttached"

@@ -32,9 +32,16 @@ const buildBulkCountryDoc = ({
   numberOfPages,
   trackingNo,
   courierType,
+  nestedSelection,
 }: any) => {
   const YES = 651;
   const NO = 652;
+  const hasAttachments = Array.isArray(uploadedDoc) && uploadedDoc.length > 0;
+  const shouldProcessAttached =
+    nestedSelection != null
+      ? nestedSelection === "proceedWithAttached"
+      : hasAttachments;
+  const attachments = shouldProcessAttached ? (uploadedDoc ?? []) : [];
 
   return {
     countryId: country.countryId,
@@ -54,11 +61,11 @@ const buildBulkCountryDoc = ({
     noOfPhotoCopyPages: undefined,
     noOfProducts: 0,
 
-    isSoftCopyGiven: uploadedDoc ? YES : NO,
-    isGeneralSoftCopy: uploadedDoc ? YES : NO,
+    isSoftCopyGiven: shouldProcessAttached ? YES : NO,
+    isGeneralSoftCopy: shouldProcessAttached ? YES : NO,
     isPhotocopyInclude: YES,
 
-    attachments: uploadedDoc ?? [],
+    attachments,
 
     CIAmount: "0",
     additionalDOX: "",
@@ -83,6 +90,7 @@ const buildBulkSingleDocMultiCountryPayload = ({
   numberOfPages,
   trackingNo,
   courierType,
+  nestedSelection,
 }: {
   countries: any[];
   document: any;
@@ -93,6 +101,7 @@ const buildBulkSingleDocMultiCountryPayload = ({
   numberOfPages?: any;
   trackingNo?: any;
   courierType?: any;
+  nestedSelection?: "proceedWithAttached" | "originalMailedNested" | null;
 }) => {
   const userId = getAuthValue("userId");
   const customerId = getAuthValue("customerId");
@@ -116,6 +125,7 @@ const buildBulkSingleDocMultiCountryPayload = ({
           numberOfPages,
           trackingNo,
           courierType,
+          nestedSelection,
         }),
       ),
     });
@@ -135,6 +145,7 @@ const buildBulkSingleDocMultiCountryPayload = ({
           numberOfPages,
           trackingNo,
           courierType,
+          nestedSelection,
         }),
       ],
     });

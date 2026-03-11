@@ -25,6 +25,7 @@ function buildNotaryPayload({
   isNotary,
   trackingNo,
   courierType,
+  nestedSelection,
 }: {
   country: any;
   additionalComments: any;
@@ -35,9 +36,17 @@ function buildNotaryPayload({
   isNotary: boolean;
   trackingNo: any;
   courierType: any;
+  nestedSelection?: "proceedWithAttached" | "originalMailedNested" | null;
 }) {
   const userId = getAuthValue("userId");
   const customerId = getAuthValue("customerId");
+  const hasAttachments = Array.isArray(attachment) && attachment.length > 0;
+  const shouldProcessAttached =
+    nestedSelection != null
+      ? nestedSelection === "proceedWithAttached"
+      : hasAttachments;
+  const attachments = shouldProcessAttached ? (attachment ?? []) : [];
+
   return {
     customerId: customerId,
     orderOriginId: 611,
@@ -48,22 +57,22 @@ function buildNotaryPayload({
       {
         docs: [
           {
-            countryId: country?.countryId, // from CountrySelect
-            originCountryId: 190, // fixed (from your sample)
-            docCategoryId: isNotary ? 528 : 529, // fixed
-            docTypeId: 0, // fixed
+            countryId: country?.countryId,
+            originCountryId: 190,
+            docCategoryId: isNotary ? 528 : 529,
+            docTypeId: 0,
             isRush: additionalServices.includes("Rush") ? true : false,
             isScan: additionalServices.includes("Pre Scan") ? true : false,
             isPostScan: additionalServices.includes("Post Scan") ? true : false,
-            isDispatch: isNotary ? false : true, // fixed
-            isNotarized: isNotary ? YES : NO, // fixed
+            isDispatch: isNotary ? false : true,
+            isNotarized: isNotary ? YES : NO,
 
-            isSoSDone: NO, // fixed
-            isDoSDone: NO, // fixed
+            isSoSDone: NO,
+            isDoSDone: NO,
 
-            noOfProducts: null, // fixed
-            isSoftCopyGiven: attachment ? YES : NO, // based on file upload
-            isGeneralSoftCopy: attachment ? YES : NO, // based on file upload
+            noOfProducts: null,
+            isSoftCopyGiven: shouldProcessAttached ? YES : NO,
+            isGeneralSoftCopy: shouldProcessAttached ? YES : NO,
 
             instructions: additionalComments || "",
             internalReference: customerReference || "",
@@ -73,7 +82,7 @@ function buildNotaryPayload({
             COCount: 0,
             CICount: 1,
 
-            attachments: attachment,
+            attachments,
 
             noOfPages: numberOfPages === "" ? undefined : numberOfPages,
 
@@ -97,6 +106,7 @@ type buildNotaryDispatchPayloadFromExistingOrder = {
   isNotary: boolean;
   trackingNo: any;
   courierType: any;
+  nestedSelection?: "proceedWithAttached" | "originalMailedNested" | null;
 };
 
 const buildNotaryDispatchPayloadFromExistingOrder = ({
@@ -110,10 +120,17 @@ const buildNotaryDispatchPayloadFromExistingOrder = ({
   isNotary,
   trackingNo,
   courierType,
+  nestedSelection,
 }: buildNotaryDispatchPayloadFromExistingOrder) => {
   if (!basePayload || !country) return basePayload;
 
   const selectedCountryId = country.countryId;
+  const hasAttachments = Array.isArray(attachment) && attachment.length > 0;
+  const shouldProcessAttached =
+    nestedSelection != null
+      ? nestedSelection === "proceedWithAttached"
+      : hasAttachments;
+  const attachments = shouldProcessAttached ? (attachment ?? []) : [];
 
   const newDoc = {
     docCategoryId: isNotary ? 528 : 529,
@@ -125,7 +142,7 @@ const buildNotaryDispatchPayloadFromExistingOrder = ({
     isDispatch: isNotary ? false : true,
     isNotarized: isNotary ? YES : NO,
     instructions: additionalComments || "",
-    attachments: attachment,
+    attachments,
     internalReference: customerReference || "",
     CIAmount: "0",
     CICount: 1,
@@ -135,7 +152,8 @@ const buildNotaryDispatchPayloadFromExistingOrder = ({
     isCopy: false,
     isDoSDone: NO,
     isSoSDone: NO,
-    isSoftCopyGiven: attachment ? YES : NO,
+    isSoftCopyGiven: shouldProcessAttached ? YES : NO,
+    isGeneralSoftCopy: shouldProcessAttached ? YES : NO,
     noOfProducts: null,
     noOfPages: numberOfPages === "" ? undefined : numberOfPages,
     incomingTracking: trackingNo ?? undefined,

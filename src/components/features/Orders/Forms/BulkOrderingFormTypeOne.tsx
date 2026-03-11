@@ -165,10 +165,10 @@ export default function BulkOrderingFormTypeOne() {
     clearFieldErrors("uploadOption", "uploadDocument");
     if (!data.uploadedFile) {
       lastUploadedRef.current = null;
+      setUploadedDoc(null);
     }
-    if (data.trackingNumberNested !== "")
-      setTrackingNo(data.trackingNumberNested);
-    setCourierType(data.courierNested);
+    setTrackingNo(data.trackingNumberNested || null);
+    setCourierType(data.courierNested || null);
     setNumberOfPages(data?.numPages);
     setUploadDocValues(data);
 
@@ -235,6 +235,7 @@ export default function BulkOrderingFormTypeOne() {
         numberOfPages,
         trackingNo,
         courierType,
+        nestedSelection: uploadDocValues?.nestedSelection ?? null,
       });
 
       await createUSApostilleOrder(payload);

@@ -159,6 +159,14 @@ export default function DocumentUpload({
             clearValidationError();
             const value = e.target.value as any;
             if (forceOriginalMail && value === "proceedWithAttached") return;
+            if (value === "originalMailedNested") {
+              setUploadedFile(null);
+              setFileName("");
+              setNumPages("");
+            } else if (value === "proceedWithAttached") {
+              setTrackingNumberNested("");
+              setCourierNested(null);
+            }
             setNestedSelection(value);
           }}
         >
