@@ -7,6 +7,37 @@ export interface SidebarContent {
     flag?: string;
 }
 
+const COUNTRY_IMAGE_FILE_NAMES: Record<string, string> = {
+    algeria: "Algeria.jpg",
+    cambodia: "Cambodia.jpg",
+    egypt: "Egypt.jpg",
+    ethiopia: "Ethiopia.jpg",
+    ghana: "Ghana.jpg",
+    haiti: "Haiti.jpg",
+    iraq: "Iraq.jpg",
+    jordan: "Jordan.jpg",
+    kenya: "Kenya.jpg",
+    kurdistan: "Kurdistan.jpg",
+    kuwait: "Kuwait.jpg",
+    lebanon: "Lebanon.jpg",
+    libya: "Libya.jpg",
+    myanmar: "Myanmar.jpg",
+    nepal: "Nepal.jpg",
+    nigeria: "Nigeria.jpg",
+    qatar: "Qatar.jpg",
+    taiwan: "Taiwan.jpg",
+    thailand: "Thailand.jpg",
+    turkmenistan: "Turkmenistan.jpg",
+    "united-arab-emirates": "united-arab-emirates.jpg",
+    vietnam: "Vietnam.jpg",
+    yemen: "Yemen.jpg",
+};
+
+const getCountryImagePath = (slug: string, folder: "flags" | "samples") => {
+    const fileName = COUNTRY_IMAGE_FILE_NAMES[slug] ?? `${slug}.jpg`;
+    return `/us-auth/${folder}/${fileName}`;
+};
+
 const COUNTRIES_REQUIRING_NOTARIZATION = new Set([
     "algeria",
     "egypt",
@@ -73,8 +104,8 @@ export const SIDEBAR_CONTENT = {
                     ? [notarizationParagraph(countryName)]
                     : []),
             ],
-            flag: `/us-auth/flags/${slug}.jpg`,
-            sampleDoc: `/us-auth/samples/${slug}.jpg`,
+            flag: getCountryImagePath(slug, "flags"),
+            sampleDoc: getCountryImagePath(slug, "samples"),
         };
     },
 
@@ -87,8 +118,8 @@ export const SIDEBAR_CONTENT = {
             "The embassy requires all supporting documents to legalize/process shipping documents: Bill of Lading, Inspection Certificate, and Insurance Policy (copies only).",
             "If a commercial invoice also needs to be legalized, it must be legalized together with its certificate of origin, with one legalization stamp.",
         ],
-        flag: "/us-auth/flags/iraq.jpg",
-        sampleDoc: "/us-auth/samples/iraq.jpg",
+        flag: getCountryImagePath("iraq", "flags"),
+        sampleDoc: getCountryImagePath("iraq", "samples"),
     },
     TAIWAN_DOC: {
         title: "Embassy Legalization - Taiwan",
@@ -99,8 +130,8 @@ export const SIDEBAR_CONTENT = {
             "2. A copy of the Personal Identification of a person who signs the Permission Letter  Once provided to the Embassy, these documents do not have to be renewed for two (2) years",
             "NOTE:  The Permission Letter and Personal Identification must be from the state of origin of the document",
         ],
-        flag: "/us-auth/flags/taiwan.jpg",
-        sampleDoc: "/us-auth/samples/taiwan.jpg",
+        flag: getCountryImagePath("taiwan", "flags"),
+        sampleDoc: getCountryImagePath("taiwan", "samples"),
     },
     LEBANON_DOC: {
         title: "Embassy Legalization - Lebanon",
@@ -109,8 +140,8 @@ export const SIDEBAR_CONTENT = {
             "Key Distinction:  The POA must be an internal document authorizing the individual to act for the Company in the submission of the document for legalization.",
             "And, the person authorized under the POA must submit his/her personal identification (copy of driver’s license)",
         ],
-        flag: "/us-auth/flags/lebanon.jpg",
-        sampleDoc: "/us-auth/samples/lebanon.jpg",
+        flag: getCountryImagePath("lebanon", "flags"),
+        sampleDoc: getCountryImagePath("lebanon", "samples"),
     },
 
 };

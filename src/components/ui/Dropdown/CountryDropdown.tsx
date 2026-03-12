@@ -11,7 +11,6 @@ import {
 import { createFilterOptions } from "@mui/material/Autocomplete";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
-import { Key } from "@mui/icons-material";
 import { Country } from "@/types";
 
 interface CountrySelectProps {
@@ -109,7 +108,7 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
         //           src={
         //             option.genC2ACode
         //               ? `https://flagcdn.com/w20/${option.genC2ACode.toLowerCase()}.png`
-        //               : "/images/placeholder-flag.png"
+        //               : undefined
         //           }
         //           alt={option.countryShortName}
         //           sx={{ width: 24, height: 18, borderRadius: "3px" }}
@@ -158,12 +157,14 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
                   src={
                     option.genC2ACode
                       ? `https://flagcdn.com/w20/${option.genC2ACode.toLowerCase()}.png`
-                      : "/images/placeholder-flag.png"
+                      : undefined
                   }
                   alt={option.countryShortName}
                   sx={{ width: 24, height: 18, borderRadius: "3px" }}
                   variant="square"
-                />
+                >
+                  {option.genC2ACode?.toUpperCase() ?? "?"}
+                </Avatar>
 
                 <Box component="span" sx={{ ml: 0.5, fontSize: "0.95rem" }}>
                   {option.countryShortName}
