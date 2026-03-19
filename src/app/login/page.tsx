@@ -118,32 +118,34 @@ const CustomerLogin = () => {
         sx={{
           display: "flex",
           alignItems: "flex-start",
-          px: 6,
-          py: 2,
+          px: 10,
+          // py: 2,
           color: "#fff",
-          gap: 3,
-          mt: 3,
+          // gap: 3,
+          mt:2,
+          mb: 4,
         }}
       >
         {/* LOGO */}
         <Image
           src="/WCS-Express-Logo.png"
           alt="WCS Logo"
-          width={130}
-          height={130}
-          style={{ width: "11.875rem", height: "10rem" }}
+          width={190}
+          height={160}
+          // style={{ width: "11.875rem", height: "10rem" }}
         />
 
         {/* TITLE + ADDRESS COLUMN */}
-        <Box sx={{ flex: 1 }}>
+        <Box sx={{ flex: 1 }} ml={1} mb={1}>
           {/* Title */}
           <Typography
-            variant="h4"
+            variant="body1"
+            mt={1}
             fontWeight={600}
-            lineHeight={1.2}
-            fontSize={"42px"}
+            // lineHeight={1}
+            fontSize={"33px"}
             sx={{
-              fontFamily: "'Lato', sans-serif !important",
+              fontFamily: "Lato, sans-serif !important",
             }}
             color="white"
           >
@@ -153,11 +155,11 @@ const CustomerLogin = () => {
           {/* Red underline (auto width) */}
           <Box
             sx={{
-              height: 3,
+              height: 4,
               width: "100%",
               maxWidth: 520,
               backgroundColor: "#c8102e",
-              mt: 0.5,
+              // mt: 0.2,
             }}
           />
 
@@ -168,7 +170,7 @@ const CustomerLogin = () => {
               sx={{
                 fontFamily: "Poppins, Arial, Helvetica, sans-serif",
                 color: "white",
-                fontSize: "1.2375rem",
+                fontSize: "16.5px",
                 fontWeight: 500,
               }}
             >
@@ -179,22 +181,22 @@ const CustomerLogin = () => {
               sx={{
                 fontFamily: "Poppins, Arial, Helvetica, sans-serif",
                 color: "white",
-                fontSize: "1.2375rem",
+                fontSize: "16.5px",
                 fontWeight: 500,
               }}
             >
-              Email: wcs@wcss.com &nbsp; | &nbsp; Phone: +1 301 605 1500
+              Email:  wcs@wcss.com    |    Phone: +1 301 605 1500
             </Typography>
             <Typography
               variant="body2"
               sx={{
                 fontFamily: "Poppins, Arial, Helvetica, sans-serif",
                 color: "white",
-                fontSize: "1.2375rem",
+                fontSize: "16.5px",
                 fontWeight: 500,
               }}
             >
-              Toll Free: 1-866-ALL-DOCS (255-3627)
+              Toll Free:  1-866-ALL-DOCS (255-3627)
             </Typography>
           </Box>
         </Box>
@@ -203,12 +205,13 @@ const CustomerLogin = () => {
       {/* Login Card */}
       <Box
         sx={{
-          width: 620,
-          p: 4,
-          borderRadius: 3,
-
-          background:
-            "linear-gradient(135deg, rgba(15,35,65,0.85), rgba(10,25,50,0.75))",
+          width: 500,
+          p: 2.29,
+          // padding:"25px 25px",
+          borderRadius: "3%",
+          background: "rgba(13, 24, 51, 0.4)",
+          // background:
+          //   "linear-gradient(135deg, rgba(15,35,65,0.85), rgba(10,25,50,0.75))",
 
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
@@ -217,21 +220,21 @@ const CustomerLogin = () => {
           border: "1px solid rgba(255,255,255,0.25)",
 
           // Glow + depth
-          boxShadow: `
-            0 0 0 1px rgba(255,255,255,0.1) inset,
-            0 8px 32px rgba(0,0,0,0.6),
-            0 0 40px rgba(255,255,255,0.35)
-          `,
-          mt: 1,
+          // boxShadow: `
+          //   0 0 0 1px rgba(255,255,255,0.1) inset,
+          //   0 8px 32px rgba(0,0,0,0.6),
+          //   0 0 40px rgba(255,255,255,0.35)
+          // `,
+          boxShadow: "0px 1px 8px 0px #FFFFFF"
         }}
       >
         <Typography
           variant="h5"
           textAlign="center"
-          fontWeight={500}
+          fontWeight={700}
           color="#fff"
           mb={4}
-          fontSize={"2.1rem"}
+          fontSize={"28px"}
         >
           Sign In to WCS Express
         </Typography>
@@ -264,7 +267,6 @@ const CustomerLogin = () => {
               </InputAdornment>
             }
             sx={{
-              mb: 2,
               backgroundColor: "#fff",
               borderRadius: 1,
               "& fieldset": { border: "none" },
@@ -312,7 +314,7 @@ const CustomerLogin = () => {
             mt: 2,
           }}
         >
-          <Typography variant="body2" color="#fff" fontWeight={600}>
+          <Typography variant="body2" color="#fff" fontWeight={600} fontSize={"17px"} >
             New to WCS?{" "}
             
               <Link
@@ -329,6 +331,7 @@ const CustomerLogin = () => {
             color="#fff"
             sx={{ cursor: "pointer", fontWeight: 600 }}
             onClick={handleOpenForgotPassword}
+            fontSize={"17px"}
           >
             Forgot password?
           </Typography>
