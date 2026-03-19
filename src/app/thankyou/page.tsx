@@ -6,6 +6,7 @@ import { Box, Button, Link, Typography } from "@mui/material";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { GoogleTagManager } from "@next/third-parties/google";
 
 const ThankyouPage = () => {
   const router = useRouter();
@@ -33,7 +34,10 @@ const ThankyouPage = () => {
   // }, [router]);
 
   return (
-    <Box
+    <>
+      <GoogleTagManager gtmId="GTM-M523SLXH" />
+      
+      <Box
       sx={{
         minHeight: "100vh",
         background: `
@@ -200,6 +204,7 @@ const ThankyouPage = () => {
         </Box>
       </Box>
     </Box>
+    </>
   );
 };
 
