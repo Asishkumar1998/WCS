@@ -14,6 +14,7 @@ import { SnackbarProvider } from "@/components/ui/Snakebar/SnackbarProvider";
 import { useEffect, useState } from "react";
 import { getAuth } from "./utils/auth";
 import Script from "next/script";
+import GoDaddySeal from "./goDaddy";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -67,7 +68,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${roboto.variable}`}>
-        {pathname === "/login" && (
+        {/* {pathname === "/login" && (
           <>
             <Script
               src="https://seal.godaddy.com/getSeal?sealID=DXP8dPL4iK9BQhiIblVRlrORv2iWSDAA1l11hG2wU6h4gQskGKKSgB58Fcm7"
@@ -75,11 +76,16 @@ export default function RootLayout({
             />
             <span id="siteseal" className="godaddy-seal-position" />
           </>
-        )}
+        )} */}
         {shouldRenderApp ? (
           <AppRouterCacheProvider>
             <Provider store={store}>
               <ThemeProvider theme={theme}>
+                <div style={{height:"35px",width: "100%",backgroundColor: pathname==="/login"?"tramsparent":"white",
+                  position: "fixed",zIndex: 999
+                  }} >
+                  <GoDaddySeal />
+                </div>
                 <SnackbarProvider>
                   <div style={{ display: "flex" }}>
                     {!hideLayout && <SideDrawer />}
