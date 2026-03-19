@@ -86,7 +86,7 @@ export default function HomePage() {
 
   return isCorporateCustomer ? (
     <Container maxWidth="xl" sx={{ px: 0, py: 2 }}>
-      <Box sx={{ flexGrow: 1, pt: 3, mt: "64px" }}>
+      <Box sx={{ flexGrow: 1, pt: 3, mt: "75px" }}>
         <Grid container spacing={3}>
           {/* SERVICES (2 x 3 GRID) */}
           {DashboardServices.map((service, idx) => (

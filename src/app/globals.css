@@ -51,7 +51,9 @@ a {
 }
 
 .godaddy-seal-position {
-  position: absolute;
-  right: 0;
+  position: fixed;
+  top: 1;
+  right: 4;
   z-index: 999;
+  /* opacity: 0.6; */
 }

@@ -128,12 +128,12 @@ export const AdditionalQuestions = ({
               backgroundColor: "background.paper",
             }}
           >
-            Additional Details *
+            Additional Details
           </InputLabel>
 
           <OutlinedInput
             notched
-            label="Additional Details *"
+            label="Additional Details"
             error={error}
             inputComponent={() => (
               <Box sx={{ py: 1, width: "100%" }}>
