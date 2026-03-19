@@ -443,15 +443,22 @@ export default function OrderMilestonePage() {
         setRegion(response[0]);
       }
 
-      const flattenedDocs = orderData.dockets.flatMap((docket: any) => {
-        if (!docket.docs || !Array.isArray(docket.docs)) {
-          return [];
-        }
-        return docket.docs.map((doc: any) => ({
-          ...doc,
-          docketId: docket.docketId,
-        }));
-      });
+      const flattenedDocs = orderData.dockets
+        .flatMap((docket: any) => {
+          if (!docket.docs || !Array.isArray(docket.docs)) {
+            return [];
+          }
+          return docket.docs.map((doc: any) => ({
+            ...doc,
+            docketId: docket.docketId,
+          }));
+        })
+        .sort(
+          (a: any, b: any) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+      console.log("flattendDocs", flattenedDocs);
+
       setAllDocs(flattenedDocs);
 
       if (orderData[0]?.useUserCourier === true) {
@@ -1121,9 +1128,15 @@ export default function OrderMilestonePage() {
                                 color="text.primary"
                                 sx={{ lineHeight: 1.4 }}
                               >
-                                {doc.isSoftCopyGiven === 651
-                                  ? "PROCESS ATTACHED DOCUMENTS"
-                                  : "MAIL ORIGINAL DOCUMENTS TO WCS OFFICE"}
+                                {doc.isSoftCopyGiven === 651 ? (
+                                  <span style={{ backgroundColor: "#FFFF00" }}>
+                                    PROCESS ATTACHED DOCUMENTS
+                                  </span>
+                                ) : (
+                                  <span style={{ backgroundColor: "#00FFFF" }}>
+                                    MAIL ORIGINAL DOCUMENTS TO WCS OFFICE
+                                  </span>
+                                )}
                               </Typography>
                               {doc.isSoftCopyGiven == 651 &&
                               service == "us-authentication" &&
@@ -1213,6 +1226,7 @@ export default function OrderMilestonePage() {
                                 }}
                               >
                                 <StatusStepper
+                                  uniformColor={true}
                                   steps={getTimelineWithCompletion(
                                     doc.docStops,
                                     doc.estCompletionDate,
