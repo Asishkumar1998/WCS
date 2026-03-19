@@ -143,9 +143,9 @@ export default function USAppostileAndLegalizationForm({
   const [forceOriginalMail, setForceOriginalMail] = useState(false);
   const [suppressNextDocOpen, setSuppressNextDocOpen] = useState(false);
   const [allStops, setAllStops] = useState<Stop[]>([]);
-  const [allApplicableStops, setAllApplicableStops] = useState<ApplicableStop[]>(
-    [],
-  );
+  const [allApplicableStops, setAllApplicableStops] = useState<
+    ApplicableStop[]
+  >([]);
   const [allApplicableOOS, setAllApplicableOOS] = useState<OOSRule[]>([]);
   const [allOOSDeptMappings, setAllOOSDeptMappings] = useState<any[]>([]);
   const [allOOSAddresses, setAllOOSAddresses] = useState<any[]>([]);
@@ -618,8 +618,11 @@ export default function USAppostileAndLegalizationForm({
       : null;
 
   const submitOrder = async (): Promise<boolean> => {
-    const { isValid, error, fieldErrors: nextFieldErrors } =
-      validateUSApostilleForm({
+    const {
+      isValid,
+      error,
+      fieldErrors: nextFieldErrors,
+    } = validateUSApostilleForm({
       country,
       document,
       additionalQuestions,
@@ -640,8 +643,9 @@ export default function USAppostileAndLegalizationForm({
       const countryId = country?.countryId;
       const docCategoryId = document?.docCategoryId;
       const docTypeId = document?.docTypeId;
-      const originState = Number(additionalQuestions.find((q: any) => q.questionId === 2)
-        ?.answer);
+      const originState = Number(
+        additionalQuestions.find((q: any) => q.questionId === 2)?.answer,
+      );
       const nusaccRequired =
         additionalQuestions.find((q: any) => q.questionId === 8)?.answer ===
         "Yes";
@@ -743,20 +747,27 @@ export default function USAppostileAndLegalizationForm({
 
   const fetchStopsMetadata = async () => {
     try {
-      const [stopsRes, applicableStopsRes, applicableOOSRes, oosDeptRes, oosAddressRes] =
-        await Promise.all([
-          getStops(),
-          getApplicableStops(),
-          getApplicableOOS(),
-          getOOSDeptMapping(),
-          getOOSAddress(),
-        ]);
+      const [
+        stopsRes,
+        applicableStopsRes,
+        applicableOOSRes,
+        oosDeptRes,
+        oosAddressRes,
+      ] = await Promise.all([
+        getStops(),
+        getApplicableStops(),
+        getApplicableOOS(),
+        getOOSDeptMapping(),
+        getOOSAddress(),
+      ]);
 
       setAllStops(Array.isArray(stopsRes) ? stopsRes : []);
       setAllApplicableStops(
         Array.isArray(applicableStopsRes) ? applicableStopsRes : [],
       );
-      setAllApplicableOOS(Array.isArray(applicableOOSRes) ? applicableOOSRes : []);
+      setAllApplicableOOS(
+        Array.isArray(applicableOOSRes) ? applicableOOSRes : [],
+      );
       setAllOOSDeptMappings(Array.isArray(oosDeptRes) ? oosDeptRes : []);
       setAllOOSAddresses(Array.isArray(oosAddressRes) ? oosAddressRes : []);
     } catch (e) {
@@ -773,7 +784,12 @@ export default function USAppostileAndLegalizationForm({
   }, [customerId, formResetKey]);
 
   useEffect(() => {
-    if (!country || !document || !allStops.length || !allApplicableStops.length) {
+    if (
+      !country ||
+      !document ||
+      !allStops.length ||
+      !allApplicableStops.length
+    ) {
       setDocumentStops([]);
       return;
     }
@@ -829,7 +845,8 @@ export default function USAppostileAndLegalizationForm({
   const selectedStops: DisplayStop[] = (() => {
     const withArabChamber = [...selectedStopsBase];
     const arabChamberSelected =
-      additionalQuestions.find((q: any) => q.questionId === 8)?.answer === "Yes";
+      additionalQuestions.find((q: any) => q.questionId === 8)?.answer ===
+      "Yes";
 
     if (!arabChamberSelected) return withArabChamber;
 
@@ -872,11 +889,7 @@ export default function USAppostileAndLegalizationForm({
     return withArabChamber;
   })();
 
-  const routeStops: DisplayStop[] = [
-    { stopId: 0, stopName: "New", __virtual: true },
-    ...selectedStops,
-    { stopId: -1, stopName: "Customer", __virtual: true },
-  ];
+  const routeStops: DisplayStop[] = [...selectedStops];
 
   if (loading) return <Loader />;
 
@@ -1167,20 +1180,32 @@ export default function USAppostileAndLegalizationForm({
                   mt: 1,
                 }}
               >
-                <Box sx={{ p: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                  }}
+                >
                   <Typography fontWeight={700}>Processing Steps</Typography>
                 </Box>
 
                 <Box sx={{ p: 2 }}>
                   <Box sx={{ width: "100%", overflowX: "auto", pb: 0.5 }}>
-                    <Box sx={{ minWidth: `${Math.max(routeStops.length, 4) * 120}px` }}>
+                    <Box
+                      sx={{
+                        minWidth: `${Math.max(routeStops.length, 4) * 120}px`,
+                      }}
+                    >
                       <StatusStepper
                         uniformColor={true}
                         steps={routeStops.map((stop) => ({
                           label:
                             stop.isOOS && stop.consulateName
                               ? `${getDisplayStopName(stop.stopName)} (${stop.consulateName})`
-                              : getDisplayStopName(stop.description || stop.stopName),
+                              : getDisplayStopName(
+                                  stop.description || stop.stopName,
+                                ),
                         }))}
                         activeStep={Math.max(routeStops.length - 1, 0)}
                         orientation="horizontal"
