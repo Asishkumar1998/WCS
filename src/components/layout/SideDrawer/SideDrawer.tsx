@@ -366,7 +366,7 @@ const SideDrawer = () => {
         width: open ? drawerWidth : collapsedWidth,
         flexShrink: 0,
         "& .MuiDrawer-paper": {
-          mt:"35px",
+          // mt:"35px",
           width: open ? drawerWidth : collapsedWidth,
           transition: "width 0.3s ease",
           overflowX: "hidden",
