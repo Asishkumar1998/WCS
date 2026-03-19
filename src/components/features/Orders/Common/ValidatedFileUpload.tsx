@@ -8,6 +8,7 @@ import {
   Typography,
   Alert,
   Stack,
+  Link,
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
@@ -215,7 +216,7 @@ export default function ValidatedFileUpload({
             >
                Only one file can be uploaded
             </Typography>
-            {/* {label !== "Upload File" ? (
+            {label !== "Upload File" ? (
               <Typography
                 variant="caption"
                 sx={{ color: "primary.main", display: "block" }}
@@ -235,7 +236,7 @@ export default function ValidatedFileUpload({
               </Typography>
             ) : (
               ""
-            )} */}
+            )}
           </Box>
         )}
       </Stack>
