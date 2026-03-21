@@ -23,6 +23,15 @@ import {
   RadioGroup,
   Radio,
   MenuItem,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  InputAdornment,
+  CircularProgress,
+  InputBase,
+  TableContainer,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -40,6 +49,15 @@ import { getAuth } from "../utils/auth";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
 import { getCountries } from "@/services/formsService";
+import SearchIcon from "@mui/icons-material/Search";
+import {
+  getAllUsersForCompany,
+  signupCustomer,
+  userStatusUpdate,
+} from "@/services/userService";
+import InputField from "@/components/ui/Input/Input";
+import { Search } from "@mui/icons-material";
+import LoadingButton from "@mui/lab/LoadingButton";
 
 function TabPanel({
   children,
@@ -71,10 +89,63 @@ export default function ProfilePage() {
 
   const { showSnackbar } = useSnackbar();
   const [loader, setLoader] = useState<boolean>(false);
+  const [usersLoading, setUsersLoading] = useState<boolean>(false); // dedicated loader for users tab
+  const [inviteLoading, setInviteLoading] = useState<boolean>(false); // dedicated loader for invite button
+  const [adLoading, setADLoading] = useState<string | null>(null); // dedicated loader for users tab
+
   const [loaderMessage, setLoaderMessage] = useState<string>("");
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [users, setUsers] = useState<any>(null);
+  const [newUser, setNewUser] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    contactNumber: "",
+  });
+  // Add these validation states
+  const [errors, setErrors] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    contactNumber: "",
+  });
+
+  // Validation helper functions
+  const validateName = (name: string) => /^[a-zA-Z\s]*$/.test(name);
+  const validateEmail = (email: string) =>
+    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+  const validatePhone = (phone: string) =>
+    /^\+?[1-9]\d{6,14}$/.test(phone.replace(/[\s\-().]/g, ""));
+
+  const handleFieldChange = (field: string, value: string) => {
+    setNewUser({ ...newUser, [field]: value });
+
+    let error = "";
+    if (field === "firstName" || field === "lastName") {
+      if (value && !validateName(value)) error = "Only alphabets are allowed";
+    }
+    if (field === "email") {
+      if (value && !validateEmail(value)) error = "Enter a valid email address";
+    }
+    if (field === "contactNumber") {
+      if (value && !validatePhone(value))
+        error = "Enter a valid international phone number (e.g. +911234567890)";
+    }
+    setErrors({ ...errors, [field]: error });
+  };
+
+  const isFormValid =
+    newUser.firstName &&
+    newUser.lastName &&
+    newUser.email &&
+    newUser.contactNumber &&
+    !errors.firstName &&
+    !errors.lastName &&
+    !errors.email &&
+    !errors.contactNumber;
 
   useEffect(() => {
     const auth = getAuth();
@@ -84,6 +155,13 @@ export default function ProfilePage() {
       setCustomerId(auth.customerId);
     }
   }, []);
+
+  useEffect(() => {
+    // Only fetch if on users tab, profileData is ready, and users haven't been fetched yet
+    if (tab === 2 && profileData?.user?.level === 2 && users === null) {
+      getUsers();
+    }
+  }, [tab, profileData]);
 
   const [form, setForm] = useState({
     firstName: "",
@@ -103,6 +181,188 @@ export default function ProfilePage() {
   const getProfileData = async () => {
     const profileResponse = await getProfile(Number(userId));
     setProfileData(profileResponse);
+  };
+  const getUsers = async () => {
+    if (!profileData) return;
+    try {
+      setUsersLoading(true);
+      const usersResponse = await getAllUsersForCompany(
+        Number(profileData?.user?.companyName),
+      );
+      setUsers(Array.isArray(usersResponse) ? usersResponse : []);
+    } catch (error) {
+      console.error("Failed to fetch users", error);
+      showSnackbar("Failed to load users", "error");
+      setUsers([]); // set empty array so we don't keep retrying
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+  const randomString = (length: number) => {
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+  const validateContactNumber = (phone: string) => {
+    const cleaned = phone.replace(/[\s\-().]/g, "");
+
+    // Format check: E.164 — starts with +, 7–15 digits
+    const formatValid = /^\+?[1-9]\d{6,14}$/.test(cleaned);
+    if (!formatValid) return false;
+
+    // Reject all repeated digits like 9999999999, 1111111111, 0000000000
+    const digitsOnly = cleaned.replace("+", "");
+    const isAllRepeated = /^(\d)\1+$/.test(digitsOnly);
+    if (isAllRepeated) return false;
+
+    // Reject sequential numbers like 1234567890, 0987654321
+    const isSequentialAsc = ["1234567890", "12345678", "123456789"].some(
+      (seq) => digitsOnly.includes(seq),
+    );
+    const isSequentialDesc = ["9876543210", "98765432", "987654321"].some(
+      (seq) => digitsOnly.includes(seq),
+    );
+    if (isSequentialAsc || isSequentialDesc) return false;
+
+    // Minimum 7 digits required after removing country code
+    if (digitsOnly.length < 7) return false;
+
+    return true;
+  };
+  const handleInvite = () => {
+    setInviteLoading(true);
+    let newErrors = { ...errors };
+    let hasError = false;
+
+    if (newUser.firstName.length + newUser.lastName.length > 50) {
+      newErrors.firstName = `First name length: ${newUser.firstName.length} chars`;
+      newErrors.lastName = `Last name length: ${newUser.lastName.length} chars`;
+      showSnackbar(
+        "Customer Name's length should not be more than 50 characters",
+        "warning",
+      );
+      hasError = true;
+    }
+    if (newUser.contactNumber) {
+      if (!validateContactNumber(newUser.contactNumber)) {
+        newErrors.contactNumber =
+          "Invalid contact number — repeated or sequential numbers are not allowed";
+        hasError = true;
+      }
+    }
+
+    if (hasError) {
+      setErrors(newErrors); // single state update with both errors
+      return; // stop execution, don't call createUser
+    }
+
+    createUser(); // proceed only if valid
+    setInviteLoading(false);
+  };
+  const createUser = async () => {
+    if (!newUser.firstName) {
+      showSnackbar("First Name is required", "error");
+      return;
+    }
+
+    if (!newUser.lastName) {
+      showSnackbar("Last Name is required", "error");
+      return;
+    }
+
+    if (!newUser.email) {
+      showSnackbar("Email is required", "error");
+      return;
+    }
+
+    if (!newUser.contactNumber) {
+      showSnackbar("Contact Number is required", "error");
+      return;
+    }
+
+    try {
+      const payload: any = {
+        name: newUser.firstName,
+        lastName: newUser.lastName, // 👈 combine like Angular name
+        email: newUser.email,
+        contactNo: newUser.contactNumber,
+
+        companyName: customerId,
+        password: randomString(10),
+        passwordExpired: false,
+        agreementAccepted: true,
+        type: "A",
+        status: "Pending",
+        profileId: 1,
+        corporateMember: true,
+        permissions: [
+          {
+            type: "T",
+            referenceId: 1,
+            access: "A",
+            profileId: 1,
+          },
+        ],
+      };
+
+      const response = await signupCustomer(payload);
+
+      if (response && response.userId) {
+        showSnackbar("User Registered Successfully", "success");
+      }
+
+      setNewUser({
+        firstName: "",
+        lastName: "",
+        email: "",
+        contactNumber: "",
+      });
+
+      getUsers();
+    } catch (error) {
+      showSnackbar("Some thing went wrong!", "error");
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
+  const activateUser = async (user: any) => {
+    setADLoading(user.userId);
+    const payload: any = {
+      status: "Approved",
+    };
+    try {
+      const response = await userStatusUpdate(payload, user);
+      if (response) {
+        showSnackbar(`User Activated Successfully`, "success");
+      }
+      getUsers();
+    } catch (error) {
+      showSnackbar(`Error: ${error}`, "error");
+    } finally {
+      setADLoading(null);
+    }
+  };
+  const deactivateUser = async (user: any) => {
+    setADLoading(user.userId);
+    const payload: any = {
+      status: "Pending",
+    };
+    try {
+      const response = await userStatusUpdate(payload, user);
+      if (response) {
+        showSnackbar(`User De-Activated Successfully`, "success");
+      }
+      getUsers();
+    } catch (error) {
+      showSnackbar(`Error: ${error}`, "error");
+    } finally {
+      setADLoading(null);
+    }
   };
 
   const getCountriesData = async () => {
@@ -272,6 +532,8 @@ export default function ProfilePage() {
         >
           <Tab label="Profile Info" />
           <Tab label="Addresses" />
+          {/* Only show Users tab if level === 2 */}
+          {profileData?.user?.level === 2 && <Tab label="Users" />}
         </Tabs>
 
         {/* Profile Info */}
@@ -736,6 +998,340 @@ export default function ProfilePage() {
           address={selectedAddress}
           onSuccess={getCustomerAddresses}
         />
+
+        {/* Users */}
+        {profileData?.user?.level === 2 && (
+          <TabPanel value={tab} index={2}>
+            {/* Header */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                backgroundColor: "primary.main",
+                color: "primary.contrastText",
+                p: 2,
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant="h5" color="white">
+                Users
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  backgroundColor: "white",
+                  borderRadius: 1,
+                  px: 1,
+                  width: { xs: "130px", sm: "200px", md: "250px" },
+                }}
+              >
+                <Search sx={{ color: "gray", fontSize: 20 }} />
+                <InputBase
+                  placeholder="Search Users..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  sx={{ ml: 1, flex: 1, color: "black" }}
+                />
+              </Box>
+            </Box>
+
+            {/* Invite Section */}
+            <Paper sx={{ mt: 3, p: 2, border: "1px solid rgba(0, 0, 0, 0.2)" }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Invite New Users
+              </Typography>
+
+              <Grid container spacing={2} alignItems="flex-start">
+                <Grid size={{ xs: 12, sm: 6, md: 2.7 }}>
+                  <TextField
+                    fullWidth
+                    type="text"
+                    variant="outlined"
+                    label="First Name"
+                    placeholder="Enter First Name"
+                    value={newUser.firstName}
+                    error={!!errors.firstName}
+                    helperText={errors.firstName}
+                    onChange={(e) =>
+                      handleFieldChange("firstName", e.target.value)
+                    }
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 2.7 }}>
+                  <TextField
+                    fullWidth
+                    type="text"
+                    variant="outlined"
+                    label="Last Name"
+                    placeholder="Enter Last Name"
+                    value={newUser.lastName}
+                    error={!!errors.lastName}
+                    helperText={errors.lastName}
+                    onChange={(e) =>
+                      handleFieldChange("lastName", e.target.value)
+                    }
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 2.7 }}>
+                  <TextField
+                    fullWidth
+                    type="email"
+                    variant="outlined"
+                    label="Email"
+                    placeholder="Enter Email Address"
+                    value={newUser.email}
+                    error={!!errors.email}
+                    helperText={errors.email}
+                    onChange={(e) => handleFieldChange("email", e.target.value)}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 2.7 }}>
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    label="Contact Number"
+                    placeholder="+911234567890"
+                    value={newUser.contactNumber}
+                    error={!!errors.contactNumber}
+                    helperText={errors.contactNumber}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^[+\d\s\-().]*$/.test(value)) {
+                        handleFieldChange("contactNumber", value);
+                      }
+                    }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 1 }}>
+                  <Button
+                    variant="contained"
+                    // disabled={usersLoading || !isFormValid}
+                    sx={{
+                      // height: "56px",
+                      mt: "10px",
+                      mb: "10px",
+                      width: "100%",
+                      // "&:hover": (usersLoading || !isFormValid){ backgroundColor: "#c8102e" }
+                    }}
+                    onClick={handleInvite}
+                  >
+                    {isFormValid && inviteLoading ? (
+                      <CircularProgress size={20} sx={{ color: "#fff" }} />
+                    ) : (
+                      "Invite"
+                    )}
+                  </Button>
+                </Grid>
+              </Grid>
+            </Paper>
+
+            {/* Users Table */}
+            <Paper sx={{ mt: 3 }}>
+              {usersLoading ? (
+                // Loading state
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    py: 6,
+                  }}
+                >
+                  <CircularProgress />
+                  <Typography sx={{ ml: 2 }} color="text.secondary">
+                    Loading users...
+                  </Typography>
+                </Box>
+              ) : !users || users.length === 0 ? (
+                // Empty state
+                <Box sx={{ textAlign: "center", py: 6 }}>
+                  <Typography variant="h6" color="text.secondary">
+                    No users found
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 1 }}
+                  >
+                    Invite users above to get started.
+                  </Typography>
+                </Box>
+              ) : (
+                // Table
+                <TableContainer sx={{ maxHeight: 330, overflow: "auto" }}>
+                  <Table stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell
+                          sx={{
+                            backgroundColor: "primary.main",
+                            color: "#fff",
+                            textAlign: "center",
+                            borderRight: "1px solid white",
+                          }}
+                        >
+                          First Name
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            backgroundColor: "primary.main",
+                            color: "#fff",
+                            textAlign: "center",
+                            borderRight: "1px solid white",
+                          }}
+                        >
+                          Last Name
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            backgroundColor: "primary.main",
+                            color: "#fff",
+                            textAlign: "center",
+                            borderRight: "1px solid white",
+                          }}
+                        >
+                          Email Address
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            backgroundColor: "primary.main",
+                            color: "#fff",
+                            textAlign: "center",
+                            borderRight: "1px solid white",
+                          }}
+                        >
+                          Contact Number
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            backgroundColor: "primary.main",
+                            color: "#fff",
+                            textAlign: "center",
+                            borderRight: "1px solid white",
+                          }}
+                        >
+                          Status
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            backgroundColor: "primary.main",
+                            color: "#fff",
+                            textAlign: "center",
+                          }}
+                        >
+                          Action
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {users
+                        .filter(
+                          (u: any) =>
+                            String(u.name || "")
+                              .toLowerCase()
+                              .includes(search.toLowerCase()) ||
+                            String(u.lastName || "")
+                              .toLowerCase()
+                              .includes(search.toLowerCase()) ||
+                            String(u.email || "")
+                              .toLowerCase()
+                              .includes(search.toLowerCase()) ||
+                            String(u.status || "")
+                              .toLowerCase()
+                              .trim()
+                              .includes(search.toLowerCase().trim()) ||
+                            String(u.contactNo || "").includes(
+                              search.toLowerCase(),
+                            ),
+                        )
+                        .map((user: any, index: number) =>
+                          String(user.userId) !== userId ? (
+                            <TableRow key={index} hover>
+                              <TableCell>{user.name}</TableCell>
+                              <TableCell>{user.lastName}</TableCell>
+                              <TableCell>{user.email}</TableCell>
+                              <TableCell sx={{ textAlign: "end" }}>
+                                {user.contactNo}
+                              </TableCell>
+
+                              <TableCell>
+                                {user.status === "Approved" && (
+                                  <Box
+                                    sx={{
+                                      fontWeight: "bold",
+                                      fontSize: "15px",
+                                      color: "#34a853",
+                                    }}
+                                  >
+                                    Approved
+                                  </Box>
+                                )}
+                                {user.status === "Pending" && (
+                                  <Box
+                                    sx={{
+                                      fontWeight: "bold",
+                                      fontSize: "15px",
+                                      color: "#ff9a02",
+                                    }}
+                                  >
+                                    Pending
+                                  </Box>
+                                )}
+                                {user.status !== "Pending" &&
+                                  user.status !== "Approved" && (
+                                    <Box
+                                      sx={{
+                                        fontWeight: "bold",
+                                        fontSize: "15px",
+                                        color: "#c7022e",
+                                      }}
+                                    >
+                                      InActive
+                                    </Box>
+                                  )}
+                              </TableCell>
+
+                              <TableCell sx={{ textAlign: "center" }}>
+                                {user.status === "Pending" && (
+                                  <LoadingButton
+                                    loading={adLoading === user.userId}
+                                    loadingIndicator="Loading…"
+                                    onClick={() => activateUser(user)}
+                                    sx={{ width: "100px" }}
+                                    variant="contained"
+                                  >
+                                    Activate
+                                  </LoadingButton>
+                                )}
+                                {user.status === "Approved" && (
+                                  <LoadingButton
+                                    loading={adLoading === user.userId}
+                                    loadingIndicator="Loading…"
+                                    onClick={() => deactivateUser(user)}
+                                    sx={{ width: "100px" }}
+                                    variant="contained"
+                                  >
+                                    Deactivate
+                                  </LoadingButton>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ) : null,
+                        )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </Paper>
+          </TabPanel>
+        )}
       </Box>
     </>
   );
