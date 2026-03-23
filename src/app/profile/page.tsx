@@ -287,7 +287,7 @@ export default function ProfilePage() {
     try {
       const payload: any = {
         name: newUser.firstName,
-        lastName: newUser.lastName, // 👈 combine like Angular name
+        lastName: newUser.lastName, 
         email: newUser.email,
         contactNo: newUser.contactNumber,
 
@@ -533,7 +533,7 @@ export default function ProfilePage() {
           <Tab label="Profile Info" />
           <Tab label="Addresses" />
           {/* Only show Users tab if level === 2 */}
-          {profileData?.user?.level === 2 && <Tab label="Users" />}
+          {profileData?.user?.profileId === 2 && <Tab label="Users" />}
         </Tabs>
 
         {/* Profile Info */}
@@ -1000,7 +1000,7 @@ export default function ProfilePage() {
         />
 
         {/* Users */}
-        {profileData?.user?.level === 2 && (
+        {profileData?.user?.profileId === 2 && (
           <TabPanel value={tab} index={2}>
             {/* Header */}
             <Box
