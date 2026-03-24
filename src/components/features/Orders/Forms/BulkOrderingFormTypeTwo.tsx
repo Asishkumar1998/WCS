@@ -671,17 +671,18 @@ export default function BulkOrderingFormTypeTwo() {
                       <Typography variant="subtitle1" fontWeight={600} sx={{ color: "text.primary" }}>
                         {entry.type}
                       </Typography>
-                      <Dropdown
+                      <Box sx={{width:"100px",}}>
+                        <Dropdown
                         label="No. Of Docs"
                         value={numDocs[index] ?? "1"}
                         options={numberOptions}
                         onChange={(value: string) => handleNumDocsChange(index, value)}
                         style={{
-                          width: "100px",
                           "& .MuiOutlinedInput-root": { height: "35px" },
                           "& .MuiSelect-select": { padding: "8px" },
                         }}
                       />
+                      </Box>
                     </Grid>
 
                     {/* One row per physical document */}
