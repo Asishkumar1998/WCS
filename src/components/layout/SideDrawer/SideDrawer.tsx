@@ -366,10 +366,12 @@ const SideDrawer = () => {
         width: open ? drawerWidth : collapsedWidth,
         flexShrink: 0,
         "& .MuiDrawer-paper": {
-          // mt:"35px",
+          top: "35px",
+          height: `calc(100% - 35px)`,
           width: open ? drawerWidth : collapsedWidth,
           transition: "width 0.3s ease",
           overflowX: "hidden",
+          overflowY: "hidden",
           whiteSpace: "nowrap",
           backgroundColor: "primary.main",
           color: "#fff",
@@ -380,7 +382,13 @@ const SideDrawer = () => {
       }}
     >
       {/* Top Section */}
-      <div>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+        }}
+      >
         <div
           style={{
             display: "flex",
@@ -422,6 +430,7 @@ const SideDrawer = () => {
           flexDirection: "column",
           borderTop: "1px solid #2c3e50",
           padding: open ? "0 8px" : "8px 0",
+          flexShrink: 0,
         }}
       >
         {open ? (

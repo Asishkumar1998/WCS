@@ -184,7 +184,7 @@ export default function Navbar() {
       sx={{
         backgroundColor: "#b5001a",
         width: { sm: `calc(100% - ${activeWidth}px)` },
-        // mt: "35px",
+        top: "35px",
         ml: { sm: `${activeWidth}px` },
       }}
     >
