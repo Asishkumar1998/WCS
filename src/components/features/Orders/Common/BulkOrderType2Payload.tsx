@@ -18,6 +18,13 @@ const mapAdditionalServices = (services: string[]) => ({
   isPostScan: services.includes("Post-Scan"),
 });
 
+const normaliseAttachments = (raw: any): any[] => {
+  if (raw == null) return [];
+  if (raw?.data && Array.isArray(raw.data)) return raw.data; // { data: [...] }
+  if (Array.isArray(raw)) return raw;                        // already flat array
+  return [raw];                                              // single object
+};
+
 const buildBulkDoc = ({
   country,
   document,
@@ -25,6 +32,7 @@ const buildBulkDoc = ({
   uploadedAttachments,
   customerReference,
   additionalComments,
+  instructions,
   numberOfPages,
   trackingNo,
   courierType,
@@ -36,13 +44,18 @@ const buildBulkDoc = ({
   const YES = 651;
   const NO = 652;
 
-  const hasAttachments =
-    Array.isArray(uploadedAttachments) && uploadedAttachments.length > 0;
+  const attachmentList = normaliseAttachments(uploadedAttachments);
+  const hasAttachments = attachmentList.length > 0;
   const shouldProcessAttached =
     nestedSelection != null
       ? nestedSelection === "proceedWithAttached"
       : hasAttachments;
-  const attachments = shouldProcessAttached ? (uploadedAttachments ?? []) : [];
+  const attachments = shouldProcessAttached ? attachmentList : [];
+
+  const parsedPages =
+    numberOfPages !== "" && numberOfPages != null
+      ? Number(numberOfPages)
+      : undefined;
 
   return {
     countryId: country.countryId,
@@ -58,7 +71,7 @@ const buildBulkDoc = ({
     isSoSDone: NO,
     isDoSDone: NO,
 
-    noOfPages: numberOfPages === "" ? undefined : numberOfPages,
+    noOfPages: parsedPages,
     noOfPhotoCopyPages: undefined,
     noOfProducts: numberOfProducts ?? 0,
 
@@ -74,19 +87,15 @@ const buildBulkDoc = ({
     CICount: 1,
 
     internalReference: customerReference ?? "",
-    instructions: additionalComments ?? "",
+    instructions: instructions ?? additionalComments ?? "",
 
-    originState: originState ?? undefined,
-    nusaccRequired: nusaccRequired ?? undefined,
-    incomingTracking: trackingNo ?? undefined,
-    incomingTrackingType: courierType ?? undefined,
+    originState: originState != null ? originState : undefined,
+    nusaccRequired: nusaccRequired != null ? nusaccRequired : undefined,
+    incomingTracking:
+      trackingNo != null && trackingNo !== "" ? trackingNo : undefined,
+    incomingTrackingType:
+      courierType != null && courierType !== "" ? courierType : undefined,
   };
-};
-
-const toDocAttachmentGroups = (uploadedAttachments: any) => {
-  if (!Array.isArray(uploadedAttachments)) return [[]];
-  if (uploadedAttachments.length === 0) return [[]];
-  return uploadedAttachments.map((attachment) => [attachment]);
 };
 
 const buildBulkMultiDocSingleCountryPayload = ({
@@ -120,36 +129,50 @@ const buildBulkMultiDocSingleCountryPayload = ({
       : null;
 
   const docs = documents.flatMap((entry) => {
-    const attachmentGroups = toDocAttachmentGroups(entry.uploadedAttachments);
+    const slotCount = entry.uploadData?.length ?? 1;
 
-    return attachmentGroups.map((attachments) =>
-      buildBulkDoc({
+    return Array.from({ length: slotCount }, (_, slotIndex) => {
+      const slotUpload = entry.uploadedAttachments?.[slotIndex] ?? null;
+
+      return buildBulkDoc({
         country,
         document: entry,
         additionalServices,
-        uploadedAttachments: attachments,
-        customerReference: entry.reference,
+        uploadedAttachments: slotUpload,
+        customerReference: entry.reference?.[slotIndex],
         additionalComments,
-        numberOfPages: entry.uploadData?.numPages ?? "",
-        trackingNo: entry.uploadData?.trackingNumberNested,
-        courierType: entry.uploadData?.courierNested,
-        nestedSelection: entry.uploadData?.nestedSelection ?? null,
+        instructions: entry.instructions?.[slotIndex],
+        numberOfPages: entry.uploadData?.[slotIndex]?.numPages ?? "",
+        trackingNo: entry.uploadData?.[slotIndex]?.trackingNumberNested,
+        courierType: entry.uploadData?.[slotIndex]?.courierNested,
+        nestedSelection: entry.uploadData?.[slotIndex]?.nestedSelection ?? null,
         originState: entry.docCategoryId === 522 ? originState : undefined,
         nusaccRequired:
           entry.docCategoryId === 522 ? nusaccRequired : undefined,
         numberOfProducts:
           entry.docCategoryId === 522 ? numberOfProducts : undefined,
-      }),
-    );
+      });
+    });
   });
 
-  return {
+  const payload = {
     customerId,
     orderOriginId: 611,
     orderType: 1104,
     initiatedBy: userId,
     dockets: [{ docs }],
   };
+
+  // console.log(
+  //   "[BulkPayload] →",
+  //   JSON.parse(
+  //     JSON.stringify(payload, (_, v) =>
+  //       v === undefined ? "__UNDEFINED__" : v,
+  //     ),
+  //   ),
+  // );
+
+  return payload;
 };
 
 export default buildBulkMultiDocSingleCountryPayload;
