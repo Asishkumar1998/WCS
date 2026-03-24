@@ -49,30 +49,31 @@ interface DocumentType {
   docCategoryId?: number;
 }
 
+interface uploadDataType {
+  uploadedFiles: File[];
+  nestedSelection: "proceedWithAttached" | "originalMailedNested" | null;
+  numPages: string;
+  trackingNumberNested: string;
+  courierNested: string | null;
+}
+
 interface DocumentEntry {
   docTypeId: number;
   type: string;
   docCategoryId?: number;
   attachmentRequired: boolean;
   physicalRequired: boolean;
-  uploadData: {
-    uploadedFiles: File[];
-    nestedSelection: "proceedWithAttached" | "originalMailedNested" | null;
-    numPages: string;
-    trackingNumberNested: string;
-    courierNested: string | null;
-  };
-  reference: string;
-  uploadedAttachments?: any;
+  uploadData: uploadDataType[];
+  reference: string[];
+  uploadedAttachments?: any[];
+  instructions?: string[];
 }
 
 export default function BulkOrderingFormTypeTwo() {
   const [country, setCountry] = useState<any>(null);
   const [documents, setDocuments] = useState<number[]>([]);
   const [additionalServices, setAdditionalServices] = useState<string[]>([]);
-  const [generalAdditionalQuestions, setGeneralAdditionalQuestions] = useState<
-    any[]
-  >([]);
+  const [generalAdditionalQuestions, setGeneralAdditionalQuestions] = useState<any[]>([]);
   const [states, setStates] = useState<any>();
   const [additionalComments, setAdditionalComments] = useState("");
   const [loader, setLoader] = useState(false);
@@ -87,6 +88,9 @@ export default function BulkOrderingFormTypeTwo() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [additionalServicesState] = useState(AdditionalServices);
   const [disabled, setDisabled] = useState(false);
+
+  const [numDocs, setNumDocs] = useState<string[]>([]);
+
   const { documentTypes } = useSelector((state: RootState) => state.formsData);
   const { showSnackbar } = useSnackbar();
 
@@ -100,6 +104,7 @@ export default function BulkOrderingFormTypeTwo() {
   };
 
   const PINNED_DOC_IDS = [78, 35, 36];
+  const numberOptions = ["1", "2", "3", "4", "5"];
 
   const documentOptions = useMemo(() => {
     const filteredDocs = documentTypes;
@@ -124,7 +129,7 @@ export default function BulkOrderingFormTypeTwo() {
       .map((d) => d.docTypeName);
   }, [documentTypes]);
 
-  const selectedDocs = useMemo(
+  const chosenDocs = useMemo(
     () =>
       documents
         .map((id) => documentTypes.find((d) => d.docTypeId === id))
@@ -132,9 +137,17 @@ export default function BulkOrderingFormTypeTwo() {
     [documents, documentTypes],
   );
 
+  useEffect(() => {
+    if (chosenDocs.length === 0) return;
+    setNumDocs((prev) => {
+      const next = chosenDocs.map((_, i) => prev[i] ?? "1");
+      return next;
+    });
+  }, [chosenDocs.length]);
+
   const generalDocs = useMemo(
-    () => selectedDocs.filter((doc) => doc.docCategoryId === 522),
-    [selectedDocs],
+    () => chosenDocs.filter((doc) => doc.docCategoryId === 522),
+    [chosenDocs],
   );
 
   const generalDocNames = useMemo(
@@ -152,60 +165,190 @@ export default function BulkOrderingFormTypeTwo() {
     );
   }, [country?.countryId, generalDocs.length]);
 
-  // When docs are chosen in dropdown and user clicks upload
   const openDialogForDocs = () => {
     setDocEntries((prev) => {
-      const previousById = new Map(
+      const existingByDocTypeId = new Map(
         prev.map((entry) => [entry.docTypeId, entry]),
       );
 
-      return selectedDocs.map((doc) => {
-        const existing = previousById.get(doc.docTypeId);
-        return (
-          existing ?? {
-            docTypeId: doc.docTypeId,
-            type: doc.docTypeName,
-            docCategoryId: doc.docCategoryId,
-            attachmentRequired: doc.attachmentRequired,
-            physicalRequired: doc.physicalRequired,
-            uploadData: {
+      return chosenDocs.map((doc, index) => {
+        const existing = existingByDocTypeId.get(doc.docTypeId);
+        const count = Number(numDocs[index] ?? "1");
+
+        if (existing) {
+          // Preserve existing upload slots; add empty slots if count grew
+          const uploads = [...existing.uploadData];
+          while (uploads.length < count) {
+            uploads.push({
               uploadedFiles: [],
               nestedSelection: null,
               numPages: "",
               trackingNumberNested: "",
               courierNested: null,
-            },
-            reference: "",
+            });
           }
-        );
+          return { ...existing, uploadData: uploads };
+        }
+
+        const uploadData: uploadDataType[] = Array.from({ length: count }, () => ({
+          uploadedFiles: [],
+          nestedSelection: null,
+          numPages: "",
+          trackingNumberNested: "",
+          courierNested: null,
+        }));
+
+        return {
+          docTypeId: doc.docTypeId,
+          type: doc.docTypeName,
+          docCategoryId: doc.docCategoryId,
+          attachmentRequired: doc.attachmentRequired,
+          physicalRequired: doc.physicalRequired,
+          uploadData,
+          reference: [],
+          instructions: [],
+        };
       });
     });
 
     setDialogOpen(true);
   };
 
-  const handleReferenceChange = (index: number, value: string) => {
-    const updated = [...docEntries];
-    updated[index].reference = value;
-    setDocEntries(updated);
+  const handleNumDocsChange = (index: number, value: string) => {
+    const newCount = Number(value);
+
+    setNumDocs((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+
+    setDocEntries((prev) => {
+      const updated = [...prev];
+      const entry = { ...updated[index] };
+      const uploads = [...entry.uploadData];
+
+      // Grow: add empty slots
+      while (uploads.length < newCount) {
+        uploads.push({
+          uploadedFiles: [],
+          nestedSelection: null,
+          numPages: "",
+          trackingNumberNested: "",
+          courierNested: null,
+        });
+      }
+      // Shrink: trim extras (preserves data for slots that remain)
+      uploads.length = newCount;
+
+      entry.uploadData = uploads;
+      updated[index] = entry;
+      return updated;
+    });
   };
 
-  const handleUploadDataChange = (index: number, data: any) => {
+  const handleUploadDataChange = (index: number, docIndex: number, data: any) => {
     clearFieldErrors("uploadEntries");
     setDocEntries((prev) => {
       const updated = [...prev];
-      updated[index] = {
-        ...updated[index],
-        uploadData: {
-          uploadedFiles: data?.uploadedFiles ?? [],
-          nestedSelection: data?.nestedSelection ?? null,
-          numPages: data?.numPages ?? "",
-          trackingNumberNested: data?.trackingNumberNested ?? "",
-          courierNested: data?.courierNested ?? null,
-        },
+      const entry = { ...updated[index] };
+      const uploads = [...entry.uploadData];
+
+      uploads[docIndex] = {
+        uploadedFiles: data?.uploadedFiles ?? [],
+        nestedSelection: data?.nestedSelection ?? null,
+        numPages: data?.numPages ?? "",
+        trackingNumberNested: data?.trackingNumberNested ?? "",
+        courierNested: data?.courierNested ?? null,
       };
+      entry.uploadData = uploads;
+      updated[index] = entry;
       return updated;
     });
+  };
+
+  const handleReferenceChange = (index: number, docIndex: number, value: string) => {
+    setDocEntries((prev) => {
+      const updated = [...prev];
+      const entry = { ...updated[index] };
+      const refs = Array.isArray(entry.reference) ? [...entry.reference] : [];
+      refs[docIndex] = value;
+      entry.reference = refs;
+      updated[index] = entry;
+      return updated;
+    });
+  };
+
+  const handleAdditionalDataChange = (index: number, docIndex: number, value: any) => {
+    setDocEntries((prev) => {
+      const updated = [...prev];
+      const entry = { ...updated[index] };
+      const ints = Array.isArray(entry.instructions) ? [...entry.instructions] : [];
+      ints[docIndex] = value;
+      entry.instructions = ints;
+      updated[index] = entry;
+      return updated;
+    });
+  };
+
+  const validateUploadEntries = () => {
+    if (docEntries.length === 0) {
+      return "Please upload documents for the selected document types";
+    }
+
+    for (let i = 0; i < docEntries.length; i++) {
+      const entry = docEntries[i];
+      const count = Number(numDocs[i] ?? "1");
+
+      for (let docIndex = 0; docIndex < count; docIndex++) {
+        const uploadData = entry.uploadData?.[docIndex];
+
+        if (!uploadData?.nestedSelection) {
+          return `Please select a document upload option for ${entry.type} (Document ${docIndex + 1})`;
+        }
+
+        if (
+          uploadData.nestedSelection === "proceedWithAttached" &&
+          (!uploadData.uploadedFiles || uploadData.uploadedFiles.length === 0)
+        ) {
+          return `Please upload at least one file for ${entry.type} (Document ${docIndex + 1})`;
+        }
+      }
+    }
+
+    return "";
+  };
+
+  const handleDialogSave = () => {
+    const error = validateUploadEntries();
+    if (error) {
+      setFieldErrors((prev) => ({ ...prev, uploadEntries: error }));
+      showSnackbar(error, "error");
+      return;
+    }
+    clearFieldErrors("uploadEntries");
+    setDialogOpen(false);
+  };
+
+  const uploadEntryFiles = async (entry: DocumentEntry) => {
+    if (!entry.uploadData || entry.uploadData.length === 0) return [];
+
+    const uploadedResults: any[] = [];
+
+    for (const uploadData of entry.uploadData) {
+      if (!uploadData.uploadedFiles || uploadData.uploadedFiles.length === 0) {
+        uploadedResults.push(null); // preserve slot alignment
+        continue;
+      }
+      const formData = new FormData();
+      uploadData.uploadedFiles.forEach((file, idx) => {
+        formData.append(`file_${idx}`, file);
+      });
+      const data = await uploadFile(formData);
+      uploadedResults.push(data);
+    }
+
+    return uploadedResults;
   };
 
   const init = async () => {
@@ -213,19 +356,14 @@ export default function BulkOrderingFormTypeTwo() {
       setLoader(true);
       setLoaderMessage("Checking for an existing order");
       const basePayload = CART_SERVICE_MAP["bulk-ordering"];
-      if (!basePayload) {
-        return <div>Invalid service selected.</div>;
-      }
-      const payload = {
-        userId: userId,
-        ...basePayload,
-      };
+      if (!basePayload) return;
+      const payload = { userId, ...basePayload };
       const orderId = await getOrderIdOfCart(payload);
       if (orderId) {
         setExistingOrderId(orderId);
         setShowCartConflict(true);
       }
-    } catch (error) {
+    } catch {
       showSnackbar("Failed to load existing order", "error");
     } finally {
       setLoader(false);
@@ -253,88 +391,25 @@ export default function BulkOrderingFormTypeTwo() {
 
   useEffect(() => {
     fetchStates();
-    if (customerId) {
-      init();
-    }
+    if (customerId) init();
   }, [customerId]);
-
-  useEffect(() => {
-    setDocEntries((prev) =>
-      prev.filter((entry) => documents.includes(entry.docTypeId)),
-    );
-  }, [documents]);
-
-  const validateUploadEntries = () => {
-    if (docEntries.length === 0) {
-      return "Please upload documents for the selected document types";
-    }
-
-    for (const entry of docEntries) {
-      if (!entry.uploadData?.nestedSelection) {
-        return `Please select a document upload option for ${entry.type}`;
-      }
-
-      if (
-        entry.uploadData.nestedSelection === "proceedWithAttached" &&
-        entry.uploadData.uploadedFiles.length === 0
-      ) {
-        return `Please upload at least one file for ${entry.type}`;
-      }
-    }
-
-    return "";
-  };
-
-  const handleDialogSave = () => {
-    const error = validateUploadEntries();
-    if (error) {
-      setFieldErrors((prev) => ({ ...prev, uploadEntries: error }));
-      showSnackbar(error, "error");
-      return;
-    }
-    clearFieldErrors("uploadEntries");
-    setDialogOpen(false);
-  };
-
-  const uploadEntryFiles = async (entry: DocumentEntry) => {
-    if (!entry.uploadData?.uploadedFiles?.length) return [];
-
-    const formData = new FormData();
-    entry.uploadData.uploadedFiles.forEach((file, index) => {
-      formData.append(`file_${index}`, file);
-    });
-
-    const data = await uploadFile(formData);
-    return data ?? [];
-  };
 
   const submitOrder = async (): Promise<boolean> => {
     const errors: Record<string, string> = {};
 
-    const { isValid, fieldErrors: validationFieldErrors } =
-      validateUSApostilleForm({
+    const { isValid, fieldErrors: validationFieldErrors } = validateUSApostilleForm({
       country,
       additionalQuestions: shouldRenderGeneralAdditionalQuestions
         ? generalAdditionalQuestions
         : undefined,
-      });
+    });
 
-    if (!country) {
-      errors.country = "Country is required";
-    }
-
-    if (documents.length === 0) {
-      errors.documents = "Please select at least one document";
-    }
-
-    if (!isValid) {
-      Object.assign(errors, validationFieldErrors);
-    }
+    if (!country) errors.country = "Country is required";
+    if (documents.length === 0) errors.documents = "Please select at least one document";
+    if (!isValid) Object.assign(errors, validationFieldErrors);
 
     const uploadError = validateUploadEntries();
-    if (uploadError) {
-      errors.uploadEntries = uploadError;
-    }
+    if (uploadError) errors.uploadEntries = uploadError;
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -353,6 +428,13 @@ export default function BulkOrderingFormTypeTwo() {
           uploadedAttachments: await uploadEntryFiles(entry),
         })),
       );
+
+      entriesWithUploads.forEach((entry: any, ei: number) => {
+        console.log(`[Entry ${ei}] type=${entry.type}`);
+        (entry.uploadedAttachments ?? []).forEach((slotResult: any, si: number) => {
+          console.log(`  slot[${si}] raw result:`, JSON.stringify(slotResult));
+        });
+      });
 
       const payload = buildBulkMultiDocSingleCountryPayload({
         country,
@@ -386,21 +468,13 @@ export default function BulkOrderingFormTypeTwo() {
 
         <DialogContent>
           <Typography>
-            You already have an order in your cart. Please choose one of the
-            options below to continue.
+            You already have an order in your cart. Please choose one of the options below to continue.
           </Typography>
         </DialogContent>
-
         <DialogActions>
-          <Button
-            variant="outlined"
-            onClick={() => {
-              window.location.href = "/cart?service=bulk-ordering";
-            }}
-          >
+          <Button variant="outlined" onClick={() => { window.location.href = "/cart?service=bulk-ordering"; }}>
             Go to Cart
           </Button>
-
           <Button
             variant="contained"
             color="error"
@@ -442,20 +516,12 @@ export default function BulkOrderingFormTypeTwo() {
               options={documentOptions}
               pinnedOptions={pinnedDocumentNames}
               value={documents
-                .map(
-                  (id) =>
-                    documentTypes.find((d) => d.docTypeId === id)?.docTypeName,
-                )
+                .map((id) => documentTypes.find((d) => d.docTypeId === id)?.docTypeName)
                 .filter(Boolean)}
               onChange={(selectedNames: string[]) => {
                 const selectedIds = selectedNames
-                  .map(
-                    (name) =>
-                      documentTypes.find((d) => d.docTypeName === name)
-                        ?.docTypeId,
-                  )
+                  .map((name) => documentTypes.find((d) => d.docTypeName === name)?.docTypeId)
                   .filter((id): id is number => typeof id === "number");
-
                 setDocuments(selectedIds);
                 clearFieldErrors("documents", "uploadEntries");
               }}
@@ -466,7 +532,7 @@ export default function BulkOrderingFormTypeTwo() {
             />
           </Grid>
 
-          {/* Additional Details (with floating label) */}
+          {/* Additional Questions */}
           {shouldRenderGeneralAdditionalQuestions && (
             <Grid size={{ xs: 12, md: 12, sm: 6 }}>
               <AdditionalQuestions
@@ -480,10 +546,7 @@ export default function BulkOrderingFormTypeTwo() {
                 error={Boolean(fieldErrors.additionalQuestions)}
                 helperText={fieldErrors.additionalQuestions || ""}
               />
-              <Typography
-                variant="body2"
-                sx={{ mt: 1, color: "text.secondary" }}
-              >
+              <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
                 Applies to General document types: {generalDocNames.join(", ")}
               </Typography>
             </Grid>
@@ -501,24 +564,19 @@ export default function BulkOrderingFormTypeTwo() {
                 height: 56,
                 py: 1,
                 borderColor: fieldErrors.uploadEntries ? "error.main" : undefined,
-                "&.Mui-disabled": {
-                  color: "grey.500",
-                },
+                "&.Mui-disabled": { color: "grey.500" },
               }}
             >
               Upload Selected Documents
             </Button>
             {fieldErrors.uploadEntries && (
-              <Typography
-                variant="caption"
-                sx={{ mt: 0.75, display: "block", color: "error.main" }}
-              >
+              <Typography variant="caption" sx={{ mt: 0.75, display: "block", color: "error.main" }}>
                 {fieldErrors.uploadEntries}
               </Typography>
             )}
           </Grid>
 
-          {/* Additional Services - single line on desktop, wraps only on mobile */}
+          {/* Additional Services */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl
               fullWidth
@@ -526,35 +584,21 @@ export default function BulkOrderingFormTypeTwo() {
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 1,
-                  height: 56, // same as TextField default
+                  height: 56,
                   display: "flex",
                   alignItems: "center",
                   px: 1.25,
-                  "&:hover fieldset": {
-                    borderColor: "rgba(0,0,0,0.12)", // no hover highlight
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "rgba(0,0,0,0.12)",
-                  },
+                  "&:hover fieldset": { borderColor: "rgba(0,0,0,0.12)" },
+                  "&.Mui-focused fieldset": { borderColor: "rgba(0,0,0,0.12)" },
                 },
               }}
             >
               <InputLabel shrink>Additional Services</InputLabel>
-
               <OutlinedInput
                 notched
                 label="Additional Services"
                 inputComponent={() => (
-                  <Box
-                    sx={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      overflowX: "auto",
-                      height: "100%", // aligns vertically
-                      pl: "6px",
-                    }}
-                  >
+                  <Box sx={{ width: "100%", display: "flex", alignItems: "center", overflowX: "auto", height: "100%", pl: "6px" }}>
                     <FormGroup
                       row
                       sx={{
@@ -564,13 +608,8 @@ export default function BulkOrderingFormTypeTwo() {
                         "& .MuiFormControlLabel-root": {
                           flex: "0 0 auto",
                           whiteSpace: "nowrap",
-                          "& .MuiTypography-root": {
-                            fontSize: "0.9rem",
-                          },
-                          "& .MuiCheckbox-root": {
-                            transform: "scale(0.9)",
-                            p: "2px",
-                          },
+                          "& .MuiTypography-root": { fontSize: "0.9rem" },
+                          "& .MuiCheckbox-root": { transform: "scale(0.9)", p: "2px" },
                         },
                       }}
                     >
@@ -583,9 +622,7 @@ export default function BulkOrderingFormTypeTwo() {
                               onChange={(e) => {
                                 const checked = e.target.checked;
                                 setAdditionalServices((prev) =>
-                                  checked
-                                    ? [...prev, service]
-                                    : prev.filter((s) => s !== service),
+                                  checked ? [...prev, service] : prev.filter((s) => s !== service),
                                 );
                               }}
                               disabled={disabled}
@@ -597,61 +634,23 @@ export default function BulkOrderingFormTypeTwo() {
                     </FormGroup>
                   </Box>
                 )}
-                sx={{
-                  "& .MuiOutlinedInput-input": {
-                    height: "auto",
-                    padding: 0,
-                  },
-                }}
+                sx={{ "& .MuiOutlinedInput-input": { height: "auto", padding: 0 } }}
               />
             </FormControl>
           </Grid>
-
-          {/* Additional Comments */}
-          <Grid
-            size={{ xs: 12 }}
-            sx={{ display: "flex", flexDirection: "column" }}
-          >
-            <InputField
-              label="Additional Comments"
-              placeholder="Enter comments..."
-              disabled={disabled}
-              multiline
-              minRows={9}
-              onChange={(e) => setAdditionalComments(e.target.value)}
-              sx={{
-                height: "100%",
-                "& .MuiOutlinedInput-root": {
-                  height: "100%",
-                  alignItems: "flex-start",
-                },
-                "& textarea": {
-                  height: "100% !important",
-                  resize: "none",
-                },
-              }}
-            />
-          </Grid>
         </Grid>
 
-        {/* Popup for uploading + references */}
-        <Dialog
-          open={dialogOpen}
-          onClose={() => setDialogOpen(false)}
-          maxWidth="md"
-          fullWidth
-        >
+        {/* Upload Dialog */}
+        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
           <DialogTitle>Upload Documents & Enter References</DialogTitle>
           <DialogContent>
             {docEntries.length === 0 ? (
-              <Typography color="text.secondary">
-                No documents selected.
-              </Typography>
+              <Typography color="text.secondary">No documents selected.</Typography>
             ) : (
               <Grid container spacing={2}>
                 {docEntries.map((entry, index) => (
                   <Grid
-                    key={entry.docTypeId}
+                    key={`${entry.docTypeId}-${index}`}
                     container
                     spacing={2}
                     size={{ xs: 12 }}
@@ -664,53 +663,71 @@ export default function BulkOrderingFormTypeTwo() {
                       backgroundColor: "grey.50",
                     }}
                   >
-                    {/* Document Type Title */}
-                    <Grid size={{ xs: 12 }}>
-                      <Typography
-                        variant="subtitle1"
-                        fontWeight={600}
-                        sx={{ mb: 1, color: "text.primary" }}
-                      >
+                    {/* Doc type title + count dropdown */}
+                    <Grid
+                      size={{ xs: 12 }}
+                      sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}
+                    >
+                      <Typography variant="subtitle1" fontWeight={600} sx={{ color: "text.primary" }}>
                         {entry.type}
                       </Typography>
+                      <Dropdown
+                        label="No. Of Docs"
+                        value={numDocs[index] ?? "1"}
+                        options={numberOptions}
+                        onChange={(value: string) => handleNumDocsChange(index, value)}
+                        style={{
+                          width: "100px",
+                          "& .MuiOutlinedInput-root": { height: "35px" },
+                          "& .MuiSelect-select": { padding: "8px" },
+                        }}
+                      />
                     </Grid>
 
-                    {/* Upload + Reference Side by Side */}
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <MultiDocumentUpload
-                        country={country}
-                        value={entry.uploadData}
-                        onChange={(data) => handleUploadDataChange(index, data)}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <InputField
-                        fullWidth
-                        label="Customer Reference"
-                        value={entry.reference}
-                        placeholder="Enter reference"
-                        onChange={(e) =>
-                          handleReferenceChange(index, e.target.value)
-                        }
-                      />
-                    </Grid>
+                    {/* One row per physical document */}
+                    {Array.from({ length: Number(numDocs[index] ?? "1") }).map((_, docIndex) => (
+                      <Grid size={12} container spacing={2} key={docIndex} sx={{ mt: 2 }}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <MultiDocumentUpload
+                            country={country}
+                            value={entry.uploadData?.[docIndex]}
+                            onChange={(data) => handleUploadDataChange(index, docIndex, data)}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6 }} sx={{ display: "flex", flexDirection: "column" }}>
+                          <InputField
+                            fullWidth
+                            label="Customer Reference"
+                            value={entry.reference?.[docIndex] ?? ""}
+                            placeholder="Enter reference"
+                            onChange={(e) => handleReferenceChange(index, docIndex, e.target.value)}
+                          />
+                          <InputField
+                            label="Additional Comments"
+                            placeholder="Enter comments..."
+                            disabled={disabled}
+                            multiline
+                            minRows={9}
+                            value={entry.instructions?.[docIndex] ?? ""}
+                            onChange={(e) => handleAdditionalDataChange(index, docIndex, e.target.value)}
+                            sx={{
+                              height: "100%",
+                              "& .MuiOutlinedInput-root": { height: "100%", alignItems: "flex-start" },
+                              "& textarea": { height: "100% !important", resize: "none" },
+                              mt: 2,
+                            }}
+                          />
+                        </Grid>
+                      </Grid>
+                    ))}
                   </Grid>
                 ))}
               </Grid>
             )}
           </DialogContent>
-
           <DialogActions>
-            <Button onClick={() => setDialogOpen(false)} color="secondary">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleDialogSave}
-              variant="contained"
-              color="primary"
-            >
-              Save
-            </Button>
+            <Button onClick={() => setDialogOpen(false)} color="secondary">Cancel</Button>
+            <Button onClick={handleDialogSave} variant="contained" color="primary">Save</Button>
           </DialogActions>
         </Dialog>
       </FormLayout>
