@@ -22,6 +22,8 @@ const roboto = Roboto({
   weight: ["400", "500", "700"],
 });
 
+const securityRibbonHeight = 35;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -102,16 +104,23 @@ export default function RootLayout({
           <AppRouterCacheProvider>
             <Provider store={store}>
               <ThemeProvider theme={theme}>
-                <div style={{height:"35px",width: "100%",backgroundColor: pathname==="/login"?"tramsparent":"white",
-                  position: "fixed",zIndex: 999
+                <div style={{height:`35px`,width: "100%",backgroundColor: pathname==="/login"?"tramsparent":"white",
+                  position: "fixed",top: 0,left: 0,zIndex: 999
                   }} >
                   <GoDaddySeal />
                 </div>
                 <SnackbarProvider>
-                  <div style={{ display: "flex" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      minHeight: "100vh",
+                      paddingTop: "35px",
+                      boxSizing: "border-box",
+                    }}
+                  >
                     {!hideLayout && <SideDrawer />}
                     {!hideLayout && <Navbar />}
-                    <main style={{ flexGrow: 1 }}>{children}</main>
+                    <main style={{ flexGrow: 1, minWidth: 0 }}>{children}</main>
                   </div>
                 </SnackbarProvider>
               </ThemeProvider>
