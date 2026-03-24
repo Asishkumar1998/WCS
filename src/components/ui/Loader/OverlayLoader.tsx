@@ -1,6 +1,6 @@
 "use client";
 
-import { Backdrop, CircularProgress, Typography, Box, keyframes } from "@mui/material";
+import { Backdrop, Typography, Box, keyframes } from "@mui/material";
 
 const wave = keyframes`
   0% { transform: scaleY(0.4); opacity: 0.6 }

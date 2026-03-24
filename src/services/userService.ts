@@ -66,3 +66,13 @@ export const signupCustomer=async (payload:any)=>{
   const response=await axios.post("users/signup",payload)
   return response.data;
 }
+
+export const getAllUsersForCompany= async (companyName: number)=>{
+  const response = await axios.get(`users?companyName=${companyName}`)
+  return response.data;
+}
+
+export const userStatusUpdate = async (payload: any,user: any)=>{
+  const response = await axios.put(`users?userId=${user.userId}`,payload)
+  return response.data;
+}
