@@ -19,8 +19,8 @@ interface FileUploadFieldProps {
   disabled?: boolean;
   allowedTypes?: string[];
   maxSizeMB?: number;
-
   fileNameProp?: string;
+  hideBulkOrderingHint?: boolean;
 }
 
 export default function ValidatedFileUpload({
@@ -28,8 +28,9 @@ export default function ValidatedFileUpload({
   onChange,
   disabled = false,
   allowedTypes = ["pdf", "doc", "docx"],
-  maxSizeMB = 5,
+  maxSizeMB,
   fileNameProp = "",
+  hideBulkOrderingHint = false,
 }: FileUploadFieldProps) {
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
@@ -51,20 +52,12 @@ export default function ValidatedFileUpload({
   const validateFile = (file: File): boolean => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "";
     const isValidType = allowedTypes.includes(ext);
-    const isValidSize = file.size / 1024 / 1024 <= maxSizeMB;
 
     if (!isValidType) {
       setError(
         `Invalid file type. Only ${allowedTypes
           .map((t) => t.toUpperCase())
           .join(", ")} files are allowed.`,
-      );
-      return false;
-    }
-
-    if (!isValidSize) {
-      setError(
-        `File is too large (max ${maxSizeMB} MB). Please contact WCS team for assistance.`,
       );
       return false;
     }
@@ -207,8 +200,7 @@ export default function ValidatedFileUpload({
               variant="caption"
               sx={{ color: "text.secondary", display: "block", mb: 0.5 }}
             >
-              Allowed: {allowedTypes.map((t) => t.toUpperCase()).join(", ")} |
-              Max size: {maxSizeMB} MB
+              Allowed: {allowedTypes.map((t) => t.toUpperCase()).join(", ")}
             </Typography>
             <Typography
               variant="caption"
@@ -216,7 +208,7 @@ export default function ValidatedFileUpload({
             >
                Only one file can be uploaded
             </Typography>
-            {label !== "Upload File" ? (
+            {!hideBulkOrderingHint && label !== "Upload File" ? (
               <Typography
                 variant="caption"
                 sx={{ color: "primary.main", display: "block" }}

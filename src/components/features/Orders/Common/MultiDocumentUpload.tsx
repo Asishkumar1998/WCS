@@ -21,7 +21,6 @@ import { useEffect, useRef, useState } from "react";
 
 const couriers = ["FEDEX", "UPS", "USPS", "DHL", "OTHERS"];
 const ALLOWED_TYPES = ["pdf", "doc", "docx"];
-const MAX_SIZE_MB = 5;
 
 type NestedSelection = "proceedWithAttached" | "originalMailedNested" | null;
 
@@ -108,20 +107,12 @@ export default function MultiDocumentUpload({ country, onChange, value }: Props)
     files.forEach((file) => {
       const ext = file.name.split(".").pop()?.toLowerCase() || "";
       const isValidType = ALLOWED_TYPES.includes(ext);
-      const isValidSize = file.size / 1024 / 1024 <= MAX_SIZE_MB;
 
       if (!isValidType) {
         invalidReasons.push(
           `${file.name}: invalid type (allowed ${ALLOWED_TYPES
             .map((t) => t.toUpperCase())
             .join(", ")})`,
-        );
-        return;
-      }
-
-      if (!isValidSize) {
-        invalidReasons.push(
-          `${file.name}: file too large (max ${MAX_SIZE_MB} MB)`,
         );
         return;
       }

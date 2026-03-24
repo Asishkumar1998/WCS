@@ -383,6 +383,7 @@ export default function BulkOrderingFormTypeOne() {
               <DocumentUpload
                 onChange={handleDocumentUpload}
                 country=""
+                hideBulkOrderingHint
                 error={Boolean(
                   fieldErrors.uploadOption || fieldErrors.uploadDocument,
                 )}

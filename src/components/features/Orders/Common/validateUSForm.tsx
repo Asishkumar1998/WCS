@@ -39,7 +39,7 @@ const validateUSApostilleForm = ({
     typeof document === "object" &&
     Number(document.docTypeId) > 0;
 
-  if (!hasValidCountry) {
+  if (country !== undefined && !hasValidCountry) {
     addError("country", "Country is required");
   }
 

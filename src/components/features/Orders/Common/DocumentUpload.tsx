@@ -23,6 +23,7 @@ export default function DocumentUpload({
   error = false,
   errorText = "",
   onInteraction,
+  hideBulkOrderingHint = false,
 }: {
   country?: any;
   onChange?: (data: any) => void;
@@ -30,6 +31,7 @@ export default function DocumentUpload({
   error?: boolean;
   errorText?: string;
   onInteraction?: () => void;
+  hideBulkOrderingHint?: boolean;
 }) {
   const [nestedSelection, setNestedSelection] = useState<
     "proceedWithAttached" | "originalMailedNested" | null
@@ -124,6 +126,7 @@ export default function DocumentUpload({
           fileNameProp={fileName}
           onChange={handleFileChange}
           disabled={forceOriginalMail}
+          hideBulkOrderingHint={hideBulkOrderingHint}
         />
         {uploadedFile && (
           <Box

@@ -41,27 +41,48 @@ export default function RootLayout({
   const [isAuthed, setIsAuthed] = useState(false);
 
   useEffect(() => {
-    const auth = getAuth();
+    const validateAccess = () => {
+      const auth = getAuth();
 
-    // Not logged in or expired
-    if (!auth && !isPublicRoute) {
-      setIsAuthed(false);
+      if (!auth && !isPublicRoute) {
+        setIsAuthed(false);
+        setAuthChecked(true);
+        router.replace("/login");
+        return;
+      }
+
+      if (!auth && (pathname === "/login" || pathname === "/signup" || pathname === "/thankyou")) {
+        setIsAuthed(true);
+        setAuthChecked(true);
+        return;
+      }
+
+      setIsAuthed(!!auth || isPublicRoute);
       setAuthChecked(true);
-      router.replace("/login");
-      return;
-    }
+    };
 
-    // Logged in -> block login page
-    if (!auth && (pathname === "/login" || pathname === "/signup"|| pathname==="/thankyou")) {
-      setIsAuthed(true);
-      setAuthChecked(true);
-      router.replace(pathname);
-      return;
-    }
+    validateAccess();
 
-    setIsAuthed(!!auth || isPublicRoute);
-    setAuthChecked(true);
-  }, [pathname, router]);
+    const handlePageShow = () => {
+      validateAccess();
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === "wcs-logout-at") {
+        validateAccess();
+      }
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    window.addEventListener("popstate", handlePageShow);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+      window.removeEventListener("popstate", handlePageShow);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [isPublicRoute, pathname, router]);
 
   const shouldRenderApp = isPublicRoute || (authChecked && isAuthed);
 
