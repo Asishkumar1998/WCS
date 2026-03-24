@@ -235,7 +235,7 @@ export default function ProfilePage() {
   };
   const handleInvite = () => {
     setInviteLoading(true);
-    let newErrors = { ...errors };
+    const newErrors = { ...errors };
     let hasError = false;
 
     if (newUser.firstName.length + newUser.lastName.length > 50) {
