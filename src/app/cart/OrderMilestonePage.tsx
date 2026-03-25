@@ -1185,6 +1185,28 @@ export default function OrderMilestonePage() {
                                     </div>
                                   ))
                                 : ""}
+                                {doc.isSoftCopyGiven == 651 &&
+                              service == "bulk-ordering" &&
+                              doc.attachments?.length > 0 ? (
+                                <Link
+                                  onClick={() =>
+                                    downloadAttachments({
+                                      attachmentId:
+                                        doc.attachments[0].attachmentId,
+                                      fileName: doc.attachments[0].fileName,
+                                    })
+                                  }
+                                  underline="hover"
+                                  color="text.secondary"
+                                  sx={{
+                                    fontSize: "0.9rem",
+                                    wordBreak: "break-word",
+                                    pointer: "cursor",
+                                  }}
+                                >
+                                  {doc.attachments[0].fileName}
+                                </Link>)
+                                : ""}
                             </Box>
                           </Paper>
                           <Box
