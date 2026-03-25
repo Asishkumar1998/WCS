@@ -40,6 +40,7 @@ import { getOrderIdOfCart } from "@/services/cartServices";
 import { deleteOrder } from "@/services/deleteService";
 import { getAuth } from "@/app/utils/auth";
 import ADDITIONAL_QUESTION_COUNTRY_MAP from "@/dataset/additionalQuesWithCountryMap";
+import DocumentUpload from "../Common/DocumentUpload";
 
 interface DocumentType {
   docTypeId: number;
@@ -248,7 +249,8 @@ export default function BulkOrderingFormTypeTwo() {
   };
 
   const handleUploadDataChange = (index: number, docIndex: number, data: any) => {
-    clearFieldErrors("uploadEntries");
+    const key = `uploadEntries_${docEntries[index].docTypeId}_${docIndex}`;
+    clearFieldErrors(key);
     setDocEntries((prev) => {
       const updated = [...prev];
       const entry = { ...updated[index] };
@@ -291,41 +293,75 @@ export default function BulkOrderingFormTypeTwo() {
     });
   };
 
+  // const validateUploadEntries = () => {
+  //   const errors: Record<string, string> = {};
+  //   if (docEntries.length === 0) {
+  //     return "Please upload documents for the selected document types";
+  //   }
+
+  //   for (let i = 0; i < docEntries.length; i++) {
+  //     const entry = docEntries[i];
+  //     const count = Number(numDocs[i] ?? "1");
+
+  //     for (let docIndex = 0; docIndex < count; docIndex++) {
+  //       const uploadData = entry.uploadData?.[docIndex];
+
+  //       if (!uploadData?.nestedSelection) {
+  //         return `Please select a document upload option for ${entry.type} (Document ${docIndex + 1})`;
+  //       }
+
+  //       if (
+  //         uploadData.nestedSelection === "proceedWithAttached" &&
+  //         (!uploadData.uploadedFiles || uploadData.uploadedFiles.length === 0)
+  //       ) {
+  //         return `Please upload at least one file for ${entry.type} (Document ${docIndex + 1})`;
+  //       }
+  //     }
+  //   }
+
+  //   return "";
+  // };
+
+
   const validateUploadEntries = () => {
-    if (docEntries.length === 0) {
-      return "Please upload documents for the selected document types";
-    }
+  const errors: Record<string, string> = {};
+  
+   if (docEntries.length === 0) {
+    errors["uploadEntries_general"] = "Please upload documents";
+    return errors;
+   }
 
-    for (let i = 0; i < docEntries.length; i++) {
-      const entry = docEntries[i];
-      const count = Number(numDocs[i] ?? "1");
+  docEntries.forEach((entry, i) => {
+    const count = Number(numDocs[i] ?? "1");
 
-      for (let docIndex = 0; docIndex < count; docIndex++) {
-        const uploadData = entry.uploadData?.[docIndex];
+    for (let docIndex = 0; docIndex < count; docIndex++) {
+      const uploadData = entry.uploadData?.[docIndex];
+      const key = `uploadEntries_${entry.docTypeId}_${docIndex}`;
 
-        if (!uploadData?.nestedSelection) {
-          return `Please select a document upload option for ${entry.type} (Document ${docIndex + 1})`;
-        }
+      if (!uploadData?.nestedSelection) {
+        errors[key] = `Select upload option`;
+        continue;
+      }
 
-        if (
-          uploadData.nestedSelection === "proceedWithAttached" &&
-          (!uploadData.uploadedFiles || uploadData.uploadedFiles.length === 0)
-        ) {
-          return `Please upload at least one file for ${entry.type} (Document ${docIndex + 1})`;
-        }
+      if (
+        uploadData.nestedSelection === "proceedWithAttached" &&
+        (!uploadData.uploadedFiles || uploadData.uploadedFiles.length === 0)
+      ) {
+        errors[key] = `Upload file required`;
       }
     }
+  });
 
-    return "";
-  };
-
+  return errors;
+};
   const handleDialogSave = () => {
     const error = validateUploadEntries();
-    if (error) {
-      setFieldErrors((prev) => ({ ...prev, uploadEntries: error }));
-      showSnackbar(error, "error");
+    if (Object.keys(error).length > 0) {
+      setFieldErrors(error);
+      // showSnackbar(error, "error");
       return;
     }
+    setFieldErrors({});
     clearFieldErrors("uploadEntries");
     setDialogOpen(false);
   };
@@ -409,7 +445,7 @@ export default function BulkOrderingFormTypeTwo() {
     if (!isValid) Object.assign(errors, validationFieldErrors);
 
     const uploadError = validateUploadEntries();
-    if (uploadError) errors.uploadEntries = uploadError;
+    if (Object.keys(uploadError).length > 0) Object.assign(errors, uploadError);
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -493,7 +529,7 @@ export default function BulkOrderingFormTypeTwo() {
         title="Bulk Ordering - Add multiple documents for a single country."
         onProceed={submitOrder}
       >
-        <Grid container spacing={2} alignItems="flex-start">
+        <Grid container spacing={2} size={12} alignItems="flex-start">
           {/* Country */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <CountrySelect
@@ -563,7 +599,12 @@ export default function BulkOrderingFormTypeTwo() {
                 width: "100%",
                 height: 56,
                 py: 1,
-                borderColor: fieldErrors.uploadEntries ? "error.main" : undefined,
+                // borderColor: fieldErrors.uploadEntries ? "error.main" : undefined,
+                borderColor: Object.keys(fieldErrors).some((key) =>
+                  key.startsWith("uploadEntries_")
+                )
+                  ? "error.main"
+                  : undefined,
                 "&.Mui-disabled": { color: "grey.500" },
               }}
             >
@@ -686,14 +727,45 @@ export default function BulkOrderingFormTypeTwo() {
                     </Grid>
 
                     {/* One row per physical document */}
-                    {Array.from({ length: Number(numDocs[index] ?? "1") }).map((_, docIndex) => (
-                      <Grid size={12} container spacing={2} key={docIndex} sx={{ mt: 2 }}>
+                    {Array.from({ length: Number(numDocs[index] ?? "1") }).map((_, docIndex) => {
+                      const errorKey = `uploadEntries_${entry.docTypeId}_${docIndex}`;
+                      const docError = fieldErrors[errorKey];
+                    
+                      return(
+                        <Grid size={12} container spacing={2} key={docIndex} sx={{ mt: 2 }}>
                         <Grid size={{ xs: 12, sm: 6 }}>
-                          <MultiDocumentUpload
+                          {/* <MultiDocumentUpload
                             country={country}
                             value={entry.uploadData?.[docIndex]}
                             onChange={(data) => handleUploadDataChange(index, docIndex, data)}
-                          />
+                            error={Boolean(fieldErrors.uploadEntries)}
+                            errorText={fieldErrors.uploadEntries || ""}
+                            onInteraction={() => clearFieldErrors("uploadEntries")}
+                          /> */}
+                          <DocumentUpload
+                            country={country}
+                            onChange={(data) =>
+                              handleUploadDataChange(index, docIndex, {
+                                uploadedFiles: data?.uploadedFile ? [data.uploadedFile] : [],
+                                nestedSelection: data?.nestedSelection ?? null,
+                                numPages: data?.numPages ?? "",
+                                trackingNumberNested: data?.trackingNumberNested ?? "",
+                                courierNested: data?.courierNested ?? null,
+                              })
+                            }
+
+                            error={Boolean(docError)}
+                            errorText={docError || ""}
+                            onInteraction={() => {
+                              setFieldErrors((prev) => {
+                                const updated = { ...prev };
+                                delete updated[errorKey];
+                                return updated;
+                              });
+                            }}
+
+                            hideBulkOrderingHint={true}
+                    />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }} sx={{ display: "flex", flexDirection: "column" }}>
                           <InputField
@@ -720,7 +792,8 @@ export default function BulkOrderingFormTypeTwo() {
                           />
                         </Grid>
                       </Grid>
-                    ))}
+                      )
+                    })}
                   </Grid>
                 ))}
               </Grid>
