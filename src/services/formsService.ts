@@ -109,6 +109,13 @@ export const getApplicableStops = async () => {
   return response.data;
 };
 
+export const getStateSOSConfigs = async () => {
+  const response = await axiosInstance.get("stateSOSConfigs", {
+    params: { active: true },
+  });
+  return response.data;
+};
+
 export const getApplicableOOS = async () => {
   const response = await axiosInstance.get("applicabelOOS");
   return response.data;
@@ -143,3 +150,5 @@ export const updateFeeQuantity = async (docFeeId: number, payload: any) => {
   const response = await axiosInstance.put(`docFees/${docFeeId}`, payload);
   return response.data;
 }
+
+

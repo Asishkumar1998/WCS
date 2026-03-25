@@ -331,11 +331,14 @@ export default function TrackOrderDialog({
 
                 const status = getStopStatus(details);
 
+                const processDays =
+                  details.noProcessDays ?? details.processDays ?? meta.processDays;
+
                 return {
                   label: fullStopLabel || `Stop ${details.stopNumber}`,
                   date: null,
-                  description: meta.processDays
-                    ? `Est. Processing time: ${meta.processDays} days`
+                  description: processDays
+                    ? `Est. Processing time: ${processDays} days`
                     : "",
                   status,
                   completed: status === "completed",
@@ -529,3 +532,4 @@ export default function TrackOrderDialog({
     </Dialog>
   );
 }
+

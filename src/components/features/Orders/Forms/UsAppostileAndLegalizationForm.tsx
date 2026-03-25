@@ -36,6 +36,7 @@ import {
   getStates,
   getStops,
   getApplicableStops,
+  getStateSOSConfigs,
   getApplicableOOS,
   getOOSDeptMapping,
   getOOSAddress,
@@ -68,7 +69,12 @@ type Stop = {
   oosReferenceId?: number | null;
   consulateName?: string | null;
   stopAddress?: any;
-  description?: string ;
+  description?: string;
+  processDays?: number | null;
+  rushProcessDays?: number | null;
+  noProcessDays?: number | null;
+  prepDays?: number | null;
+  courierDays?: number | null;
 };
 
 type ApplicableStop = {
@@ -86,6 +92,13 @@ type OOSRule = {
   docSubCategoryId: number;
   isOOSSOS: boolean;
   isOOSEMB: boolean;
+};
+
+type StateSOSConfig = {
+  stateId?: number | null;
+  processDays?: number | null;
+  rushProcessDays?: number | null;
+  active?: boolean | null;
 };
 
 type DisplayStop = Stop & {
@@ -147,6 +160,7 @@ export default function USAppostileAndLegalizationForm({
     ApplicableStop[]
   >([]);
   const [allApplicableOOS, setAllApplicableOOS] = useState<OOSRule[]>([]);
+  const [allStateSOSConfigs, setAllStateSOSConfigs] = useState<StateSOSConfig[]>([]);
   const [allOOSDeptMappings, setAllOOSDeptMappings] = useState<any[]>([]);
   const [allOOSAddresses, setAllOOSAddresses] = useState<any[]>([]);
   const [documentStops, setDocumentStops] = useState<Stop[]>([]);
@@ -471,6 +485,51 @@ export default function USAppostileAndLegalizationForm({
       });
   };
 
+  const applyStateSOSConfigToStops = ({
+    stops,
+    originState,
+    isRush,
+  }: {
+    stops: Stop[];
+    originState: any;
+    isRush: boolean;
+  }) => {
+    if (!Array.isArray(stops) || !originState || !Array.isArray(allStateSOSConfigs)) {
+      return stops;
+    }
+
+    const stateSOSConfig =
+      allStateSOSConfigs.find(
+        (config) => Number(config.stateId) === Number(originState.stateId),
+      ) || allStateSOSConfigs.find((config) => config.stateId == null);
+
+    if (!stateSOSConfig) {
+      return stops;
+    }
+
+    return stops.map((stop) => {
+      if (stop.stopId !== 2) {
+        return stop;
+      }
+
+      const processDays =
+        stateSOSConfig.processDays == null
+          ? stop.processDays
+          : stateSOSConfig.processDays;
+      const rushProcessDays =
+        stateSOSConfig.rushProcessDays == null ||
+        stateSOSConfig.rushProcessDays === 0
+          ? processDays
+          : stateSOSConfig.rushProcessDays;
+
+      return {
+        ...stop,
+        processDays,
+        rushProcessDays,
+        noProcessDays: isRush ? rushProcessDays ?? processDays : processDays,
+      };
+    });
+  };
   const enrichOOSStops = ({
     stops,
     selectedCountry,
@@ -665,6 +724,7 @@ export default function USAppostileAndLegalizationForm({
           trackingNo,
           courierType,
           nestedSelection: uploadDocValues?.nestedSelection ?? null,
+          stops: payloadStops,
         });
         await createUSApostilleOrder(payload);
         showSnackbar("Order created successfully", "success");
@@ -685,6 +745,7 @@ export default function USAppostileAndLegalizationForm({
           trackingNo,
           courierType,
           nestedSelection: uploadDocValues?.nestedSelection ?? null,
+          stops: payloadStops,
         });
         await updateOrder(payload.orderId, payload);
       }
@@ -736,6 +797,7 @@ export default function USAppostileAndLegalizationForm({
     }
   };
 
+
   const fetchStates = async () => {
     try {
       const response = await getStates();
@@ -751,12 +813,14 @@ export default function USAppostileAndLegalizationForm({
         stopsRes,
         applicableStopsRes,
         applicableOOSRes,
+        stateSOSConfigsRes,
         oosDeptRes,
         oosAddressRes,
       ] = await Promise.all([
         getStops(),
         getApplicableStops(),
         getApplicableOOS(),
+        getStateSOSConfigs(),
         getOOSDeptMapping(),
         getOOSAddress(),
       ]);
@@ -767,6 +831,9 @@ export default function USAppostileAndLegalizationForm({
       );
       setAllApplicableOOS(
         Array.isArray(applicableOOSRes) ? applicableOOSRes : [],
+      );
+      setAllStateSOSConfigs(
+        Array.isArray(stateSOSConfigsRes) ? stateSOSConfigsRes : [],
       );
       setAllOOSDeptMappings(Array.isArray(oosDeptRes) ? oosDeptRes : []);
       setAllOOSAddresses(Array.isArray(oosAddressRes) ? oosAddressRes : []);
@@ -804,8 +871,13 @@ export default function USAppostileAndLegalizationForm({
     });
 
     const originState = getOriginState();
-    const withOOS = enrichOOSStops({
+    const withStateSOS = applyStateSOSConfigToStops({
       stops: normalizedStops,
+      originState,
+      isRush,
+    });
+    const withOOS = enrichOOSStops({
+      stops: withStateSOS,
       selectedCountry: country,
       selectedDocument: document,
       originState,
@@ -820,6 +892,7 @@ export default function USAppostileAndLegalizationForm({
     allStops,
     allApplicableStops,
     allApplicableOOS,
+    allStateSOSConfigs,
     allOOSDeptMappings,
     allOOSAddresses,
     states,
@@ -841,6 +914,17 @@ export default function USAppostileAndLegalizationForm({
   const selectedStopsBase = documentStops
     .filter((stop) => stop.isChecked)
     .sort((a, b) => (a.stopSequence ?? 0) - (b.stopSequence ?? 0));
+
+  const payloadStops = selectedStopsBase.map((stop, index) => ({
+    ...stop,
+    stopSequence: stop.stopSequence ?? index + 1,
+    stopNumber: stop.stopNumber ?? stop.stopSequence ?? index + 1,
+    noProcessDays:
+      stop.noProcessDays ??
+      (additionalServices.includes("Rush")
+        ? stop.rushProcessDays ?? stop.processDays
+        : stop.processDays),
+  }));
 
   const selectedStops: DisplayStop[] = (() => {
     const withArabChamber = [...selectedStopsBase];
@@ -1239,3 +1323,14 @@ export default function USAppostileAndLegalizationForm({
     </>
   );
 }
+
+
+
+
+
+
+
+
+
+
+

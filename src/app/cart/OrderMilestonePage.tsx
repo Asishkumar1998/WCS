@@ -565,14 +565,16 @@ export default function OrderMilestonePage() {
   };
 
   const convertStopsToTimeline = (stops: any[]) => {
-    return stops.map((s) => ({
-      label: `${
-        allStops?.find((a: any) => s.stopId === a.stopId)?.description || ""
-      }`, // or replace with stopName if available
-      subLabel: `${
-        allStops?.find((a: any) => s.stopId === a.stopId)?.processDays || ""
-      } business days`, // or a formatted date
-    }));
+    return stops.map((s) => {
+      const stopMeta = allStops?.find((a: any) => s.stopId === a.stopId) || {};
+      const processDays =
+        s.noProcessDays ?? s.processDays ?? stopMeta.processDays ?? "";
+
+      return {
+        label: `${stopMeta.description || s.description || ""}`,
+        subLabel: `${processDays} business days`,
+      };
+    });
   };
 
   const getTimelineWithCompletion = (
@@ -2408,3 +2410,4 @@ export default function OrderMilestonePage() {
     </>
   );
 }
+
