@@ -339,7 +339,7 @@ export default function BulkOrderingFormTypeTwo() {
       const key = `uploadEntries_${entry.docTypeId}_${docIndex}`;
 
       if (!uploadData?.nestedSelection) {
-        errors[key] = `Select upload option`;
+        errors[key] = `Please select upload option`;
         continue;
       }
 
@@ -347,7 +347,7 @@ export default function BulkOrderingFormTypeTwo() {
         uploadData.nestedSelection === "proceedWithAttached" &&
         (!uploadData.uploadedFiles || uploadData.uploadedFiles.length === 0)
       ) {
-        errors[key] = `Upload file required`;
+        errors[key] = `Please upload required attachment`;
       }
     }
   });
