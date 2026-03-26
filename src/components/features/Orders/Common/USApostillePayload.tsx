@@ -27,6 +27,7 @@ function buildUSApostillePayload({
   trackingNo,
   courierType,
   nestedSelection,
+  stops,
 }: {
   countryId: any;
   docCategoryId: any;
@@ -42,6 +43,7 @@ function buildUSApostillePayload({
   trackingNo: any;
   courierType: any;
   nestedSelection?: "proceedWithAttached" | "originalMailedNested" | null;
+  stops?: any[];
 }) {
   const userId = getAuthValue("userId");
   const customerId = getAuthValue("customerId");
@@ -89,6 +91,7 @@ function buildUSApostillePayload({
             nusaccRequired: nusaccRequired ?? undefined,
             instructions: additionalComments || "",
             internalReference: customerReference || "",
+            stops: stops ?? undefined,
             incomingTracking: trackingNo ?? undefined,
             incomingTrackingType: courierType ?? undefined,
           },
@@ -129,6 +132,7 @@ const buildUSApostillePayloadFromExistingOrder = ({
   trackingNo,
   courierType,
   nestedSelection,
+  stops,
 }: {
   basePayload: any;
   countryId: any;
@@ -145,6 +149,7 @@ const buildUSApostillePayloadFromExistingOrder = ({
   trackingNo: any;
   courierType: any;
   nestedSelection?: "proceedWithAttached" | "originalMailedNested" | null;
+  stops?: any[];
 }) => {
   if (!basePayload) return basePayload;
   const selectedCountryId = countryId;
@@ -183,6 +188,7 @@ const buildUSApostillePayloadFromExistingOrder = ({
     nusaccRequired: nusaccRequired ?? undefined,
     instructions: additionalComments || "",
     internalReference: customerReference || "",
+    stops: stops ?? undefined,
     incomingTracking: trackingNo ?? undefined,
     incomingTrackingType: courierType ?? undefined,
   };

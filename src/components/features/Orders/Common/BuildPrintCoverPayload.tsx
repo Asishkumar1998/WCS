@@ -112,9 +112,10 @@ export const buildPrintCoverPayload = async (
           return {
             stopName: stop?.stopName ?? `Stop ${ds.stopId}`,
             description: stop?.description,
-            processDays: ds.processDays ?? stop?.processDays,
+            processDays: ds.noProcessDays ?? ds.processDays ?? stop?.processDays,
           };
         }) ?? [],
     })),
   };
 };
+
