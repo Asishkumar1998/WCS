@@ -68,7 +68,7 @@ export default function NewConversationPage() {
       const doc = docket?.docs?.[0];
 
       const defaultSubject = `Order#: ${id}, Doc#: ${doc?.docId}, ${
-        doc?.countryName ?? "NAA"
+        doc?.countryShortName ?? doc?.countryName ?? "NAA"
       }`;
       setSubject(defaultSubject);
     } finally {
