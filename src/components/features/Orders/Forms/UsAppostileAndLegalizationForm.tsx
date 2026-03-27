@@ -662,9 +662,9 @@ export default function USAppostileAndLegalizationForm({
         const data = await uploadFile(formData);
         showSnackbar("Document uploaded successfully", "success");
         setUploadedDoc(data);
-      } catch (err) {
+      } catch (err:any) {
         console.log(err);
-        showSnackbar("Error while uploading document", "error");
+        showSnackbar("Error while uploading document.File size should be below 50MB", "error");
       }
     }
   };

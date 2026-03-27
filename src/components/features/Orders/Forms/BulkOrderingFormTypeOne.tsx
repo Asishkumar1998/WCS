@@ -192,7 +192,7 @@ export default function BulkOrderingFormTypeOne() {
         setUploadedDoc(data);
       } catch (err) {
         console.log(err);
-        showSnackbar("Error while uploading document", "error");
+        showSnackbar("Error while uploading document.File size should be below 50MB", "error");
       }
     }
   };
