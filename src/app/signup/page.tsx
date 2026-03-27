@@ -322,7 +322,7 @@ const CustomerSignup = () => {
           justifyContent: "center",
           alignItems: "center",
           position: "relative",
-          overflow: "hidden",
+          // overflow: "hidden",
           overflowY: "auto",
           backgroundAttachment: "fixed",
         }}
