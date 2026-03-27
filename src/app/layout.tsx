@@ -104,7 +104,7 @@ export default function RootLayout({
           <AppRouterCacheProvider>
             <Provider store={store}>
               <ThemeProvider theme={theme}>
-                <div style={{height:`35px`,width: "100%",backgroundColor: pathname==="/login"?"tramsparent":"white",
+                <div style={{height: (pathname==="/login"|| pathname==="/signup")?`0px`:`35px`,width: "100%",backgroundColor: (pathname==="/login"|| pathname==="/signup") ?"transparent":"white",
                   position: "fixed",top: 0,left: 0,zIndex: 999
                   }} >
                   <GoDaddySeal />
@@ -114,7 +114,7 @@ export default function RootLayout({
                     style={{
                       display: "flex",
                       minHeight: "100vh",
-                      paddingTop: "35px",
+                      paddingTop: (pathname==="/login"|| pathname==="/signup")?"0px":"35px",
                       boxSizing: "border-box",
                     }}
                   >

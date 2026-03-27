@@ -261,7 +261,6 @@ export default function ProfilePage() {
     }
 
     createUser(); // proceed only if valid
-    setInviteLoading(false);
   };
   const createUser = async () => {
     if (!newUser.firstName) {
@@ -285,6 +284,7 @@ export default function ProfilePage() {
     }
 
     try {
+          setInviteLoading(true);
       const payload: any = {
         name: newUser.firstName,
         lastName: newUser.lastName, 
@@ -323,8 +323,8 @@ export default function ProfilePage() {
       });
 
       getUsers();
-    } catch (error) {
-      showSnackbar("Some thing went wrong!", "error");
+    } catch (error:any) {
+      showSnackbar(error.response.data, "error");
     } finally {
       setInviteLoading(false);
     }
