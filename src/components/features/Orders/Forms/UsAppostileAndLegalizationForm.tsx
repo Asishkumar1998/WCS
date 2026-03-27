@@ -724,7 +724,7 @@ export default function USAppostileAndLegalizationForm({
           trackingNo,
           courierType,
           nestedSelection: uploadDocValues?.nestedSelection ?? null,
-          stops: payloadStops,
+          // stops: payloadStops,
         });
         await createUSApostilleOrder(payload);
         showSnackbar("Order created successfully", "success");
@@ -745,7 +745,7 @@ export default function USAppostileAndLegalizationForm({
           trackingNo,
           courierType,
           nestedSelection: uploadDocValues?.nestedSelection ?? null,
-          stops: payloadStops,
+          // stops: payloadStops,
         });
         await updateOrder(payload.orderId, payload);
       }

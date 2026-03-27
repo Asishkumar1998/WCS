@@ -91,7 +91,6 @@ function buildUSApostillePayload({
             nusaccRequired: nusaccRequired ?? undefined,
             instructions: additionalComments || "",
             internalReference: customerReference || "",
-            stops: stops ?? undefined,
             incomingTracking: trackingNo ?? undefined,
             incomingTrackingType: courierType ?? undefined,
           },
@@ -188,7 +187,6 @@ const buildUSApostillePayloadFromExistingOrder = ({
     nusaccRequired: nusaccRequired ?? undefined,
     instructions: additionalComments || "",
     internalReference: customerReference || "",
-    stops: stops ?? undefined,
     incomingTracking: trackingNo ?? undefined,
     incomingTrackingType: courierType ?? undefined,
   };
