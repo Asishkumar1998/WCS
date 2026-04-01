@@ -9,6 +9,7 @@ import {
   Radio,
   RadioGroup,
   TextField,
+  Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import ValidatedFileUpload from "./ValidatedFileUpload";
@@ -185,18 +186,26 @@ export default function DocumentUpload({
           />
 
           {nestedSelection === "proceedWithAttached" && (
-            <TextField
-              label="Add Number of Pages"
-              type="number"
-              value={numPages}
-              inputProps={{ min: 0 }}
-              onChange={(e) => {
-                clearValidationError();
-                setNumPages(e.target.value);
-              }}
-              size="small"
-              sx={{ width: { xs: "100%", sm: "90%" }, marginLeft: 3.5 }}
-            />
+            <Box sx={{ width: { xs: "100%", sm: "90%" }, marginLeft: 3.5 }}>
+              <TextField
+                label="Add Number of Pages"
+                type="number"
+                value={numPages}
+                inputProps={{ min: 0 }}
+                onChange={(e) => {
+                  clearValidationError();
+                  setNumPages(e.target.value);
+                }}
+                size="small"
+                fullWidth
+              />
+              <Typography
+                variant="caption"
+                sx={{ display: "block", mt: 0.75, color: "text.secondary" }}
+              >
+                First 10 pages free and additional $1 per page
+              </Typography>
+            </Box>
           )}
 
           {/* Original Mailed */}

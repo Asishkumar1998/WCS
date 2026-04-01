@@ -213,7 +213,7 @@ export default function ValidatedFileUpload({
                 variant="caption"
                 sx={{ color: "primary.main", display: "block" }}
               >
-                Have more than one file?{" "}
+                Have multiple documents?{" "}
                 <Link
                   variant="caption"
                   href="/orders/bulk-ordering"

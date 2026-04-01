@@ -32,6 +32,11 @@ export default function GlobalAuthenticationSidebar() {
         <List dense disablePadding>
           <ListItem sx={{ display: "list-item", pl: 2, mt: 2 }}>
             <Typography variant="body2" color="#1F2937" fontWeight={700}>
+              This order page is for documents that require legalization outside the United States (European Union, UK, Canada, etc).
+            </Typography>
+          </ListItem>
+          {/* <ListItem sx={{ display: "list-item", pl: 2, mt: 2 }}>
+            <Typography variant="body2" color="#1F2937" fontWeight={700}>
               WCS can provide authentication services in the country of origin
               of the document.
             </Typography>
@@ -54,7 +59,7 @@ export default function GlobalAuthenticationSidebar() {
               The process varies per country, as does the estimated processing
               times and fees.
             </Typography>
-          </ListItem>
+          </ListItem> */}
         </List>
         <Image
           src="/global-authentication.jpg"
