@@ -1027,6 +1027,7 @@ export default function USAppostileAndLegalizationForm({
               error={Boolean(fieldErrors.country)}
               helperText={fieldErrors.country || ""}
               onChange={handleCountrySelect}
+              isUSCountryRequired={false}
             />
           </Grid>
 

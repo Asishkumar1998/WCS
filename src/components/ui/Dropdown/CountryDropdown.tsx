@@ -25,6 +25,7 @@ interface CountrySelectProps {
   style?: React.CSSProperties;
   disabledCountryIds?: number[];
   pinnedCountryIds?: number[];
+  isUSCountryRequired?: boolean;
 }
 
 // Custom filter to include both short and full names
@@ -45,22 +46,27 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
   style = {},
   disabledCountryIds,
   pinnedCountryIds = [],
+  isUSCountryRequired = true,
 }) => {
   const { countries } = useSelector((state: RootState) => state.formsData);
+  const filteredCountries = countries.filter((c) => {
+    if (isUSCountryRequired) return true;
+    return c.countryId !== 190;
+  });
 
   const sortedCountries = React.useMemo(() => {
-    if (!pinnedCountryIds.length) return countries;
+    if (!pinnedCountryIds.length) return filteredCountries;
 
-    const pinned = countries.filter((c) =>
+    const pinned = filteredCountries.filter((c) =>
       pinnedCountryIds.includes(c.countryId),
     );
 
-    const rest = countries.filter(
+    const rest = filteredCountries.filter(
       (c) => !pinnedCountryIds.includes(c.countryId),
     );
 
     return [...pinned, ...rest];
-  }, [countries, pinnedCountryIds]);
+  }, [filteredCountries,countries, pinnedCountryIds]);
 
   return (
     <FormControl fullWidth={fullWidth}>

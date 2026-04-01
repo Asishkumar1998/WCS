@@ -325,6 +325,7 @@ export default function GlobalAuthenticationForm() {
               setOrigin(value);
               clearFieldErrors("origin");
             }}
+            isUSCountryRequired={false}
           />
         </Grid>
 
@@ -339,6 +340,7 @@ export default function GlobalAuthenticationForm() {
               setDestination(value);
               clearFieldErrors("destination");
             }}
+            isUSCountryRequired={false}
           />
         </Grid>
 
