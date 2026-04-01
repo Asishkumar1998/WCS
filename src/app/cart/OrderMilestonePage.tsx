@@ -1188,7 +1188,7 @@ export default function OrderMilestonePage() {
                                   ))
                                 : ""}
                                 {doc.isSoftCopyGiven == 651 &&
-                              service == "bulk-ordering" &&
+                              (service === "bulk-ordering" || service=== "notary-service" || service==="dispatch-service") &&
                               doc.attachments?.length > 0 ? (
                                 <Link
                                   onClick={() =>

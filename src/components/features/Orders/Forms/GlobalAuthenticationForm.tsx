@@ -325,6 +325,7 @@ export default function GlobalAuthenticationForm() {
               setOrigin(value);
               clearFieldErrors("origin");
             }}
+            isUSCountryRequired={false}
           />
         </Grid>
 

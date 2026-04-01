@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Grid,
   Checkbox,
@@ -41,6 +41,7 @@ import { CART_SERVICE_MAP } from "@/constants/serviceMap";
 import { getOrderIdOfCart } from "@/services/cartServices";
 import { deleteOrder } from "@/services/deleteService";
 import { getAuth } from "@/app/utils/auth";
+import DocumentUpload from "../Common/DocumentUpload";
 
 type CountryName = string;
 type DocumentTypeId = number;
@@ -56,9 +57,11 @@ interface UploadEntry {
   services: string[];
   reference: string;
   uploadedAttachments?: any;
+  comments?: string;
 }
 
-type UploadsState = Record<CountryName, Record<DocumentTypeId, UploadEntry>>;
+// type UploadsState = Record<CountryName, Record<DocumentTypeId, UploadEntry>>;
+type UploadsState = Record<string, Record<number, UploadEntry[]>>;
 
 export default function BulkOrderingFormTypeThree() {
   const [countries, setCountries] = useState<any>([]);
@@ -75,6 +78,11 @@ export default function BulkOrderingFormTypeThree() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [numDocs, setNumDocs] = useState<
+    Record<string, Record<number, string>>
+  >({});
+  const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
   const { showSnackbar } = useSnackbar();
   const [additionalServicesState] = useState(AdditionalServices);
 
@@ -194,7 +202,7 @@ export default function BulkOrderingFormTypeThree() {
       Object.entries(prev).forEach(([countryName, docEntries]) => {
         if (!validCountries.has(countryName)) return;
 
-        const filteredEntries: Record<number, UploadEntry> = {};
+        const filteredEntries: Record<number, UploadEntry[]> = {};
         Object.entries(docEntries).forEach(([docId, entry]) => {
           const numericId = Number(docId);
           if (!validDocIds.has(numericId)) return;
@@ -234,6 +242,17 @@ export default function BulkOrderingFormTypeThree() {
     }
 
     clearFieldErrors("mapping");
+    setFieldErrors((prev) => {
+      const updated = { ...prev };
+
+      Object.keys(updated).forEach((key) => {
+        if (key.startsWith("upload_")) {
+          delete updated[key];
+        }
+      });
+
+      return updated;
+    });
     setUploads((prev) => {
       const initialUploads: UploadsState = {};
 
@@ -242,17 +261,33 @@ export default function BulkOrderingFormTypeThree() {
 
         initialUploads[country] = {};
         docs.forEach((docId) => {
-          initialUploads[country][docId] = prev[country]?.[docId] ?? {
-            uploadData: {
-              uploadedFiles: [],
-              nestedSelection: null,
-              numPages: "",
-              trackingNumberNested: "",
-              courierNested: null,
-            },
-            services: [],
-            reference: "",
-          };
+          const count = Number(numDocs[country]?.[docId] ?? "1");
+          // initialUploads[country][docId] = prev[country]?.[docId] ?? {
+          //   uploadData: {
+          //     uploadedFiles: [],
+          //     nestedSelection: null,
+          //     numPages: "",
+          //     trackingNumberNested: "",
+          //     courierNested: null,
+          //   },
+          //   services: [],
+          //   reference: "",
+          //   comments: "",
+          // };
+          initialUploads[country][docId] =
+            prev[country]?.[docId] ??
+            Array.from({ length: count }, () => ({
+              uploadData: {
+                uploadedFiles: [],
+                nestedSelection: null,
+                numPages: "",
+                trackingNumberNested: "",
+                courierNested: null,
+              },
+              services: [],
+              reference: "",
+              comments: "",
+            }));
         });
       });
 
@@ -264,49 +299,80 @@ export default function BulkOrderingFormTypeThree() {
   const handleUploadDataChange = (
     country: string,
     docId: number,
+    docIndex: number,
     data: any,
   ) => {
-    clearFieldErrors("uploadEntries");
-    setUploads((prev) => ({
-      ...prev,
-      [country]: {
-        ...prev[country],
-        [docId]: {
-          ...prev[country]?.[docId],
-          uploadData: {
-            uploadedFiles: data?.uploadedFiles ?? [],
-            nestedSelection: data?.nestedSelection ?? null,
-            numPages: data?.numPages ?? "",
-            trackingNumberNested: data?.trackingNumberNested ?? "",
-            courierNested: data?.courierNested ?? null,
-          },
+    setUploads((prev) => {
+      const existing = prev[country]?.[docId] || [];
+      // const updated = [...(prev[country]?.[docId] || [])];
+      const updated = [...existing];
+
+      // updated[docIndex] = {
+      //   ...updated[docIndex],
+      //   uploadData: {
+      //     uploadedFiles: data?.uploadedFiles ?? [],
+      //     nestedSelection: data?.nestedSelection ?? null,
+      //     numPages: data?.numPages ?? "",
+      //     trackingNumberNested: data?.trackingNumberNested ?? "",
+      //     courierNested: data?.courierNested ?? null,
+      //   },
+      // };
+      const current = updated[docIndex] || {
+        uploadData: {
+          uploadedFiles: [],
+          nestedSelection: null,
+          numPages: "",
+          trackingNumberNested: "",
+          courierNested: null,
         },
-      },
-    }));
+        services: [],
+        reference: "",
+        comments: "",
+      };
+
+      updated[docIndex] = {
+        ...current,
+        uploadData: {
+          uploadedFiles: data?.uploadedFiles ?? [],
+          nestedSelection: data?.nestedSelection ?? null,
+          numPages: data?.numPages ?? "",
+          trackingNumberNested: data?.trackingNumberNested ?? "",
+          courierNested: data?.courierNested ?? null,
+        },
+      };
+      return {
+        ...prev,
+        [country]: {
+          ...prev[country],
+          [docId]: updated,
+        },
+      };
+    });
   };
 
-  const handleReferenceChange = (
+  const handleNumDocsChange = (
     country: string,
-    docId: number,
+    numericDocId: number,
     value: string,
   ) => {
-    setUploads((prev) => ({
+    const newCount = Number(value);
+
+    setNumDocs((prev) => ({
       ...prev,
       [country]: {
         ...prev[country],
-        [docId]: {
-          ...prev[country]?.[docId],
-          reference: value,
-        },
+        [numericDocId]: value,
       },
     }));
-  };
 
-  const toggleService = (country: string, docId: number, service: string) => {
     setUploads((prev) => {
-      const current =
-        prev[country]?.[docId] ??
-        ({
+      const existing = prev[country]?.[numericDocId] ?? [];
+      // const newCount = Number(value);
+
+      const updated = [...existing];
+
+      while (updated.length < newCount) {
+        updated.push({
           uploadData: {
             uploadedFiles: [],
             nestedSelection: null,
@@ -316,25 +382,108 @@ export default function BulkOrderingFormTypeThree() {
           },
           services: [],
           reference: "",
-        } as UploadEntry);
+          comments: "",
+        });
+      }
 
-      const nextServices = current.services.includes(service)
-        ? current.services.filter((s) => s !== service)
-        : [...current.services, service];
+      updated.length = newCount;
 
       return {
         ...prev,
         [country]: {
           ...prev[country],
-          [docId]: {
-            ...current,
-            services: nextServices,
-          },
+          [numericDocId]: updated,
+        },
+      };
+    });
+
+    setFieldErrors((prev) => {
+      const updatedErrors = { ...prev };
+
+      Object.keys(updatedErrors).forEach((key) => {
+        const prefix = `upload_${country}_${numericDocId}_`;
+
+        if (key.startsWith(prefix)) {
+          const index = Number(key.replace(prefix, ""));
+
+          if (index >= newCount) {
+            delete updatedErrors[key];
+          }
+        }
+      });
+
+      return updatedErrors;
+    });
+  };
+  const handleCommentsChange = (
+    country: string,
+    docId: number,
+    docIndex: number,
+    value: string,
+  ) => {
+    setUploads((prev) => {
+      const updated = [...(prev[country]?.[docId] || [])];
+      updated[docIndex].comments = value;
+
+      return {
+        ...prev,
+        [country]: {
+          ...prev[country],
+          [docId]: updated,
         },
       };
     });
   };
 
+  const handleReferenceChange = (
+    country: string,
+    docId: number,
+    docIndex: number,
+    value: string,
+  ) => {
+    setUploads((prev) => {
+      const updated = [...(prev[country]?.[docId] || [])];
+      updated[docIndex].reference = value;
+
+      return {
+        ...prev,
+        [country]: {
+          ...prev[country],
+          [docId]: updated,
+        },
+      };
+    });
+  };
+  
+  const toggleService = (
+    country: string,
+    docId: number,
+    docIndex: number,
+    service: string,
+  ) => {
+    setUploads((prev) => {
+      const updated = [...(prev[country]?.[docId] || [])];
+
+      const current = updated[docIndex];
+
+      const nextServices = current.services.includes(service)
+        ? current.services.filter((s) => s !== service)
+        : [...current.services, service];
+
+      updated[docIndex] = {
+        ...current,
+        services: nextServices,
+      };
+
+      return {
+        ...prev,
+        [country]: {
+          ...prev[country],
+          [docId]: updated,
+        },
+      };
+    });
+  };
   const validateMappings = () => {
     if (countries.length === 0) {
       return "Please select at least one country";
@@ -355,38 +504,58 @@ export default function BulkOrderingFormTypeThree() {
   };
 
   const validateUploads = () => {
-    for (const country of countries) {
-      const countryName = country?.countryShortName;
+    const errors: Record<string, string> = {};
+
+    countries.forEach((country: any) => {
+      const countryName = country.countryShortName;
       const mappedDocs = mapping[countryName] ?? [];
 
-      for (const docId of mappedDocs) {
-        const doc = documentById.get(docId);
-        const entry = uploads[countryName]?.[docId];
+      mappedDocs.forEach((docId) => {
+        const count = Number(numDocs[countryName]?.[docId] ?? "1");
 
-        if (!entry?.uploadData?.nestedSelection) {
-          return `Please select a document upload option for ${doc?.docTypeName}`;
+        for (let index = 0; index < count; index++) {
+          const entry = uploads[countryName]?.[docId]?.[index];
+
+          const key = `upload_${countryName}_${docId}_${index}`;
+
+          // If dialog never opened → entry undefined
+          if (!entry || !entry.uploadData?.nestedSelection) {
+            errors[key] = "Please select upload option";
+            continue;
+          }
+
+          if (
+            entry.uploadData.nestedSelection === "proceedWithAttached" &&
+            entry.uploadData.uploadedFiles.length === 0
+          ) {
+            errors[key] = "Please upload required file";
+          }
         }
+      });
+    });
 
-        if (
-          entry.uploadData.nestedSelection === "proceedWithAttached" &&
-          entry.uploadData.uploadedFiles.length === 0
-        ) {
-          return `Please upload at least one file for ${doc?.docTypeName}`;
-        }
-      }
-    }
-
-    return "";
+    return errors;
   };
 
   const handleDialogSave = () => {
-    const uploadError = validateUploads();
-    if (uploadError) {
-      setFieldErrors((prev) => ({ ...prev, uploadEntries: uploadError }));
-      showSnackbar(uploadError, "error");
+    const errors = validateUploads();
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      //scroll to first error
+      const firstErrorKey = Object.keys(errors)[0];
+      const element = rowRefs.current[firstErrorKey];
+
+      if (element) {
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+
       return;
     }
-    clearFieldErrors("uploadEntries");
+    setFieldErrors({});
     setDialogOpen(false);
   };
 
@@ -417,9 +586,12 @@ export default function BulkOrderingFormTypeThree() {
       }
     }
 
-    const uploadError = validateUploads();
-    if (uploadError) {
-      errors.uploadEntries = uploadError;
+    const uploadErrors = validateUploads();
+    // if (uploadError) {
+    //   errors.uploadEntries = uploadError;
+    // }
+    if (Object.keys(uploadErrors).length > 0) {
+      Object.assign(errors, uploadErrors);
     }
 
     if (Object.keys(errors).length > 0) {
@@ -443,11 +615,18 @@ export default function BulkOrderingFormTypeThree() {
         const countryName = country.countryShortName;
         const mappedDocs = mapping[countryName] ?? [];
 
+        // mappedDocs.forEach((docId) => {
+        //   const entry = uploads[countryName]?.[docId];
+        //   if (entry) {
+        //     uploadTasks.push({ countryName, docId, entry });
+        //   }
+        // });
         mappedDocs.forEach((docId) => {
-          const entry = uploads[countryName]?.[docId];
-          if (entry) {
+          const entries = uploads[countryName]?.[docId] ?? [];
+
+          entries.forEach((entry) => {
             uploadTasks.push({ countryName, docId, entry });
-          }
+          });
         });
       });
 
@@ -477,22 +656,33 @@ export default function BulkOrderingFormTypeThree() {
         if (mappedDocs.length === 0) return;
 
         const docsForCountry = mappedDocs
-          .map((docId) => {
+          .flatMap((docId) => {
             const doc = documentById.get(docId);
-            if (!doc) return null;
+            if (!doc) return [];
 
-            const result = uploadResults.find(
-              (r) => r.countryName === countryName && r.docId === docId,
-            );
-            const entry = result?.entry ?? uploads[countryName]?.[docId];
+            // const result = uploadResults.find(
+            //   (r) => r.countryName === countryName && r.docId === docId,
+            // );
+            // const entry = result?.entry ?? uploads[countryName]?.[docId];
+            const entries = uploads[countryName]?.[docId] ?? [];
 
-            return {
-              document: doc,
-              additionalServices: entry?.services ?? [],
-              uploadedAttachments: result?.uploadedAttachments ?? [],
-              uploadData: entry?.uploadData ?? null,
-              reference: entry?.reference ?? "",
-            };
+            return entries.map((entry) => {
+              const result = uploadResults.find(
+                (r) =>
+                  r.countryName === countryName &&
+                  r.docId === docId &&
+                  r.entry === entry,
+              );
+
+              return {
+                document: doc,
+                additionalServices: entry?.services ?? [],
+                uploadedAttachments: result?.uploadedAttachments ?? [],
+                uploadData: entry?.uploadData ?? null,
+                reference: entry?.reference ?? "",
+                comments: entry?.comments ?? "",
+              };
+            });
           })
           .filter(Boolean);
 
@@ -728,14 +918,20 @@ export default function BulkOrderingFormTypeThree() {
               fullWidth
               sx={{
                 height: 56,
-                borderColor: fieldErrors.uploadEntries ? "error.main" : undefined,
+                borderColor: Object.keys(fieldErrors).some((key) =>
+                  key.startsWith("upload_"),
+                )
+                  ? "error.main"
+                  : undefined,
               }}
               disabled={mappedDocsCount === 0}
               onClick={openUploadDialog}
             >
               Upload Selected Documents
             </Button>
-            {fieldErrors.uploadEntries && (
+            {Object.keys(fieldErrors).some((key) =>
+              key.startsWith("upload_"),
+            ) && (
               <Typography
                 variant="caption"
                 sx={{ mt: 0.75, display: "block", color: "error.main" }}
@@ -745,15 +941,15 @@ export default function BulkOrderingFormTypeThree() {
             )}
           </Grid>
 
-          <Grid size={{ xs: 12 }}>
+          {/* <Grid size={{ xs: 12 }}>
             <InputField
-              label="Additional Comments"
+              label="Additional Comms"
               multiline
               minRows={6}
               placeholder="Enter comments..."
               onChange={(e) => setAdditionalComments(e.target.value)}
             />
-          </Grid>
+          </Grid> */}
           <Grid size={{ xs: 12 }}>
             <Alert severity="warning" sx={{ alignItems: "flex-start" }}>
               <Typography variant="body2">
@@ -790,7 +986,28 @@ export default function BulkOrderingFormTypeThree() {
           fullWidth
         >
           <DialogTitle>Upload Documents</DialogTitle>
-          <DialogContent dividers>
+          <DialogContent
+            dividers
+            sx={{
+              maxHeight: "80vh",
+              overflowY: "auto",
+
+              /* Scrollbar styles */
+              "&::-webkit-scrollbar": {
+                width: "8px",
+              },
+              "&::-webkit-scrollbar-track": {
+                background: "#f1f1f1",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "rgba(0, 0, 0, 0.3)",
+                borderRadius: "8px",
+              },
+              "&::-webkit-scrollbar-thumb:hover": {
+                backgroundColor: "primary.main",
+              },
+            }}
+          >
             {Object.entries(uploads).map(([country, docs]) => (
               <Box key={country} sx={{ mb: 3 }}>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
@@ -817,127 +1034,235 @@ export default function BulkOrderingFormTypeThree() {
                         borderRadius: 2,
                       }}
                     >
-                      <Grid size={{ xs: 12 }}>
+                      <Grid
+                        size={{ xs: 12 }}
+                        sx={{
+                          display: "flex",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 2,
+                        }}
+                      >
                         <Typography fontWeight={600}>
                           {doc?.docTypeName ?? docId}
                         </Typography>
-                      </Grid>
-
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <MultiDocumentUpload
-                          country={countryObj}
-                          value={docData.uploadData}
-                          onChange={(data) =>
-                            handleUploadDataChange(country, numericDocId, data)
-                          }
-                        />
-                      </Grid>
-
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Grid>
-                          <FormControl
-                            fullWidth
-                            variant="outlined"
-                            sx={{
-                              "& .MuiOutlinedInput-root": {
-                                borderRadius: 1,
-                                minHeight: 56,
-                                display: "flex",
-                                alignItems: "center",
-                                px: 1.25,
-                                "&:hover fieldset": {
-                                  borderColor: "rgba(0,0,0,0.12)",
-                                },
-                                "&.Mui-focused fieldset": {
-                                  borderColor: "rgba(0,0,0,0.12)",
-                                },
-                              },
+                        <Box sx={{ width: "100px" }}>
+                          <Dropdown
+                            label="No. Of Docs"
+                            value={numDocs[country]?.[numericDocId] ?? "1"}
+                            options={["1", "2", "3", "4", "5"]}
+                            onChange={(value: string) =>
+                              handleNumDocsChange(country, numericDocId, value)
+                            }
+                            style={{
+                              "& .MuiOutlinedInput-root": { height: "35px" },
+                              "& .MuiSelect-select": { padding: "8px" },
                             }}
-                          >
-                            <InputLabel shrink>Additional Services</InputLabel>
+                          />
+                        </Box>
+                      </Grid>
 
-                            <OutlinedInput
-                              notched
-                              label="Additional Services"
-                              inputComponent={() => (
-                                <Box
+                      {docData.map((entry, docIndex) => {
+                        const errorKey = `upload_${country}_${numericDocId}_${docIndex}`;
+                        const docError = fieldErrors[errorKey];
+                        return (
+                          <Grid
+                            size={12}
+                            container
+                            spacing={2}
+                            key={`${country}_${numericDocId}_${docIndex}`}
+                            sx={{ mt: 2 }}
+                          >
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                              <div
+                                ref={(el) => {
+                                  rowRefs.current[errorKey] = el;
+                                }}
+                              >
+                                <DocumentUpload
+                                  country={countryObj}
+                                  // value={entry.uploadData}
+                                  onChange={(data) =>
+                                    handleUploadDataChange(
+                                      country,
+                                      numericDocId,
+                                      docIndex,
+                                      {
+                                        uploadedFiles: data?.uploadedFile
+                                          ? [data.uploadedFile]
+                                          : [],
+                                        nestedSelection:
+                                          data?.nestedSelection ?? null,
+                                        numPages: data?.numPages ?? "",
+                                        trackingNumberNested:
+                                          data?.trackingNumberNested ?? "",
+                                        courierNested:
+                                          data?.courierNested ?? null,
+                                      },
+                                    )
+                                  }
+                                  error={Boolean(docError)}
+                                  errorText={docError || ""}
+                                  onInteraction={() => {
+                                    setFieldErrors((prev) => {
+                                      const updated = { ...prev };
+                                      delete updated[errorKey];
+                                      return updated;
+                                    });
+                                  }}
+                                  hideBulkOrderingHint={true}
+                                />
+                              </div>
+                            </Grid>
+
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                              <Grid>
+                                <FormControl
+                                  fullWidth
+                                  variant="outlined"
                                   sx={{
-                                    width: "100%",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    overflowX: "auto",
-                                    minHeight: 48,
-                                    pl: "6px",
+                                    "& .MuiOutlinedInput-root": {
+                                      borderRadius: 1,
+                                      minHeight: 56,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      px: 1.25,
+                                      "&:hover fieldset": {
+                                        borderColor: "rgba(0,0,0,0.12)",
+                                      },
+                                      "&.Mui-focused fieldset": {
+                                        borderColor: "rgba(0,0,0,0.12)",
+                                      },
+                                    },
                                   }}
                                 >
-                                  <FormGroup
-                                    row
+                                  <InputLabel shrink>
+                                    Additional Services
+                                  </InputLabel>
+
+                                  <OutlinedInput
+                                    notched
+                                    label="Additional Services"
+                                    inputComponent={() => (
+                                      <Box
+                                        sx={{
+                                          width: "100%",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          overflowX: "auto",
+                                          minHeight: 48,
+                                          pl: "6px",
+                                        }}
+                                      >
+                                        <FormGroup
+                                          row
+                                          sx={{
+                                            flexWrap: "nowrap",
+                                            justifyContent: "flex-start",
+                                            alignItems: "center",
+                                            "& .MuiFormControlLabel-root": {
+                                              flex: "0 0 auto",
+                                              whiteSpace: "nowrap",
+                                              mr: 1.5,
+                                              ml: 0,
+                                              "& .MuiTypography-root": {
+                                                fontSize: "0.9rem",
+                                              },
+                                              "& .MuiCheckbox-root": {
+                                                transform: "scale(0.9)",
+                                                p: "2px",
+                                              },
+                                            },
+                                          }}
+                                        >
+                                          {additionalServicesState.map(
+                                            (service) => (
+                                              <FormControlLabel
+                                                key={service}
+                                                control={
+                                                  <Checkbox
+                                                    checked={entry.services.includes(
+                                                      service,
+                                                    )}
+                                                    onChange={() =>
+                                                      toggleService(
+                                                        country,
+                                                        numericDocId,
+                                                        docIndex,
+                                                        service,
+                                                      )
+                                                    }
+                                                  />
+                                                }
+                                                label={service}
+                                              />
+                                            ),
+                                          )}
+                                        </FormGroup>
+                                      </Box>
+                                    )}
                                     sx={{
-                                      flexWrap: "nowrap",
-                                      justifyContent: "flex-start",
-                                      alignItems: "center",
-                                      "& .MuiFormControlLabel-root": {
-                                        flex: "0 0 auto",
-                                        whiteSpace: "nowrap",
-                                        mr: 1.5,
-                                        ml: 0,
-                                        "& .MuiTypography-root": {
-                                          fontSize: "0.9rem",
-                                        },
-                                        "& .MuiCheckbox-root": {
-                                          transform: "scale(0.9)",
-                                          p: "2px",
-                                        },
+                                      "& .MuiOutlinedInput-input": {
+                                        height: "auto",
+                                        padding: 0,
                                       },
                                     }}
-                                  >
-                                    {additionalServicesState.map((service) => (
-                                      <FormControlLabel
-                                        key={service}
-                                        control={
-                                          <Checkbox
-                                            checked={docData.services.includes(
-                                              service,
-                                            )}
-                                            onChange={() =>
-                                              toggleService(
-                                                country,
-                                                numericDocId,
-                                                service,
-                                              )
-                                            }
-                                          />
-                                        }
-                                        label={service}
-                                      />
-                                    ))}
-                                  </FormGroup>
-                                </Box>
-                              )}
-                              sx={{
-                                "& .MuiOutlinedInput-input": {
-                                  height: "auto",
-                                  padding: 0,
-                                },
-                              }}
-                            />
-                          </FormControl>
-                        </Grid>
+                                  />
+                                </FormControl>
+                              </Grid>
 
-                        <Grid mt={3}>
-                          <InputField
-                            label="Customer Reference"
-                            value={docData.reference}
-                            onChange={(e) =>
-                              handleReferenceChange(
-                                country,
-                                numericDocId,
-                                e.target.value,
-                              )
-                            }
-                          />
-                        </Grid>
-                      </Grid>
+                              <Grid mt={3}>
+                                <InputField
+                                  label="Customer Reference"
+                                  value={entry.reference}
+                                  onChange={(e) =>
+                                    handleReferenceChange(
+                                      country,
+                                      numericDocId,
+                                      docIndex,
+                                      e.target.value,
+                                    )
+                                  }
+                                />
+                              </Grid>
+                              {/* <InputField
+                            label="Additional Comments"
+                            placeholder="Enter comments..."
+                            disabled={disabled}
+                            multiline
+                            minRows={9}
+                            value={entry.instructions?.[docIndex] ?? ""}
+                            // onChange={(e) => handleAdditionalDataChange(index, docIndex, e.target.value)}
+                            setAdditionalComments
+                            sx={{
+                              height: "100%",
+                              "& .MuiOutlinedInput-root": { height: "100%", alignItems: "flex-start" },
+                              "& textarea": { height: "100% !important", resize: "none" },
+                              mt: 2,
+                            }}
+                          /> */}
+                              <Grid size={{ xs: 12 }}>
+                                <InputField
+                                  sx={{ mt: 3 }}
+                                  label="Additional Comments"
+                                  multiline
+                                  minRows={6}
+                                  placeholder="Enter comments..."
+                                  value={entry.comments || ""}
+                                  onChange={(e) =>
+                                    handleCommentsChange(
+                                      country,
+                                      numericDocId,
+                                      docIndex,
+                                      e.target.value,
+                                    )
+                                  }
+                                />
+                              </Grid>
+                            </Grid>
+                          </Grid>
+                        );
+                      })}
                     </Grid>
                   );
                 })}
@@ -945,7 +1270,7 @@ export default function BulkOrderingFormTypeThree() {
             ))}
           </DialogContent>
 
-          <DialogActions>
+          <DialogActions sx={{ flexShrink: 0 }}>
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button variant="contained" onClick={handleDialogSave}>
               Save
