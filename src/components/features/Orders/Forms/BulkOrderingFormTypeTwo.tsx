@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -74,7 +74,9 @@ export default function BulkOrderingFormTypeTwo() {
   const [country, setCountry] = useState<any>(null);
   const [documents, setDocuments] = useState<number[]>([]);
   const [additionalServices, setAdditionalServices] = useState<string[]>([]);
-  const [generalAdditionalQuestions, setGeneralAdditionalQuestions] = useState<any[]>([]);
+  const [generalAdditionalQuestions, setGeneralAdditionalQuestions] = useState<
+    any[]
+  >([]);
   const [states, setStates] = useState<any>();
   const [additionalComments, setAdditionalComments] = useState("");
   const [loader, setLoader] = useState(false);
@@ -91,6 +93,7 @@ export default function BulkOrderingFormTypeTwo() {
   const [disabled, setDisabled] = useState(false);
 
   const [numDocs, setNumDocs] = useState<string[]>([]);
+  const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const { documentTypes } = useSelector((state: RootState) => state.formsData);
   const { showSnackbar } = useSnackbar();
@@ -269,7 +272,11 @@ export default function BulkOrderingFormTypeTwo() {
     });
   };
 
-  const handleReferenceChange = (index: number, docIndex: number, value: string) => {
+  const handleReferenceChange = (
+    index: number,
+    docIndex: number,
+    value: string,
+  ) => {
     setDocEntries((prev) => {
       const updated = [...prev];
       const entry = { ...updated[index] };
@@ -325,7 +332,6 @@ export default function BulkOrderingFormTypeTwo() {
 
   const validateUploadEntries = () => {
   const errors: Record<string, string> = {};
-  
    if (docEntries.length === 0) {
     errors["uploadEntries_general"] = "Please upload documents";
     return errors;
@@ -359,6 +365,15 @@ export default function BulkOrderingFormTypeTwo() {
     if (Object.keys(error).length > 0) {
       setFieldErrors(error);
       // showSnackbar(error, "error");
+    const firstErrorKey = Object.keys(error)[0];
+    const element = rowRefs.current[firstErrorKey];
+
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
       return;
     }
     setFieldErrors({});
@@ -468,8 +483,9 @@ export default function BulkOrderingFormTypeTwo() {
       entriesWithUploads.forEach((entry: any, ei: number) => {
         console.log(`[Entry ${ei}] type=${entry.type}`);
         (entry.uploadedAttachments ?? []).forEach((slotResult: any, si: number) => {
-          console.log(`  slot[${si}] raw result:`, JSON.stringify(slotResult));
-        });
+          console.log(`  slot[${si}] raw result:`, JSON.stringify(slotResult),);
+          },
+        );
       });
 
       const payload = buildBulkMultiDocSingleCountryPayload({
@@ -601,7 +617,7 @@ export default function BulkOrderingFormTypeTwo() {
                 py: 1,
                 // borderColor: fieldErrors.uploadEntries ? "error.main" : undefined,
                 borderColor: Object.keys(fieldErrors).some((key) =>
-                  key.startsWith("uploadEntries_")
+                  key.startsWith("uploadEntries_"),
                 )
                   ? "error.main"
                   : undefined,
@@ -684,7 +700,27 @@ export default function BulkOrderingFormTypeTwo() {
         {/* Upload Dialog */}
         <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
           <DialogTitle>Upload Documents & Enter References</DialogTitle>
-          <DialogContent>
+          <DialogContent dividers
+            sx={{
+              maxHeight: "80vh",
+              overflowY: "auto",
+
+              /* Scrollbar styles */
+              "&::-webkit-scrollbar": {
+                width: "8px",
+              },
+              "&::-webkit-scrollbar-track": {
+                background: "#f1f1f1",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "rgba(0, 0, 0, 0.3)",
+                borderRadius: "8px",
+              },
+              "&::-webkit-scrollbar-thumb:hover": {
+                backgroundColor: "primary.main",
+              },
+            }}
+          >
             {docEntries.length === 0 ? (
               <Typography color="text.secondary">No documents selected.</Typography>
             ) : (
@@ -730,11 +766,17 @@ export default function BulkOrderingFormTypeTwo() {
                     {Array.from({ length: Number(numDocs[index] ?? "1") }).map((_, docIndex) => {
                       const errorKey = `uploadEntries_${entry.docTypeId}_${docIndex}`;
                       const docError = fieldErrors[errorKey];
-                    
-                      return(
-                        <Grid size={12} container spacing={2} key={docIndex} sx={{ mt: 2 }}>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                          {/* <MultiDocumentUpload
+                      
+                    return (
+                          <Grid
+                            size={12}
+                            container
+                            spacing={2}
+                            key={docIndex}
+                            sx={{ mt: 2 }}
+                          >
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                              {/* <MultiDocumentUpload
                             country={country}
                             value={entry.uploadData?.[docIndex]}
                             onChange={(data) => handleUploadDataChange(index, docIndex, data)}
@@ -742,66 +784,105 @@ export default function BulkOrderingFormTypeTwo() {
                             errorText={fieldErrors.uploadEntries || ""}
                             onInteraction={() => clearFieldErrors("uploadEntries")}
                           /> */}
-                          <DocumentUpload
-                            country={country}
-                            onChange={(data) =>
-                              handleUploadDataChange(index, docIndex, {
-                                uploadedFiles: data?.uploadedFile ? [data.uploadedFile] : [],
-                                nestedSelection: data?.nestedSelection ?? null,
-                                numPages: data?.numPages ?? "",
-                                trackingNumberNested: data?.trackingNumberNested ?? "",
-                                courierNested: data?.courierNested ?? null,
-                              })
-                            }
-
-                            error={Boolean(docError)}
-                            errorText={docError || ""}
-                            onInteraction={() => {
-                              setFieldErrors((prev) => {
-                                const updated = { ...prev };
-                                delete updated[errorKey];
-                                return updated;
-                              });
-                            }}
-
-                            hideBulkOrderingHint={true}
-                    />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }} sx={{ display: "flex", flexDirection: "column" }}>
-                          <InputField
-                            fullWidth
-                            label="Customer Reference"
-                            value={entry.reference?.[docIndex] ?? ""}
-                            placeholder="Enter reference"
-                            onChange={(e) => handleReferenceChange(index, docIndex, e.target.value)}
-                          />
-                          <InputField
-                            label="Additional Comments"
-                            placeholder="Enter comments..."
-                            disabled={disabled}
-                            multiline
-                            minRows={9}
-                            value={entry.instructions?.[docIndex] ?? ""}
-                            onChange={(e) => handleAdditionalDataChange(index, docIndex, e.target.value)}
-                            sx={{
-                              height: "100%",
-                              "& .MuiOutlinedInput-root": { height: "100%", alignItems: "flex-start" },
-                              "& textarea": { height: "100% !important", resize: "none" },
-                              mt: 2,
-                            }}
-                          />
-                        </Grid>
-                      </Grid>
-                      )
-                    })}
+                              <div
+                                ref={(el) => {
+                                  rowRefs.current[errorKey] = el;
+                                }}
+                              >
+                                <DocumentUpload
+                                  country={country}
+                                  onChange={(data) =>
+                                    handleUploadDataChange(index, docIndex, {
+                                      uploadedFiles: data?.uploadedFile
+                                        ? [data.uploadedFile]
+                                        : [],
+                                      nestedSelection:
+                                        data?.nestedSelection ?? null,
+                                      numPages: data?.numPages ?? "",
+                                      trackingNumberNested:
+                                        data?.trackingNumberNested ?? "",
+                                      courierNested:
+                                        data?.courierNested ?? null,
+                                    })
+                                  }
+                                  error={Boolean(docError)}
+                                  errorText={docError || ""}
+                                  onInteraction={() => {
+                                    setFieldErrors((prev) => {
+                                      const updated = { ...prev };
+                                      delete updated[errorKey];
+                                      return updated;
+                                    });
+                                  }}
+                                  hideBulkOrderingHint={true}
+                                />
+                              </div>
+                            </Grid>
+                            <Grid
+                              size={{ xs: 12, sm: 6 }}
+                              sx={{ display: "flex", flexDirection: "column" }}
+                            >
+                              <InputField
+                                fullWidth
+                                label="Customer Reference"
+                                value={entry.reference?.[docIndex] ?? ""}
+                                placeholder="Enter reference"
+                                onChange={(e) =>
+                                  handleReferenceChange(
+                                    index,
+                                    docIndex,
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                              <InputField
+                                label="Additional Comments"
+                                placeholder="Enter comments..."
+                                disabled={disabled}
+                                multiline
+                                minRows={9}
+                                value={entry.instructions?.[docIndex] ?? ""}
+                                onChange={(e) =>
+                                  handleAdditionalDataChange(
+                                    index,
+                                    docIndex,
+                                    e.target.value,
+                                  )
+                                }
+                                sx={{
+                                  height: "100%",
+                                  "& .MuiOutlinedInput-root": {
+                                    height: "100%",
+                                    alignItems: "flex-start",
+                                  },
+                                  "& textarea": {
+                                    height: "100% !important",
+                                    resize: "none",
+                                  },
+                                  mt: 2,
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                        );
+                      },
+                    )}
                   </Grid>
                 ))}
               </Grid>
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDialogOpen(false)} color="secondary">Cancel</Button>
-            <Button onClick={handleDialogSave} variant="contained" color="primary">Save</Button>
+            <Button onClick={() => setDialogOpen(false)} color="secondary">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDialogSave}
+              variant="contained"
+              color="primary"
+            >
+              Save
+            </Button>
           </DialogActions>
         </Dialog>
       </FormLayout>

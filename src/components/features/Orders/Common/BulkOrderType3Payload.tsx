@@ -87,7 +87,7 @@ const buildBulkDoc = ({
 const buildBulkMultiDocMultiCountryPayload = ({
   countries,
   countryDocuments,
-  additionalComments,
+  // additionalComments,
 }: {
   countries: any[];
   countryDocuments: Record<
@@ -98,6 +98,7 @@ const buildBulkMultiDocMultiCountryPayload = ({
       uploadedAttachments: any[];
       uploadData: any;
       reference?: string;
+      comments?: string;
     }[]
   >;
   additionalComments?: string;
@@ -123,7 +124,7 @@ const buildBulkMultiDocMultiCountryPayload = ({
           additionalServices: entry.additionalServices,
           uploadedAttachments: attachments,
           customerReference: entry.reference,
-          additionalComments,
+          additionalComments:entry.comments,
           numberOfPages: entry.uploadData?.numPages ?? "",
           trackingNo: entry.uploadData?.trackingNumberNested,
           courierType: entry.uploadData?.courierNested,
