@@ -22,6 +22,7 @@ import { getCustomer } from "@/services/userService";
 import RetailServiceCard from "@/components/features/Dashboard/ServiceCardRetail";
 import ChartsWrapper from "@/components/ui/Charts/ChartsWrapper";
 import { getAuth } from "./utils/auth";
+import { GoogleTagManager } from "@next/third-parties/google";
 
 export default function HomePage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -85,6 +86,8 @@ export default function HomePage() {
   if (loading && !customer) return <Loader />;
 
   return isCorporateCustomer ? (
+    <>
+    <GoogleTagManager gtmId="GTM-M523SLXH" />
     <Container maxWidth="xl" sx={{ px: 0, py: 2 }}>
       <Box sx={{ flexGrow: 1, pt: 3, mt: "75px" }}>
         <Grid container spacing={3}>
@@ -111,7 +114,11 @@ export default function HomePage() {
         </Grid>
       </Box>
     </Container>
+    </>
+    
   ) : (
+    <>
+    <GoogleTagManager gtmId="GTM-M523SLXH" />
     <Container maxWidth="xl" sx={{ px: 0, py: 2 }}>
       <Box sx={{ flexGrow: 1, pt: 3, mt: "64px" }}>
         <Grid container spacing={3}>
@@ -142,5 +149,7 @@ export default function HomePage() {
         </Grid>
       </Box>
     </Container>
+    </>
+    
   );
 }
