@@ -572,7 +572,7 @@ export default function OrderMilestonePage() {
 
       return {
         label: `${stopMeta.description || s.description || ""}`,
-        subLabel: `${processDays} business days`,
+        subLabel: `${processDays===0?1:processDays} business days`, 
       };
     });
   };

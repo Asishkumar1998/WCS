@@ -23,7 +23,7 @@ import {
   buildNotaryDispatchPayloadFromExistingOrder,
   buildNotaryPayload,
 } from "../Common/NotaryDispatchPayload";
-import { postTranslationOrder, uploadFile } from "@/services/formsService";
+import { createUSApostilleOrder, postTranslationOrder, uploadFile } from "@/services/formsService";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import { updateOrder } from "@/services/paymentService";
 import DocumentDropdown from "@/components/ui/Dropdown/DocumentDropdown";
@@ -48,7 +48,7 @@ export interface DocType {
 export default function DispatchServiceForm() {
   const [country, setCountry] = useState<any>(null);
   const [document, setDocument] = useState<DocType | null>(null);
-  const [additionalServices, setAdditionalServices] = useState<string[]>([]);
+  const [additionalServices, setAdditionalServices] = useState<string[]>(["Pre-Scan"]);
   const [attachment, setAttachment] = useState<any>();
   const [basePayload, setBasePayload] = useState<any>(null);
   const [customerReference, setCustomerReference] = useState<any>();
@@ -175,7 +175,8 @@ export default function DispatchServiceForm() {
           courierType,
           nestedSelection: uploadDocValues?.nestedSelection ?? null,
         });
-        await postTranslationOrder(payload);
+        await createUSApostilleOrder(payload);
+        showSnackbar("Order created successfully", "success");
       } else {
         payload = buildNotaryDispatchPayloadFromExistingOrder({
           basePayload,
@@ -384,7 +385,8 @@ export default function DispatchServiceForm() {
                                       : prev.filter((s) => s !== service),
                                   );
                                 }}
-                                disabled={disabled}
+                                disabled={disabled || service!=="Pre-Scan"}
+                                readOnly
                               />
                             }
                             label={service}
