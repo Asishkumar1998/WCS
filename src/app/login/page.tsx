@@ -25,6 +25,7 @@ import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import { forgotPassword, getCustomerId } from "@/services/userService";
 import ReCAPTCHA from "@/components/features/Orders/Common/ClientRecaptcha";
 import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
+import { GoogleTagManager } from "@next/third-parties/google";
 
 const CustomerLogin = () => {
   const router = useRouter();
@@ -100,6 +101,8 @@ const CustomerLogin = () => {
   };
 
   return (
+    <>
+    <GoogleTagManager gtmId="GTM-M523SLXH" />
     <Box
       sx={{
         minHeight: "100vh",
@@ -402,6 +405,9 @@ const CustomerLogin = () => {
       </Box>
 
     </Box>
+    </>
+    
+    
   );
 };
 
