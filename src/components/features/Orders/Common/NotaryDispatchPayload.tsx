@@ -62,8 +62,8 @@ function buildNotaryPayload({
             docCategoryId: isNotary ? 528 : 529,
             docTypeId: 0,
             isRush: additionalServices.includes("Rush") ? true : false,
-            isScan: additionalServices.includes("Pre Scan") ? true : false,
-            isPostScan: additionalServices.includes("Post Scan") ? true : false,
+            isScan: additionalServices.includes("Pre-Scan") ? true : false,
+            isPostScan: additionalServices.includes("Post-Scan") ? true : false,
             isDispatch: isNotary ? false : true,
             isNotarized: isNotary ? YES : NO,
 
