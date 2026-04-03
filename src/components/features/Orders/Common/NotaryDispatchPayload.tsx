@@ -74,7 +74,7 @@ function buildNotaryPayload({
             isSoftCopyGiven: shouldProcessAttached ? YES : NO,
             isGeneralSoftCopy: shouldProcessAttached ? YES : NO,
 
-            instructions: additionalComments || "",
+            instructions: additionalComments || null,
             internalReference: customerReference || "",
 
             CIAmount: "0",
@@ -141,7 +141,7 @@ const buildNotaryDispatchPayloadFromExistingOrder = ({
     isRush: additionalServices.includes("Rush"),
     isDispatch: isNotary ? false : true,
     isNotarized: isNotary ? YES : NO,
-    instructions: additionalComments || "",
+    instructions: additionalComments || null,
     attachments,
     internalReference: customerReference || "",
     CIAmount: "0",
