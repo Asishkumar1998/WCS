@@ -26,6 +26,7 @@ function buildVisaPayload({
             docCategoryId: 526,
             isPostScan: true,
             originCountryId: form.originCountryOfPassPort,
+            instructions: form.additionalComments,
             visa: [
               {
                 typeOfPassport: form.typeOfPassport,
