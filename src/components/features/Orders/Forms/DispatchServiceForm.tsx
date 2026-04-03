@@ -73,7 +73,7 @@ export default function DispatchServiceForm() {
   const resetForm = () => {
     setCountry(null);
     setDocument(null);
-    setAdditionalServices([]);
+    setAdditionalServices(["Pre-Scan"]);
     setAdditionalServicesState([...AdditionalServices]);
     setDisabled(false);
     setDropdownOpen(false);
