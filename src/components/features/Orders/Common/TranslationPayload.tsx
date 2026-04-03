@@ -20,12 +20,14 @@ function buildTranslationPayload({
   attachments,
   coverLetter,
   shippingLabel,
+  additionalComments,
 }: {
   originalLangId: any;
   translatedLangId: any;
   attachments: any;
   coverLetter: any;
   shippingLabel: any;
+  additionalComments?: string;
 }) {
   const userId = getAuthValue("userId");
   const customerId = getAuthValue("customerId");
@@ -53,6 +55,7 @@ function buildTranslationPayload({
             attachments,
             coverLetter,
             shippingLabel,
+            instructions: additionalComments || null,
           },
         ],
       },
