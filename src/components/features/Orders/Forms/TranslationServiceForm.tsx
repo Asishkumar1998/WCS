@@ -49,6 +49,7 @@ export default function TranslationServiceForm() {
   const [loader, setLoader] = useState(false);
   const [loaderMessage, setLoaderMessage] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [additionalComments, setAdditionalComments] = useState("");
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -163,6 +164,7 @@ export default function TranslationServiceForm() {
         attachments,
         coverLetter,
         shippingLabel,
+        additionalComments,
       });
       await postTranslationOrder(payload);
       window.location.href = "/cart?service=translation-service";
@@ -306,6 +308,8 @@ export default function TranslationServiceForm() {
           <InputField
             label="Additional Comments"
             placeholder="Add Additional Comments"
+            value={additionalComments}
+            onChange={(e) => setAdditionalComments(e.target.value)}
             multiline
             rows={5}
             sx={{

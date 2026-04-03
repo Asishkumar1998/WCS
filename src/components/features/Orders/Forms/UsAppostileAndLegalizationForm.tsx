@@ -755,6 +755,7 @@ export default function USAppostileAndLegalizationForm({
       console.error(error);
       return false;
     } finally {
+      setAdditionalComments(null);
       setIsSubmitting(false);
     }
   };

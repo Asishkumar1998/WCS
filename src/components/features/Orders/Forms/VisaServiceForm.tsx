@@ -62,7 +62,7 @@ type Form = {
   isExpedited: boolean;
   expeditedDate: Dayjs | null;
   customerReference: string;
-  additonalComments: string;
+  additionalComments: string;
 };
 
 const initialForm: Form = {
@@ -83,7 +83,7 @@ const initialForm: Form = {
   isExpedited: false,
   expeditedDate: null,
   customerReference: "",
-  additonalComments: "",
+  additionalComments: "",
 };
 
 type StateType = {
@@ -595,7 +595,7 @@ export default function VisaServiceForm() {
             onChange={(e) =>
               setForm((prev) => ({
                 ...prev,
-                additonalComments: e.target.value,
+                additionalComments: e.target.value,
               }))
             }
           />
