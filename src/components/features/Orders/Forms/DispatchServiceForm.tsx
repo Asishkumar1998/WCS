@@ -198,6 +198,7 @@ export default function DispatchServiceForm() {
       console.error(error);
       return false;
     } finally {
+      setCustomerReference("");
       setAdditionalComments(null);
       setIsSubmitting(false);
     }

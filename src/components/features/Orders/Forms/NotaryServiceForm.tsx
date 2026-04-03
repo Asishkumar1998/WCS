@@ -221,6 +221,7 @@ export default function NotaryServiceForm() {
       console.error(error);
       return false;
     } finally {
+      setCustomerReference("");
       setAdditionalComments(null);
       setIsSubmitting(false);
     }
