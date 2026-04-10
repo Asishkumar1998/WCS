@@ -192,7 +192,7 @@ export default function TrackOrderDialog({
       statusName: doc?.docStatusName,
       createdAt: doc?.createdAt || orderDetails?.createdAt || null,
       processStart: doc?.processStart || null,
-      estDate: doc?.docStatusName==="Completed"? doc?.actReceiveBackDate :
+      estDate: doc?.docStatusName==="Completed" && doc?.completionDate ? doc?.completionDate :
         doc?.estCompletionDate ||
         orderDetails?.estDateOfCompletion ||
         null,
@@ -356,7 +356,7 @@ export default function TrackOrderDialog({
                 // lastStop?.estReceiveBackDate ||
                 // "",
                 completed: docTimes?.statusName==="Completed" && finalCompleted,
-                description: docTimes?.statusName!=="Completed"? "Est. Completion Date" : "Completion Date",
+                description: docTimes?.statusName!=="Completed"? "Est. Completion Date" : null,
               };
 
               const allSteps = [...baseSteps, ...dynamicSteps, finalStep];
