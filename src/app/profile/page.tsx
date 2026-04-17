@@ -183,11 +183,12 @@ export default function ProfilePage() {
     setProfileData(profileResponse);
   };
   const getUsers = async () => {
-    if (!profileData) return;
+    const auth = getAuth();
+    if(!auth) return;
     try {
       setUsersLoading(true);
       const usersResponse = await getAllUsersForCompany(
-        Number(profileData?.user?.companyName),
+        Number(auth.customerId),
       );
       setUsers(Array.isArray(usersResponse) ? usersResponse : []);
     } catch (error) {
@@ -532,8 +533,8 @@ export default function ProfilePage() {
         >
           <Tab label="Profile Info" />
           <Tab label="Addresses" />
-          {/* Only show Users tab if level === 2 */}
-          {profileData?.user?.profileId === 2 && <Tab label="Users" />}
+          {/* Only show Users tab for Corporate and Super Admins */}
+          {(profileData?.user?.profileId === 2 || profileData?.user?.profileId === 54) && <Tab label="Users" />}
         </Tabs>
 
         {/* Profile Info */}
@@ -1000,7 +1001,7 @@ export default function ProfilePage() {
         />
 
         {/* Users */}
-        {profileData?.user?.profileId === 2 && (
+        {(profileData?.user?.profileId === 2 || profileData?.user?.profileId === 54) && (
           <TabPanel value={tab} index={2}>
             {/* Header */}
             <Box
@@ -1218,7 +1219,7 @@ export default function ProfilePage() {
                         >
                           Status
                         </TableCell>
-                        <TableCell
+                        {/* <TableCell
                           sx={{
                             backgroundColor: "primary.main",
                             color: "#fff",
@@ -1226,7 +1227,7 @@ export default function ProfilePage() {
                           }}
                         >
                           Action
-                        </TableCell>
+                        </TableCell> */}
                       </TableRow>
                     </TableHead>
 
@@ -1298,7 +1299,7 @@ export default function ProfilePage() {
                                   )}
                               </TableCell>
 
-                              <TableCell sx={{ textAlign: "center" }}>
+                              {/* <TableCell sx={{ textAlign: "center" }}>
                                 {user.status === "Pending" && (
                                   <LoadingButton
                                     loading={adLoading === user.userId}
@@ -1321,7 +1322,7 @@ export default function ProfilePage() {
                                     Deactivate
                                   </LoadingButton>
                                 )}
-                              </TableCell>
+                              </TableCell> */}
                             </TableRow>
                           ) : null,
                         )}
