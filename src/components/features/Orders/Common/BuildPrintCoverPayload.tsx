@@ -89,6 +89,7 @@ export const buildPrintCoverPayload = async (
       isRush: doc.isRush,
       isScan: doc.isScan,
       isPostScan: doc.isPostScan,
+      isGeneralSoftCopy:doc.isGeneralSoftCopy,
 
       internalReference: order.orderType == 1102 ? doc.visa[0].customerReference : doc.internalReference,
       invoiceReference: doc.invoiceReference,

@@ -312,7 +312,9 @@ export default function GlobalAuthenticationForm() {
         </DialogActions>
       </Dialog>
       <OverlayLoader open={loader} message={loaderMessage} />
-      <FormLayout title="Global Authentication" onProceed={handleSubmit}>
+      <FormLayout title="Global Authentication (Canada, Europe, UK & Others)" onProceed={handleSubmit}>
+        <span style={{fontSize:"13px",fontWeight:"bold",color:"rgba(0,0,0,0.57)"}}>This order page is for documents that require legalization outside the United States (European Union, UK, Canada, etc).
+</span>
         {/* Origin + Destination */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <CountrySelect
@@ -460,9 +462,9 @@ export default function GlobalAuthenticationForm() {
         <Grid size={{ xs: 12 }}>
           <InputField
             label="Additional Comments"
-            placeholder="Add Additional Comments"
+            placeholder="Please mention any special legalization requirements for your documents"
             multiline
-            rows={2}
+            maxRows={5}
             onChange={(e) => setAdditionalComments(e.target.value)}
           />
         </Grid>
