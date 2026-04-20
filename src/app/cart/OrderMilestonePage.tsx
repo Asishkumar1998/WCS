@@ -164,6 +164,7 @@ const E_COPY_REGION_ID = -1;
 export default function OrderMilestonePage() {
   const [allDocs, setAllDocs] = useState<any>([]);
   const [paymentType, setPaymentType] = useState("");
+  const [fedExFee, setFedExFee] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
   const [form, setForm] = useState<Record<string, string>>(initialForm);
   const [country, setCountry] = useState<any>(null);
@@ -492,7 +493,7 @@ export default function OrderMilestonePage() {
   );
 
   if (checked.option === "courier" && !hasFedex60Fee)
-    totalAmount = (Number(totalAmount) + 100).toFixed(2);
+    totalAmount = (Number(totalAmount) + fedExFee).toFixed(2);
 
   const getCustomerDetails = async () => {
     const customerDetails = await getCustomer(String(customerId));
@@ -538,6 +539,15 @@ export default function OrderMilestonePage() {
     else setShowCard(false);
   }, [service, paymentType]);
 
+  useEffect(() => {
+    console.log("regionss", region);
+    if (region) {
+      const reg = allRegions?.find((r: any) => r.regionId === region.regionId);
+      console.log("reg", reg);
+      setFedExFee(reg.feeAmount);
+    }
+  }, [region]);
+
   const downloadAttachments = async (attachment: {
     attachmentId: string;
     fileName: string;
@@ -572,7 +582,7 @@ export default function OrderMilestonePage() {
 
       return {
         label: `${stopMeta.description || s.description || ""}`,
-        subLabel: `${processDays===0?1:processDays} business days`, 
+        subLabel: `${processDays === 0 ? 1 : processDays} business days`,
       };
     });
   };
@@ -647,8 +657,7 @@ export default function OrderMilestonePage() {
         "Please select Shipping Label/Return Instructions";
     }
     if (!isPolicyAccepted) {
-      nextSectionErrors.policy =
-        "Please accept Cancellation & Refund Policy.";
+      nextSectionErrors.policy = "Please accept Cancellation & Refund Policy.";
     }
     if (paymentType == "") {
       nextSectionErrors.paymentType = "Please select payment type";
@@ -714,7 +723,7 @@ export default function OrderMilestonePage() {
       setCard(paymentCard);
       let response;
       if (showCard) {
-        paymentCard.amount = Number(totalAmount) + totalAmount * 0.035;
+        paymentCard.amount = (Number(totalAmount) + totalAmount * 0.035).toFixed(2);
         response = await savePayment(paymentCard);
       } else {
         const paymentOption =
@@ -1286,7 +1295,7 @@ export default function OrderMilestonePage() {
                                       disablePadding
                                       sx={{ py: 0.5, px: 1 }}
                                     >
-                                      <ListItemText
+                                      {/* <ListItemText
                                         primaryTypographyProps={{
                                           variant: "body2",
                                           fontSize: 13,
@@ -1295,7 +1304,7 @@ export default function OrderMilestonePage() {
                                         primary={`${
                                           doc.instructionsList.length + 1
                                         }. Based on the state of origin of a document, additional shipping fees may be applied to ship the document to a consulate outside of Washington, DC.`}
-                                      />
+                                      /> */}
                                     </ListItem>
                                   )}
                                 </List>
@@ -1320,10 +1329,13 @@ export default function OrderMilestonePage() {
                                   })}
                                   {checked.option === "courier" &&
                                     docIndex === 0 &&
-                                    !hasFedex60Fee && (
+                                    !hasFedex60Fee &&
+                                    fedExFee > 0 && (
                                       <ListItem>
                                         <ListItemText primary="Fedex Return Fee" />
-                                        <Typography>$100.00</Typography>
+                                        <Typography>
+                                          ${fedExFee.toFixed(2)}
+                                        </Typography>
                                       </ListItem>
                                     )}
                                   <Divider />
@@ -1345,7 +1357,7 @@ export default function OrderMilestonePage() {
                                                 a + b.feeAmount * b.quantity,
                                               0,
                                             ),
-                                          ) + 100
+                                          ) + fedExFee
                                         ).toFixed(2)}
                                       </Typography>
                                     ) : (

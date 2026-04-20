@@ -2,6 +2,7 @@
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
 import { SIDEBAR_CONTENT } from "@/components/features/Orders/Sidebars/US Rules/us-auth-sidebar.content";
+import { Margin } from "@mui/icons-material";
 
 (pdfMake as any).vfs = (pdfFonts as any).vfs;
 
@@ -69,6 +70,7 @@ export interface PrintCoverPayload {
     docCategoryName?: string;
     createdAt?: string | Date;
     instructions?: string;
+    isGeneralSoftCopy?: string;
     instructionsList?: string[];
     invoiceReference?: string;
     internalReference?: string;
@@ -267,6 +269,13 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                       bold: true,
                       background: doc.isRush ? "#FD958D" : "#ffffff",
                     },
+                    {
+                      text:doc.isGeneralSoftCopy ==="651" ? "Process the document with attachment" :"Customer is sending original document",
+                      bold: true,
+                      // background:doc.isGeneralSoftCopy ==="651" ? "#FFFF00" : "#00FFFF",
+                      Margin: [5, 0, 0, 0],
+                      italics: true,
+                    }    
                   ],
                 },
                 // Middle column - Customer details
