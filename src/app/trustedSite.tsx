@@ -4,7 +4,7 @@
 import Script from "next/script";
 
 
-const YOUR_DOMAIN = "express.wcss.com"; // ← replace with your real domain
+const DOMAIN = "express.wcss.com"; 
 
 export default function TrustedSiteFloating() {
   
@@ -14,7 +14,7 @@ export default function TrustedSiteFloating() {
       id="trustedsite-floating"
       src="https://cdn.ywxi.net/js/1.js"
       strategy="afterInteractive"
-      data-host={YOUR_DOMAIN}
+      data-host={DOMAIN}
     />
   );
 }
