@@ -15,6 +15,8 @@ import { useEffect, useState } from "react";
 import { getAuth } from "./utils/auth";
 import Script from "next/script";
 import GoDaddySeal from "./goDaddy";
+import TrustedSiteCertified from "./trustedCertified";
+import TrustedSiteFloating from "./trustedSite";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -107,6 +109,8 @@ export default function RootLayout({
                 <div style={{height: (pathname==="/login"|| pathname==="/signup")?`0px`:`35px`,width: "100%",backgroundColor: (pathname==="/login"|| pathname==="/signup") ?"transparent":"white",
                   position: "fixed",top: 0,left: 0,zIndex: 999
                   }} >
+                    <TrustedSiteCertified/>
+                    <TrustedSiteFloating/>
                   <GoDaddySeal />
                 </div>
                 <SnackbarProvider>
