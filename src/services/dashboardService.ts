@@ -43,6 +43,15 @@ export const updateDefaultAddress = async (
   return response.data;
 };
 
+export const getAccesibleCustomers = async()=>{
+  const response = await axiosInstance.get("customers/accessibleCustomers");
+  return response.data;
+}
+export const getAccessibleCustomersUsers = async(customerIds: number[])=>{
+  const response = await axiosInstance.get(`users?companyName.in=${customerIds.join(",")}`);
+  return response.data;
+}
+
 export const addAddress = async (payload: any) => {
   const response = await axiosInstance.post("addresses", payload);
   return response.data;

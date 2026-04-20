@@ -16,6 +16,7 @@ import {
   Stack,
   Paper,
   TablePagination,
+  Tooltip,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PrintIcon from "@mui/icons-material/Print";
@@ -59,6 +60,7 @@ import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/app/store/store";
 import { fetchFormsSharedData } from "@/app/store/features/formsSlice";
+import { getAccesibleCustomers, getAccessibleCustomersUsers } from "@/services/dashboardService";
 
 //Below are the Interfaces to handle the API response
 interface Instruction {
@@ -158,6 +160,8 @@ interface Filters {
   userId: number;
   pageNumber: number;
   rowsPerPage: number;
+  customerId?: number | null;
+  selectedUserId?: number | null; 
 }
 
 const ORDER_STATUS_OPTIONS = [
@@ -220,6 +224,8 @@ export default function OrdersPage() {
     userId: Number(userId),
     pageNumber: 1,
     rowsPerPage: 10,
+    customerId: null,
+    selectedUserId: null,
   });
   const [conversationDrawerOpen, setConversationDrawerOpen] = useState(false);
   const [trackOpen, setTrackOpen] = React.useState(false);
@@ -234,6 +240,11 @@ export default function OrdersPage() {
   const [loader, setLoader] = useState(false);
   const [loaderMessage, setLoaderMessage] = useState<string>("");
   const allOrderIds = data?.orders?.map((o) => o.orderId) ?? [];
+  const [accessibleCustomers, setAccessibleCustomers] = useState<any[]>([]);
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [selectedCustomerUsers, setSelectedCustomerUsers] = useState<any[]>([]);
+  const [user, setUser] = useState<any | null>(null);
+
   const { showSnackbar } = useSnackbar();
   const allExpanded =
     expanded.length === allOrderIds.length && allOrderIds.length > 0;
@@ -560,6 +571,61 @@ export default function OrdersPage() {
     }
   };
 
+  const fetchAccessibleCustomers = async () => {
+      try {
+        const customers = await getAccesibleCustomers();
+        const users = await getUser(String(userId));
+        
+        setUser(users[0]);
+        setAccessibleCustomers(customers);
+      } catch (error) {
+        console.error("Error fetching accessible customers:", error);
+      }
+  };
+  useEffect(() => {
+    if (userId) {
+      fetchAccessibleCustomers();
+    }
+  }, [userId]);
+
+  const fetchAccessibleCustomersUsers = async (customerIds: number[]) => {  
+    try {
+      const users = await getAccessibleCustomersUsers(customerIds);
+      setUsersList(users);
+      setSelectedCustomerUsers(users)
+    } catch (error) {
+      console.error("Error fetching users for accessible customers:", error);
+    }
+
+  };
+
+  useEffect(()=>{
+    if(accessibleCustomers.length > 0){
+      const customers = accessibleCustomers.map((c: any) => c.customerId);
+      fetchAccessibleCustomersUsers(customers);
+    }
+  },[accessibleCustomers])
+
+  useEffect(()=>{
+    if(filters.customerId){
+      const users = usersList.filter((u: any) => Number(u.companyName) === Number(filters.customerId));
+      setSelectedCustomerUsers(users);
+    }else{
+      setSelectedCustomerUsers(usersList);
+    }
+  },[filters.customerId])
+
+  useEffect(()=>{
+    if(usersList.find((u: any) => u.userId === filters.selectedUserId)?.companyName !== filters.customerId){
+      setFilters({
+                    ...filters,
+                    selectedUserId:null
+                  })
+    }
+
+  },[filters.customerId])
+
+
   if (loading) return <Loader />;
 
   return (
@@ -698,6 +764,54 @@ export default function OrdersPage() {
               />
             </Grid>
 
+            {user && user.profileId===54 && <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Dropdown
+                label="Select Corporate/Business"
+                options={(accessibleCustomers.map((c: any) => c.customerName).sort((a, b) => a.localeCompare(b)))}
+                value={
+                  accessibleCustomers.find(
+                    (c: any) => c.customerId === filters.customerId,
+                  )?.customerName ?? ""
+                }
+                onChange={(val) =>
+                  setFilters({
+                    ...filters,
+                    customerId:
+                      accessibleCustomers.find((c: any) => c.customerName === val)?.customerId ??
+                      0,
+                  })
+                }
+              />
+            </Grid>}
+            
+            {user && (user.profileId===2 || user.profileId===54) && <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+             
+              <Dropdown
+                label="Select User"
+                options={(selectedCustomerUsers)
+                .map((u: any) => (u.name + " " + (u?.lastName ?? "")).trim())
+                .sort((a, b) => a.localeCompare(b))
+              }
+                value={(() => {
+                  const user = selectedCustomerUsers.find(
+                    (u: any) => u.userId === filters.selectedUserId
+                  );
+                  return user ? (user.name + " " + (user?.lastName ?? "")).trim() : "";
+                })()}
+                onChange={(val) =>
+                  setFilters({
+                    ...filters,
+                    selectedUserId:
+                      selectedCustomerUsers.find(
+                        (u: any) =>
+                          (u.name + " " + (u?.lastName ?? "")).trim() === val
+                      )?.userId ?? 0,
+                  })
+                }
+              />
+            </Grid> }
+            
+
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <DateInput
                 label="From Date"
@@ -744,6 +858,8 @@ export default function OrdersPage() {
                   userId: Number(userId),
                   pageNumber: 1,
                   rowsPerPage: 10,
+                  customerId: null,
+                  selectedUserId: null,
                 });
                 setCountry(null);
               }}
@@ -839,6 +955,8 @@ export default function OrdersPage() {
                   userId: Number(userId),
                   pageNumber: 1,
                   rowsPerPage: 10,
+                  customerId: null,
+                  selectedUserId: null,
                 });
                 setCountry(null);
               }}
@@ -865,9 +983,20 @@ export default function OrdersPage() {
                   justifyContent="space-between"
                   width="100%"
                 >
-                  <Typography fontWeight="bold">
+                  <Typography fontWeight="bold" sx={{display: "flex",alignItems: "center"}}>
                     Created: {dayjs(order.orderCreatedAt).format("MMM D, YYYY")}{" "}
-                    | Order ID: {order.orderId}
+                    | Order ID: {order.orderId} | {" "} User:
+                    <Tooltip title={order.docs[0]?.name ?? ""} placement="top" arrow >
+                    <Typography  sx={{
+                      marginLeft: 1,
+                    fontWeight: "bold",
+                    maxWidth: "110px",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",}}>
+                      {order.docs[0]?.name ?? "N/A"}
+                    </Typography>
+                    </Tooltip>
                   </Typography>
 
                   <Stack direction="row" spacing={1} flexWrap="wrap">
