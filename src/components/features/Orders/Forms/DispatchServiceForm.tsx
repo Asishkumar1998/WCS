@@ -228,6 +228,7 @@ export default function DispatchServiceForm() {
       }
       const payload = {
         userId: userId,
+        customerId: customerId,
         docCategoryId: 529,
         ...basePayload,
       };
