@@ -51,6 +51,7 @@ export default function Navbar() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [query, setQuery] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const [docCount, setDocCount] = useState<number | null>(null);
   const [welcomeMessage, setWelcomeMessage] = useState<any>(null);
   const [isWelcomeMessageOpen, setIsWelcomeMessageOpen] = useState(false);
@@ -168,6 +169,7 @@ export default function Navbar() {
 
     if (auth) {
       setUserId(auth.userId);
+      setCustomerId(auth.customerId);
     }
   }, []);
 
@@ -237,6 +239,7 @@ export default function Navbar() {
       }
       const payload = {
         userId: userId,
+        customerId: customerId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);

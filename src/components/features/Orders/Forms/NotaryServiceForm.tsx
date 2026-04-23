@@ -253,6 +253,7 @@ export default function NotaryServiceForm() {
       }
       const payload = {
         userId: userId,
+        customerId: customerId,
         docCategoryId: 528,
         ...basePayload,
       };

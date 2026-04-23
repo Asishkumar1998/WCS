@@ -142,6 +142,7 @@ export default function BulkOrderingFormTypeThree() {
       }
       const payload = {
         userId: userId,
+        customerId: customerId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);

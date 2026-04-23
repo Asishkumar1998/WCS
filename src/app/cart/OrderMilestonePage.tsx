@@ -418,6 +418,7 @@ export default function OrderMilestonePage() {
       }
       const payload = {
         userId: userId,
+        customerId: customerId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);
@@ -723,7 +724,7 @@ export default function OrderMilestonePage() {
       setCard(paymentCard);
       let response;
       if (showCard) {
-        paymentCard.amount = (Number(totalAmount) + totalAmount * 0.035).toFixed(2);
+        paymentCard.amount = (Math.ceil(Number(totalAmount) * 1.035 * 100) / 100).toFixed(2);
         response = await savePayment(paymentCard);
       } else {
         const paymentOption =

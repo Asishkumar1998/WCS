@@ -786,6 +786,7 @@ export default function USAppostileAndLegalizationForm({
       }
       const payload = {
         userId: userId,
+        customerId: customerId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);
