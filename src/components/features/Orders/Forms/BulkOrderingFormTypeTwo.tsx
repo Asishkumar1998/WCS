@@ -408,7 +408,10 @@ export default function BulkOrderingFormTypeTwo() {
       setLoaderMessage("Checking for an existing order");
       const basePayload = CART_SERVICE_MAP["bulk-ordering"];
       if (!basePayload) return;
-      const payload = { userId, ...basePayload };
+      const payload = {
+         userId: userId,
+        customerId: customerId,
+         ...basePayload };
       const orderId = await getOrderIdOfCart(payload);
       if (orderId) {
         setExistingOrderId(orderId);

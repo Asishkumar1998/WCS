@@ -133,6 +133,7 @@ const SideDrawer = () => {
     "New Order": true,
   });
   const [userId, setUserId] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);  
   const [docCount, setDocCount] = useState<number | null>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -164,6 +165,7 @@ const SideDrawer = () => {
 
     if (auth) {
       setUserId(auth.userId);
+      setCustomerId(auth.customerId);
     }
   }, []);
 
@@ -182,6 +184,7 @@ const SideDrawer = () => {
 
       const payload = {
         userId: userId,
+        customerId: customerId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);

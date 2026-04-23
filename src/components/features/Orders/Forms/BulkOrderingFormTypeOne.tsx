@@ -104,6 +104,7 @@ export default function BulkOrderingFormTypeOne() {
       }
       const payload = {
         userId: userId,
+        customerId: customerId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);

@@ -66,6 +66,7 @@ export default function GlobalAuthenticationForm() {
       }
       const payload = {
         userId: userId,
+        customerId: customerId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);

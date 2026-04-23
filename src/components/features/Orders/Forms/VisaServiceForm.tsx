@@ -154,6 +154,7 @@ export default function VisaServiceForm() {
       }
       const payload = {
         userId: userId,
+        customerId: customerId,
         ...basePayload,
       };
       const orderId = await getOrderIdOfCart(payload);
