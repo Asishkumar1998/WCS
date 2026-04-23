@@ -230,14 +230,20 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                       bold: true,
                       background: doc.docCategoryId === 525 ? "#86f7aa" : "#FFFFFF",
                     },
-                    { text: `\n Order Date:  ${new Date().toLocaleDateString()}` },
+                    // { text: `\n Order Date:  ${new Date().toLocaleDateString()}` },
+                  {
+                      text: "\nOrder Date: ",
+                      bold: false,
+                    },
                     {
                       text: doc.createdAt
-                        ? new Date(doc.createdAt).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "2-digit",
-                        })
+                        ? (() => {
+                            const date = new Date(doc.createdAt);
+                            const month = date.toLocaleString("en-US", { month: "short" });
+                            const day = String(date.getDate()).padStart(2, "0");
+                            const year = date.getFullYear();
+                            return `${month}-${day}-${year}`;
+                          })()
                         : "-",
                       bold: true,
                     },
@@ -270,10 +276,12 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                       background: doc.isRush ? "#FD958D" : "#ffffff",
                     },
                     {
-                      text:doc.isGeneralSoftCopy ==="651" ? "Process the document with attachment" :"Customer is sending original document",
+                      text:doc.isGeneralSoftCopy ==="651" ?
+                       "\n\nProcess the document with \nattachment" 
+                       :doc.isGeneralSoftCopy ==="652" ? 
+                       "\n\nCustomer is sending original \ndocument" : "",
                       bold: true,
                       // background:doc.isGeneralSoftCopy ==="651" ? "#FFFF00" : "#00FFFF",
-                      Margin: [5, 0, 0, 0],
                       italics: true,
                     }    
                   ],
@@ -327,13 +335,13 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                           ? "\nE-Copy Only"
                           : data?.shppingInstructions?.regionId &&
                               data?.shppingInstructions?.regionId > 0
-                          ? "\n*Use WCS Courier Account for additional fee"
+                          ? "\nCreate Return Label"
                           : data.shppingInstructions?.useUserCourier
-                            ? "\n*Use Prepaid Label Uploaded"
+                            ? "\n*Upload Return Label"
                             : data.shppingInstructions?.labelByMail
-                              ? "\nEnclose Return Shipping Label by mail with documents"
+                              ? "\nEnclose Label by mail"
                               : data.shppingInstructions?.pickupOrDropOff
-                                ? "\nPickup / Dropoff"
+                                ? "\nPickup"
                                 : "",
                       bold: true,
                       italics: true,
@@ -348,7 +356,7 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                     },
                     {
                       text: data.region
-                        ? `\n${data.region.contactName}, ${data.region.address}\n${data.region.city}, ${data.region.country}, ${data.region.postalCode}\n${data.region.phoneNumber}`
+                        ? `\n${data.region.contactName}, ${data.region.address}\n${data.region.city}, ${data.region.country}, ${data.region.postalCode} `
                         : "",
                       italics: true,
                     },
