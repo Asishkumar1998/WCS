@@ -378,8 +378,8 @@ export default function OrdersPage() {
       setLoader(true);
       setLoaderMessage("Printing Cover...");
       const order = await getOrder(orderId);
-      const customer = await getCustomer(String(customerId));
-      const user = await getUser(String(userId));
+      const customer = await getCustomer(String(order[0]?.customerId));
+      const user = await getUser(String(order[0]?.createdBy));
 
       const userData = {
         customerId: customer[0].sageCustomerId,

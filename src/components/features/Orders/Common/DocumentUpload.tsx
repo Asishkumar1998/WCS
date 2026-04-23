@@ -178,10 +178,10 @@ export default function DocumentUpload({
           <FormControlLabel
             value="proceedWithAttached"
             control={<Radio size="small" disabled={forceOriginalMail} />}
-            label={
-              country?.countryId === 195
-                ? "Upload un-notarized document (document will be notarized by WCS and certified by MD Secretary of State)"
-                : "Process Attached Documents"
+            label={"Process Attached Documents"
+              // country?.countryId === 195
+              //   ? "Upload un-notarized document (document will be notarized by WCS and certified by MD Secretary of State)"
+              //   : "Process Attached Documents"
             }
           />
 
@@ -212,10 +212,10 @@ export default function DocumentUpload({
           <FormControlLabel
             value="originalMailedNested"
             control={<Radio size="small" />}
-            label={
-              country?.countryId === 195
-                ? "Mail Original Documents to WCS office (after notarization & state certification)"
-                : "Mail Original Documents to WCS office"
+            label={"Mail Original Documents to WCS office"
+              // country?.countryId === 195
+              //   ? "Mail Original Documents to WCS office (after notarization & state certification)"
+              //   : "Mail Original Documents to WCS office"
             }
           />
 
