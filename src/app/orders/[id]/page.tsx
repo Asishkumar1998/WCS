@@ -766,7 +766,7 @@ export default function OrdersPage() {
 
             {user && user.profileId===54 && <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Dropdown
-                label="Select Corporate/Business"
+                label="Select Company"
                 options={(accessibleCustomers.map((c: any) => c.customerName).sort((a, b) => a.localeCompare(b)))}
                 value={
                   accessibleCustomers.find(

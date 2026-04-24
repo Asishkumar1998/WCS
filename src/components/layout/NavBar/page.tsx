@@ -334,12 +334,15 @@ export default function Navbar() {
               >
                <Tooltip title={currentCompany?.customerName} placement="bottom" arrow >
                   <Typography variant="body1" sx={{
-                    maxWidth: "330px",
+                    maxWidth: "250px",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     display: "inline-block",
                     color: "white",
+                    border: "2px solid white",
+                    borderRadius: "5px",
+                    padding: "3px 15px",
                     // fontWeight: "bold",
                   }}>
                     Company:{" "}<b>{currentCompany?.customerName}</b>
