@@ -11,10 +11,12 @@ interface UserState {
 export const fetchUserNotifications = createAsyncThunk(
   "user/fetchUserNotifications",
   async (_, { rejectWithValue }) => {
-    const userId = typeof window !== "undefined"
-      ? localStorage.getItem("userId")
+    const auth = typeof window !== "undefined"
+      ? sessionStorage.getItem("auth")
       : null;
 
+      const parsedAuth = auth ? JSON.parse(auth) : null;
+      const userId = parsedAuth?.userId;
     if (!userId) {
       return rejectWithValue("User ID not found");
     }
