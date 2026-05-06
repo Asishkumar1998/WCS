@@ -48,6 +48,7 @@ export interface PrintCoverPayload {
     phoneNumber?: string;
     postalCode?: string;
     state?: string;
+    emailId?: string
   };
   shppingInstructions?: {
     labelByMail?: boolean;
@@ -126,7 +127,7 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                           image: "logo",
                           fit: [110, 110],
                           width: 110,
-                          margin: [2, 13, 10, 0],
+                          margin: [2, 13],
                         },
                         {
                           text: [
@@ -158,11 +159,12 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                           ],
                           alignment: "left",
                           fontSize: 10,
-                          margin: [20, 4, 0, 5],
+                          margin: [9, 7, 0, 5],
                         },
                       ],
                     },
                   ],
+                  margin: [0, 0, 0, 1]
                 },
                 {
                   width: "*",
@@ -303,12 +305,12 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                     { text: "\n\n" },
                     { text: "\n PO/Invoice Ref: " },
                     {
-                      text: doc.invoiceReference ?? "Not Provided",
+                      text: doc.invoiceReference ?doc.invoiceReference: "Not Provided",
                       bold: true,
                     },
                     { text: "\n Customer Ref: " },
                     {
-                      text: doc.internalReference ? doc.internalReference : "Not Provided",
+                      text: doc.internalReference ? doc.internalReference : "",
                       bold: true,
                     },
                     { text: "\n Payment: " },
@@ -332,16 +334,16 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                     {
                       text:
                         data?.shppingInstructions?.regionId === -1
-                          ? "\nE-Copy Only"
+                          ? "\n*E-Copy Only"
                           : data?.shppingInstructions?.regionId &&
                               data?.shppingInstructions?.regionId > 0
-                          ? "\nCreate Return Label"
+                          ? "\n*Create Return Label"
                           : data.shppingInstructions?.useUserCourier
                             ? "\n*Upload Return Label"
                             : data.shppingInstructions?.labelByMail
-                              ? "\nEnclose Label by mail"
+                              ? "*Enclose Label by mail"
                               : data.shppingInstructions?.pickupOrDropOff
-                                ? "\nPickup"
+                                ? "*Pickup"
                                 : "",
                       bold: true,
                       italics: true,
@@ -356,7 +358,12 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                     },
                     {
                       text: data.region
-                        ? `\n${data.region.contactName}, ${data.region.address}\n${data.region.city}, ${data.region.country}, ${data.region.postalCode} `
+                        ? `\n${data.region.contactName}
+                        ${data.region.address}
+                        ${data.region.city}, ${data.region.state}, ${data.region.postalCode}, ${data.region.country}
+                        ${data.region.phoneNumber}
+                        ${data.region.emailId?data.region.emailId:""}
+                         `
                         : "",
                       italics: true,
                     },
@@ -364,6 +371,7 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                 },
               ],
               fontSize: 11,
+              margin: [0, 0, 0, -1],
             },
           ],
         ],

@@ -379,7 +379,7 @@ export default function OrdersPage() {
       setLoaderMessage("Printing Cover...");
       const order = await getOrder(orderId);
       const customer = await getCustomer(String(order[0]?.customerId));
-      const user = await getUser(String(order[0]?.createdBy));
+      const user = await getUser(String(order[0]?.initiatedBy));
 
       const userData = {
         customerId: customer[0].sageCustomerId,
@@ -510,9 +510,11 @@ export default function OrdersPage() {
       pageNumber: 1,
     }));
   };
-
+  console.log("data=>",data);
+  
   //Export to Excel
   const exportToExcel = async () => {
+    
     const payload: Partial<Filters> = Object.entries(filters).reduce(
       (acc, [key, value]) => {
         if (value !== null && value !== "") {
@@ -522,6 +524,12 @@ export default function OrdersPage() {
       },
       {},
     );
+
+    if(!(payload as any).fromDate || !(payload as any).toDate){
+      showSnackbar("Please select From Date and To Date to export the report.", "error");
+      return;
+    }
+    
 
     if (userId) {
       (payload as any).userId = userId;
