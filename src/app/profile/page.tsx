@@ -1173,7 +1173,6 @@ export default function ProfilePage() {
                           sx={{
                             backgroundColor: "primary.main",
                             color: "#fff",
-                            textAlign: "center",
                             borderRight: "1px solid white",
                           }}
                         >
@@ -1183,7 +1182,6 @@ export default function ProfilePage() {
                           sx={{
                             backgroundColor: "primary.main",
                             color: "#fff",
-                            textAlign: "center",
                             borderRight: "1px solid white",
                           }}
                         >
@@ -1193,7 +1191,6 @@ export default function ProfilePage() {
                           sx={{
                             backgroundColor: "primary.main",
                             color: "#fff",
-                            textAlign: "center",
                             borderRight: "1px solid white",
                           }}
                         >
@@ -1203,7 +1200,6 @@ export default function ProfilePage() {
                           sx={{
                             backgroundColor: "primary.main",
                             color: "#fff",
-                            textAlign: "center",
                             borderRight: "1px solid white",
                           }}
                         >
@@ -1213,7 +1209,6 @@ export default function ProfilePage() {
                           sx={{
                             backgroundColor: "primary.main",
                             color: "#fff",
-                            textAlign: "center",
                             borderRight: "1px solid white",
                           }}
                         >
@@ -1258,7 +1253,7 @@ export default function ProfilePage() {
                               <TableCell>{user.name}</TableCell>
                               <TableCell>{user.lastName}</TableCell>
                               <TableCell>{user.email}</TableCell>
-                              <TableCell sx={{ textAlign: "end" }}>
+                              <TableCell >
                                 {user.contactNo}
                               </TableCell>
 
