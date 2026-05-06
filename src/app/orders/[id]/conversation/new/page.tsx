@@ -24,6 +24,7 @@ import { uploadFile } from "@/services/formsService";
 import { getAuth } from "@/app/utils/auth";
 import { useSnackbar } from "@/components/ui/Snakebar/SnackbarProvider";
 import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
+import { getCountries } from "@/services/userService";
 
 export default function NewConversationPage() {
   const router = useRouter();
@@ -66,9 +67,11 @@ export default function NewConversationPage() {
 
       const docket = orderData?.[0]?.dockets?.[0];
       const doc = docket?.docs?.[0];
+      const countryName = await getCountries();
+        const country = countryName.find((c: any) => c.countryId === doc?.countryId);
 
       const defaultSubject = `Order#: ${id}, Doc#: ${doc?.docId}, ${
-        doc?.countryShortName ?? doc?.countryName ?? "NAA"
+        country?.countryShortName ?? country?.countryName ?? ""
       }`;
       setSubject(defaultSubject);
     } finally {
