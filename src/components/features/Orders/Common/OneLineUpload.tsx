@@ -1,9 +1,19 @@
 import { Button, Stack, Typography } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-const OneLineUpload = ({ onFileSelect }: { onFileSelect: (file: File) => void }) => {
+const OneLineUpload = ({ onFileSelect,clearFile }: { onFileSelect: (file: File) => void; clearFile?:boolean }) => {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const [fileName, setFileName] = useState("");
+
+  useEffect(() => {
+    if (clearFile) {
+      setFileName("");
+
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+    }
+  }, [clearFile]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

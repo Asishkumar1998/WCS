@@ -17,6 +17,7 @@ import { useRouter, useParams } from "next/navigation";
 import {
   addNotification,
   addNotificationHistory,
+  downloadAttachment,
   getCustomerNotification,
   updateNotification,
 } from "@/services/notificationService";
@@ -38,7 +39,7 @@ export default function ConversationPage() {
 
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
- 
+  const [clearFile, setClearFile] = useState(false); 
   useEffect(() => {
     const auth = getAuth();
 
@@ -88,12 +89,12 @@ export default function ConversationPage() {
     try {
       setLoading(true);
 
-      updateNotification(rootId, {
+      await updateNotification(rootId, {
         readStatus: "replied",
         modifiedAt: new Date().toISOString(),
       });
 
-      addNotification({
+      await addNotification({
         parentId: rootId,
         subject: rootConversation.subject,
         messageBody: content,
@@ -110,13 +111,13 @@ export default function ConversationPage() {
       const docId = orderDetails?.dockets[0].docs[0].docId;
       const countryId = orderDetails?.dockets[0].docs[0].countryId;
 
-      addNotificationHistory({
+      await addNotificationHistory({
         notificationId: rootId,
         notificationSubject: rootConversation.subject,
         notificationBody: rootConversation.messageBody,
         parentId: 0,
         customerId,
-        id,
+        orderId: String(id),
         docketId,
         docId,
         countryId,
@@ -130,6 +131,12 @@ export default function ConversationPage() {
       await fetchConversation();
 
       editorRef.current?.clear();
+      setAttachment([]);
+      setClearFile(true);
+      
+      setTimeout(() => {
+        setClearFile(false);
+      }, 0);
     } catch (error) {
       console.error("Failed to send message", error);
     } finally {
@@ -138,6 +145,7 @@ export default function ConversationPage() {
   };
 
   async function uploadAndStore(file: any) {
+    setLoading(true);
     if (!file) return;
 
     if (file) {
@@ -148,9 +156,40 @@ export default function ConversationPage() {
         setAttachment(data);
       } catch (err) {
         console.log(err);
+      }finally{
+        setLoading(false);
       }
     }
   }
+
+  const handleDownloadAttachment = async (
+  attachmentId: number,
+  fileName: string
+) => {
+  try {
+    const blob = await downloadAttachment(attachmentId);
+    console.log("blob",blob);
+    
+    const url = window.URL.createObjectURL(blob);
+    console.log("url",url);
+    
+    const link = document.createElement("a");
+    console.log("link",link);
+    
+    link.href = url;
+    link.download = fileName;
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Download failed", error);
+  }
+};
 
   return (
     <>
@@ -185,6 +224,20 @@ export default function ConversationPage() {
                 mt: 2,
                 mb: 1,
                 pr: 1,
+                "&::-webkit-scrollbar": {
+                  width: "8px",  
+                },
+                "&::-webkit-scrollbar-track": {
+                  background: "#f1f1f1",  
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  background: "#bdbdbd",
+                  borderRadius: "10px",
+                  height:"60px"
+                },
+                "&::-webkit-scrollbar-thumb:hover": {
+                  background: "#9e9e9e",
+                },
               }}
             >
               {messages.map((msg) => {
@@ -200,37 +253,51 @@ export default function ConversationPage() {
                   >
                     <Paper
                       sx={{
-                        p: 2,
-                        maxWidth: "70%",
+                        padding:"5px 10px",
+                        width: "70%",
                         borderRadius: 3,
                         bgcolor: isCustomer ? "primary.light" : "grey.300",
                         color: isCustomer ? "#fff" : "#000",
                       }}
                     >
-                      <Typography variant="subtitle2" fontWeight="bold" mb={1}>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{
+                        marginBottom:"0px"
+                      }}>
                         {isCustomer ? "You" : "Processor"}
                       </Typography>
                       <Typography
                         variant="body2"
                         dangerouslySetInnerHTML={{ __html: msg.messageBody }}
-                        sx={{ mb: 1 }}
+                        sx={{padding:"0px",margin:"0px"}}
                       />
                       {msg.attachments?.map((a: any) => (
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, marginTop: "8px" }}>
+                        <Typography variant="body2" sx={{fontWeight:"bold"}}>Attachment:</Typography>
                         <Typography
                           key={a.attachmentId}
                           variant="body2"
                           sx={{
-                            textDecoration: "underline",
+                            // textDecoration: "none",
                             cursor: "pointer",
+                            color: "primary.main",
+                            fontWeight: "bold",
+                            "&:hover": { textDecoration: "underline" },
                           }}
-                          onClick={() => window.open(a.fileUrl)}
+                          // onClick={() => window.open(a.fileUrl)}
+                          onClick={() =>
+                            handleDownloadAttachment(
+                              a.attachmentId,
+                              a.fileName
+                            )
+                          }
                         >
-                          📎 {a.fileName}
+                          {a.fileName}
                         </Typography>
+                        </Box>    
                       ))}
                       <Typography
                         variant="caption"
-                        sx={{ display: "block", textAlign: "right", mt: 1 }}
+                        sx={{ display: "block", textAlign: "right", marginTop: "0px" }}
                       >
                         {new Date(msg.createdAt + "Z").toLocaleString()}
                       </Typography>
@@ -245,7 +312,7 @@ export default function ConversationPage() {
             <Box sx={{ mt: 1 }}>
               <RichTextEditor ref={editorRef} />
               <Stack direction="row" justifyContent="space-between" mt={2}>
-                <OneLineUpload onFileSelect={(file) => uploadAndStore(file)} />
+                <OneLineUpload onFileSelect={(file) => uploadAndStore(file)} clearFile={clearFile}/>
                 <Button variant="contained" onClick={handleSend}>
                   Send
                 </Button>
