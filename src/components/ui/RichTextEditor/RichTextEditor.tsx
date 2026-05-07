@@ -75,7 +75,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle>((_, ref) => {
       {/* ✅ Editor */}
       <div
         ref={editorRef}
-        style={{ height: "200px", border: "1px solid #ccc", borderRadius: 6 }}
+        style={{ height: "170px", border: "1px solid #ccc", borderRadius: 6 }}
       />
     </div>
   );

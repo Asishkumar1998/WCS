@@ -90,7 +90,7 @@ export default function NewConversationPage() {
 
       showSnackbar("Document uploaded successfully.", "success");
 
-      setAttachment((prev) => [...prev, data]);
+      setAttachment((prev) => [...prev, ...(Array.isArray(data) ? data : [data]),]);
     } catch (err) {
       console.error(err);
       showSnackbar("Failed to upload document", "error");
