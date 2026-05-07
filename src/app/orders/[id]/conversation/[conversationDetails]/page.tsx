@@ -271,7 +271,7 @@ export default function ConversationPage() {
                         sx={{padding:"0px",margin:"0px"}}
                       />
                       {msg.attachments?.map((a: any) => (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, marginTop: "8px" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, marginTop: "8px" }} key={a.attachmentId}>
                         <Typography variant="body2" sx={{fontWeight:"bold"}}>Attachment:</Typography>
                         <Typography
                           key={a.attachmentId}
