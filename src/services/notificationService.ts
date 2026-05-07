@@ -20,3 +20,16 @@ export const addNotificationHistory = async (payload: any) => {
     return response.data;
 }
 
+export const downloadAttachment = async (
+  attachmentId: number
+) => {
+  const response = await axiosInstance.get(
+    `documentattachments/${attachmentId}`,
+    {
+      responseType: "blob",
+    }
+  );
+
+  return response.data;
+};
+
