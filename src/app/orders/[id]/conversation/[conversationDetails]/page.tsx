@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { use, useEffect, useRef, useState } from "react";
 import {
   Box,
   Grid,
@@ -30,7 +30,7 @@ import { getAuth } from "@/app/utils/auth";
 export default function ConversationPage() {
   const [orderDetails, setOrderDetails] = useState<any>();
   const [messages, setMessages] = useState<any[]>([]);
-  const [attachment, setAttachment] = useState<any>();
+  const [attachment, setAttachment] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<any>(null);
@@ -133,7 +133,6 @@ export default function ConversationPage() {
       editorRef.current?.clear();
       setAttachment([]);
       setClearFile(true);
-      
       setTimeout(() => {
         setClearFile(false);
       }, 0);
@@ -143,53 +142,51 @@ export default function ConversationPage() {
       setLoading(false);
     }
   };
-
-  async function uploadAndStore(file: any) {
-    setLoading(true);
+  async function uploadAndStore(file: File) {
     if (!file) return;
 
     if (file) {
       try {
+        setLoading(true);
         const formData = new FormData();
         formData.append("file_0", file);
         const data = await uploadFile(formData);
-        setAttachment(data);
+        setAttachment((prev) => [...prev, ...data]);
+        // setFiles((prev) => [...prev, file]);
       } catch (err) {
         console.log(err);
-      }finally{
+      } finally {
         setLoading(false);
       }
     }
   }
 
   const handleDownloadAttachment = async (
-  attachmentId: number,
-  fileName: string
-) => {
-  try {
-    const blob = await downloadAttachment(attachmentId);
-    console.log("blob",blob);
-    
-    const url = window.URL.createObjectURL(blob);
-    console.log("url",url);
-    
-    const link = document.createElement("a");
-    console.log("link",link);
-    
-    link.href = url;
-    link.download = fileName;
+    attachmentId: number,
+    fileName: string,
+  ) => {
+    try {
+      setLoading(true);
+      const blob = await downloadAttachment(attachmentId);
+   const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
 
-    document.body.appendChild(link);
+      link.href = url;
+      link.download = fileName;
 
-    link.click();
+      document.body.appendChild(link);
 
-    link.remove();
+      link.click();
 
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error("Download failed", error);
-  }
-};
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed", error);
+    } finally{
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -225,15 +222,15 @@ export default function ConversationPage() {
                 mb: 1,
                 pr: 1,
                 "&::-webkit-scrollbar": {
-                  width: "8px",  
+                  width: "8px",
                 },
                 "&::-webkit-scrollbar-track": {
-                  background: "#f1f1f1",  
+                  background: "#f1f1f1",
                 },
                 "&::-webkit-scrollbar-thumb": {
                   background: "#bdbdbd",
                   borderRadius: "10px",
-                  height:"60px"
+                  height: "60px",
                 },
                 "&::-webkit-scrollbar-thumb:hover": {
                   background: "#9e9e9e",
@@ -253,51 +250,74 @@ export default function ConversationPage() {
                   >
                     <Paper
                       sx={{
-                        padding:"5px 10px",
+                        padding: "5px 10px",
                         width: "70%",
                         borderRadius: 3,
                         bgcolor: isCustomer ? "primary.light" : "grey.300",
                         color: isCustomer ? "#fff" : "#000",
                       }}
                     >
-                      <Typography variant="subtitle2" fontWeight="bold" sx={{
-                        marginBottom:"0px"
-                      }}>
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight="bold"
+                        sx={{
+                          marginBottom: "0px",
+                        }}
+                      >
                         {isCustomer ? "You" : "Processor"}
                       </Typography>
                       <Typography
                         variant="body2"
                         dangerouslySetInnerHTML={{ __html: msg.messageBody }}
-                        sx={{padding:"0px",margin:"0px"}}
+                        sx={{ padding: "0px", margin: "0px" }}
                       />
+                      { msg.attachments?.length>0 &&
+                      <Typography
+                            variant="body2"
+                            sx={{ fontWeight: "bold" ,marginTop:"8px"}}
+                          >
+                            {/* {msg.messageBody.includes("Attachments:") && msg.attachments?.length > 0 && "Attachments:"} */}
+                            {msg.attachments?.length > 1 ? "Attachments: " : "Attachment: " }
+                          </Typography>
+              }
                       {msg.attachments?.map((a: any) => (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, marginTop: "8px" }} key={a.attachmentId}>
-                        <Typography variant="body2" sx={{fontWeight:"bold"}}>Attachment:</Typography>
-                        <Typography
-                          key={a.attachmentId}
-                          variant="body2"
+                        <Box
                           sx={{
-                            // textDecoration: "none",
-                            cursor: "pointer",
-                            color: "primary.main",
-                            fontWeight: "bold",
-                            "&:hover": { textDecoration: "underline" },
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
                           }}
-                          // onClick={() => window.open(a.fileUrl)}
-                          onClick={() =>
-                            handleDownloadAttachment(
-                              a.attachmentId,
-                              a.fileName
-                            )
-                          }
+                          key={a.attachmentId}
                         >
-                          {a.fileName}
-                        </Typography>
-                        </Box>    
+                          <Typography
+                            key={a.attachmentId}
+                            variant="body2"
+                            sx={{
+                              // textDecoration: "none",
+                              cursor: "pointer",
+                              color: "primary.main",
+                              fontWeight: "bold",
+                              "&:hover": { textDecoration: "underline" },
+                            }}
+                            // onClick={() => window.open(a.fileUrl)}
+                            onClick={() =>
+                              handleDownloadAttachment(
+                                a.attachmentId,
+                                a.fileName,
+                              )
+                            }
+                          >
+                            {a.fileName}
+                          </Typography>
+                        </Box>
                       ))}
                       <Typography
                         variant="caption"
-                        sx={{ display: "block", textAlign: "right", marginTop: "0px" }}
+                        sx={{
+                          display: "block",
+                          textAlign: "right",
+                          marginTop: "0px",
+                        }}
                       >
                         {new Date(msg.createdAt + "Z").toLocaleString()}
                       </Typography>
@@ -312,7 +332,14 @@ export default function ConversationPage() {
             <Box sx={{ mt: 1 }}>
               <RichTextEditor ref={editorRef} />
               <Stack direction="row" justifyContent="space-between" mt={2}>
-                <OneLineUpload onFileSelect={(file) => uploadAndStore(file)} clearFile={clearFile}/>
+                <OneLineUpload
+                  onFileSelect={(file) => uploadAndStore(file)}
+                  onRemoveFile={(index) => {
+                    setAttachment((prev) => prev.filter((_, i) => i !== index));
+                  }}
+                  clearFile={clearFile}
+                />
+                {/* <MultiDocumentUpload onChange={(data) => {uploadAndStore(data.uploadedFiles);}}/> */}
                 <Button variant="contained" onClick={handleSend}>
                   Send
                 </Button>
