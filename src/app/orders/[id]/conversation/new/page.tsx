@@ -84,6 +84,7 @@ export default function NewConversationPage() {
   /* Upload Attachment */
   /* -------------------- */
   async function uploadAndStore(file: any) {
+    setLoader(true);
     if (!file) return;
 
     try {
@@ -97,6 +98,8 @@ export default function NewConversationPage() {
     } catch (err) {
       console.error(err);
       showSnackbar("Failed to upload document", "error");
+    } finally {
+      setLoader(false);
     }
   }
 
@@ -175,7 +178,9 @@ export default function NewConversationPage() {
 
             {/* Footer */}
             <Stack direction="row" justifyContent="space-between" mt={2}>
-              <OneLineUpload onFileSelect={(file) => uploadAndStore(file)} />
+              <OneLineUpload onFileSelect={(file) => uploadAndStore(file)} onRemoveFile={(index) => {
+                    setAttachment((prev) => prev.filter((_, i) => i !== index));
+                  }}/>
               <Button variant="contained" onClick={handleSend}>
                 Send
               </Button>
