@@ -164,7 +164,7 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                       ],
                     },
                   ],
-                  margin: [0, 0, 0, 1]
+                  margin: [0, 0, 0, 18]
                 },
                 {
                   width: "*",
@@ -174,7 +174,7 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                   image: doc.barcode ? `data:image/jpeg;base64,${doc.barcode}` : logoBase64,
                   width: 150,
                   alignment: "right",
-                  margin: [0, 35, 0, 0],
+                  margin: [-8, 37, 11, 0], // [left, top, right, bottom]
                 },
               ],
             },
