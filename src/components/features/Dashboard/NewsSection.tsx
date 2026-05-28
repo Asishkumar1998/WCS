@@ -33,11 +33,29 @@ const NewsSection = ({ news }: { news: NewsItem[] }) => {
       {/* Content */}
       <CardContent sx={{ p: 3, overflowY: "auto", height: "35vh" }}>
         {news?.map((item, index) => (
-          <Box key={index}>
-            <Box sx={{ mb: 2 }}>
+          <a
+            key={index}
+            href={item.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: "none" }}
+          >
+            <Box
+              sx={{
+                mb: 2,
+                cursor: "pointer",
+                "&:hover": {
+                  backgroundColor: "grey.100",
+                },
+              }}
+            >
               <Typography
                 variant="body1"
-                sx={{ fontWeight: 500, mb: 0.5, color: "#2c3e50" }}
+                sx={{
+                  fontWeight: 500,
+                  mb: 0.5,
+                  color: "#2c3e50",
+                }}
               >
                 {item.title.rendered}
               </Typography>
@@ -46,7 +64,7 @@ const NewsSection = ({ news }: { news: NewsItem[] }) => {
               </Typography>
             </Box>
             {index < news.length - 1 && <Divider sx={{ mb: 2 }} />}
-          </Box>
+          </a>
         ))}
       </CardContent>
     </Card>
