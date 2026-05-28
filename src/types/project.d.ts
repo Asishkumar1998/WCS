@@ -19,6 +19,7 @@ export interface UpdateItem {
   description: string;
   attachment: any[];
   publishedDate: string;
+  url?: string;
 }
 
 export interface Country {

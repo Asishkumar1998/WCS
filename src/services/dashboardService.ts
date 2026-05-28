@@ -71,3 +71,19 @@ export const getWelcomeMessage = async (userId: number) => {
   const response = await axiosInstance.get(`loginWelcomeMessages?userId=${userId}`);
   return response.data[0];
 }
+
+export const fetchAttachment = async (referenceId: number) => {
+  try {
+
+    const response = await axiosInstance.get(
+      `documentattachments/GetWCSAttchment?documentId=${referenceId}`
+    );
+    return response;
+
+  } catch (error) {
+
+    console.log("Attachment API Error:", error);
+
+    return null;
+  }
+};
