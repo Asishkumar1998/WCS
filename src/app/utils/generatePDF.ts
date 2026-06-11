@@ -315,11 +315,11 @@ export const generatePDF = async (data: PrintCoverPayload, action: PdfAction = "
                     },
                     { text: "\n Payment: " },
                     {
-                      text: data.shppingInstructions?.payLaterOptions
+                      text: doc.paidAmount===0 && data.shppingInstructions?.payLaterOptions
                         ? `Pay later (${data.shppingInstructions.payLaterOptions})`
                         : (doc.orderAmount ?? 0) <= (doc.paidAmount ?? 0)
                           ? "Paid"
-                          : "Payment Due",
+                          : "Partially Paid",
                       bold: true,
                     },
                   ],
