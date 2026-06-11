@@ -44,6 +44,8 @@ export const buildPrintCoverPayload = async (
   return {
     fileName: `Order_${order.orderId}_Cover.pdf`,
     orderId: order.orderId,
+    orderAmount: order.orderAmount,
+    paidAmount:order.paidAmount,
 
     userDetails: {
       customerId: userData.customerId,
@@ -90,6 +92,8 @@ export const buildPrintCoverPayload = async (
       isScan: doc.isScan,
       isPostScan: doc.isPostScan,
       isGeneralSoftCopy:doc.isGeneralSoftCopy,
+      paidAmount: doc.paidAmount,
+      orderAmount: doc.orderAmount,
       createdAt: doc.createdAt,
 
       internalReference: order.orderType == 1102 ? doc.visa[0].customerReference : doc.internalReference,

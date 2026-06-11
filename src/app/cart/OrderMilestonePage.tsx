@@ -236,6 +236,19 @@ export default function OrderMilestonePage() {
   const hasInitializedExpanded = useRef(false);
 
   const allDocIds = allDocs.map((doc: any) => doc.docId);
+  const apostilleDocs = allDocs.filter((doc: any) => doc.countryTypeId === 501);
+  const legalizeDocs = allDocs.filter((doc: any) => doc.countryTypeId === 502);
+  
+  const showApostilleWarning =
+    apostilleDocs.length > 15
+    //  ||(apostilleDocs.length >= 1 && legalizeDocs.length >= 1);
+
+  const showLegalizeWarning =
+    legalizeDocs.length > 5
+    //  ||(apostilleDocs.length >= 1 && legalizeDocs.length >= 1);
+
+  const showSplitOrderWarning =apostilleDocs.length > 0 && legalizeDocs.length > 0;
+
   const allExpanded =
     expanded.length === allDocIds.length && allDocIds.length > 0;
 
@@ -1016,7 +1029,73 @@ export default function OrderMilestonePage() {
                       Add More Documents
                     </Button>
                   )}
+                  {showSplitOrderWarning &&!showApostilleWarning && !showLegalizeWarning && (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 1,
+                          backgroundColor: "#fff3cd",
+                          border: "1px solid #ffc107",
+                          borderRadius: 1,
+                          px: 2,
+                          py: 1.5,
+                          mb: 1,
+                        }}
+                      >
+                        <Typography variant="body2" color="text.primary" style={{fontWeight:"bold"}}>
+                          You have Apostilles and Legalization documents in the cart.
+                          The order will be split into two or more orders for the convenience
+                          of processing documents.
+                        </Typography>
+                      </Box>
+                  )}
+                  {(showApostilleWarning || showLegalizeWarning) && (
+                    <Grid sx={{ mb: 2 }}>
+                      {showApostilleWarning && (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 1,
+                            backgroundColor: "#fff3cd",
+                            border: "1px solid #ffc107",
+                            borderRadius: 1,
+                            px: 2,
+                            py: 1.5,
+                            mb: 1,
+                          }}
+                        >
+                          <Typography variant="body2" color="text.primary">
+                            <strong>More than 15 Apostille documents</strong> are in the cart.
+                            This order will be split into multiple orders for the convenience of
+                            processing documents.
+                          </Typography>
+                        </Box>
+                      )}
 
+                      {showLegalizeWarning && (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 1,
+                            backgroundColor: "#fff3cd",
+                            border: "1px solid #ffc107",
+                            borderRadius: 1,
+                            px: 2,
+                            py: 1.5,
+                          }}
+                        >
+                          <Typography variant="body2" color="text.primary">
+                            <strong>More than 5 Legalize documents</strong> are in the cart.
+                            This order will be split into multiple orders for the convenience of
+                            processing documents.
+                          </Typography>
+                        </Box>
+                      )}
+                    </Grid>
+                  )}
                   <Grid
                     sx={{
                       display: "flex",
@@ -1068,7 +1147,8 @@ export default function OrderMilestonePage() {
                             height={1}
                           >
                             <Grid size={{ xs: 3 }}>
-                              <Typography variant="subtitle1" fontWeight={600}>
+                              <Box display="flex" alignItems="center" gap={0.5}>
+                                <Typography variant="subtitle1" fontWeight={600}>
                                 {(
                                   getCountryShortName(doc.countryId) ||
                                   doc.countryId ||
@@ -1077,6 +1157,23 @@ export default function OrderMilestonePage() {
                                   .toString()
                                   .toUpperCase()}
                               </Typography>
+                              {doc.isRush && (
+                                <>
+                                <Image
+                                  src="/sprint-icon-rush.png"
+                                  alt=""
+                                  width={30}
+                                  height={30}
+                                  style={{ marginBottom: 7, animation: "pulse-scale 1s ease-in-out infinite" }}
+                                  // style={{ cursor: "pointer" }}
+                                  />
+                                </>
+                                
+                              )}
+                                
+                                </Box>
+                              
+                              
                             </Grid>
                             <Grid size={{ xs: 3 }}>
                               <Typography variant="subtitle1">
