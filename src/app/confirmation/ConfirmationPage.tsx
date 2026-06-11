@@ -129,9 +129,9 @@ const OrderConfirmation = () => {
         order.dockets?.flatMap(
           (docket: any) =>
             docket.docs?.map((doc: any) => ({
-              ...doc
-              // orderId: order.orderId,
-              // modifiedAt: order.modifiedAt,
+              ...doc,
+              orderId: order.orderId,
+              modifiedAt: order.modifiedAt,
             })) || []
         ) || []
     );
