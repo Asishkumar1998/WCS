@@ -304,6 +304,8 @@ export default function TrackOrderDialog({
           <Box>
             {Object.entries(stopsByDoc).map(([docId, files]) => {
               const docTimes = getTimesForDocs(docId);
+              const docDetails = getDocumentDetails(Number(docId));
+              const currentDirectionId =docDetails?.docsStatus?.[0]?.directionId;
               const baseSteps = [
                 {
                   label: "Order Placed",
@@ -363,14 +365,13 @@ export default function TrackOrderDialog({
 
               // Calculate active step (first incomplete step)
               const activeStepIndex = allSteps.findIndex(
-                (step) => step.completed,
+                (step) => !step.completed,
               );
               // If all completed, show as complete (activeStep = allSteps.length)
               const activeStep =
                 activeStepIndex === -1 ? allSteps.length : activeStepIndex;
 
               const tracking = getTrackingInfo(docId);
-              const docDetails = getDocumentDetails(Number(docId));
               const docDescription = docDetails?.description?.trim();
 
               return (
@@ -419,13 +420,14 @@ export default function TrackOrderDialog({
                       <StepConnector
                         sx={{
                           "& .MuiStepConnector-line": {
-                            borderColor: "#e0e0e0", // default grey
+                            border: "3.5px solid #e0e0e0", // default grey
+                            marginTop: "-3px",
                           },
                           "&.Mui-active .MuiStepConnector-line": {
-                            borderColor: "green",
+                            borderColor: currentDirectionId == 552  ? "green":"#e0e0e0",
                           },
                           "&.Mui-completed .MuiStepConnector-line": {
-                            borderColor: "green",
+                            borderColor: currentDirectionId == 552 || currentDirectionId == 551 || currentDirectionId == 553? "green":"#e0e0e0",
                           },
                         }}
                       />
@@ -437,7 +439,7 @@ export default function TrackOrderDialog({
                           StepIconProps={{
                             sx: {
                               "&.Mui-active": {
-                                color: "green",
+                                color:"gray",
                               },
                               "&.Mui-completed": {
                                 color: "green",
@@ -454,7 +456,7 @@ export default function TrackOrderDialog({
                               // color="text.secondary"
                               sx={{
                                 color:
-                                  step.completed || idx === activeStep
+                                  step.completed 
                                     ? "green"
                                     : "text.secondary",
                               }}
@@ -469,7 +471,7 @@ export default function TrackOrderDialog({
                               // color="text.secondary"
                               sx={{
                                 color:
-                                  step.completed || idx === activeStep
+                                  step.completed 
                                     ? "green"
                                     : "text.secondary",
                               }}
