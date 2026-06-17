@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import BoltIcon from '@mui/icons-material/Bolt';
 import {
   Box,
   Typography,
@@ -195,6 +196,8 @@ export default function OrderMilestonePage() {
   const [addressErrors, setAddressErrors] = useState<Record<string, string>>(
     {},
   );
+  const [firstNumberOfCard, setFirstNumberOfCard] = useState<number>(0);
+
   const [sectionErrors, setSectionErrors] = useState<{
     shippingOption?: string;
     paymentType?: string;
@@ -261,12 +264,20 @@ export default function OrderMilestonePage() {
     }
   }, []);
 
+  useEffect(() => {
+    if (allDocs.length >0) {
+      setFirstNumberOfCard(Number(allDocs.length ?? 0));
+    }
+  },[allDocs]);
+
+
   const getRegions = async () => {
+
     try {
       const response = await getRegion();
       setAllRegions(response);
     } catch (e) {
-      console.log("Error in getRegion: ", e);
+      showSnackbar("Error in getting Region ", "error")
     }
   };
 
@@ -328,7 +339,6 @@ export default function OrderMilestonePage() {
     try {
       const { regionName, ...payload } = form;
       if (customerId) payload.customerId = customerId;
-      console.log(payload);
       const response = await addRegionAddress(payload);
       if (response) {
         setChecked((prev) => ({
@@ -344,7 +354,6 @@ export default function OrderMilestonePage() {
       setCountry(null);
       setOpenDialog(false);
     } catch (error) {
-      console.log("Failed to add address: ", error);
       showSnackbar("Failed to add address", "error");
     }
   };
@@ -472,7 +481,6 @@ export default function OrderMilestonePage() {
           (a: any, b: any) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         );
-      console.log("flattendDocs", flattenedDocs);
 
       setAllDocs(flattenedDocs);
 
@@ -554,10 +562,8 @@ export default function OrderMilestonePage() {
   }, [service, paymentType]);
 
   useEffect(() => {
-    console.log("regionss", region);
     if (region) {
       const reg = allRegions?.find((r: any) => r.regionId === region.regionId);
-      console.log("reg", reg);
       setFedExFee(reg.feeAmount);
     }
   }, [region]);
@@ -584,7 +590,7 @@ export default function OrderMilestonePage() {
       a.click();
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-      console.log("Download error: ", error);
+      showSnackbar("Download failed","error")
     }
   };
 
@@ -604,12 +610,23 @@ export default function OrderMilestonePage() {
   const getTimelineWithCompletion = (
     stops: any[],
     estCompletionDate: string,
+    isRush: boolean
   ) => {
     return [
       ...convertStopsToTimeline(stops),
       {
         label: "Estimated Completion",
-        subLabel: dayjs(estCompletionDate).format("MMM D, YYYY"),
+        subLabel: (
+          <>
+          {dayjs(estCompletionDate).format("MMM D, YYYY")}
+          {" "}
+          <strong>
+              ({isRush ? "Rush" : "Standard"})
+          </strong>
+          </>
+        ),
+         icon: isRush ? <BoltIcon fontSize="small" /> : undefined,
+        
       },
     ];
   };
@@ -755,12 +772,10 @@ export default function OrderMilestonePage() {
       if (response.success != false)
         window.location.href = `/confirmation?orderId=${orderDetails.orderId}`;
       else {
-        console.log(response);
         showSnackbar(`${response.message}`, "error");
       }
     } catch (e) {
       showSnackbar("Payment failed", "error");
-      console.log(e);
     } finally {
       setIsSubmitting(false);
     }
@@ -920,7 +935,6 @@ export default function OrderMilestonePage() {
       return true;
     } catch (e) {
       showSnackbar("Failed to save shipping details", "error");
-      console.log(e);
       return false;
     }
   };
@@ -937,7 +951,6 @@ export default function OrderMilestonePage() {
         showSnackbar("Successfully Upload Return Shipping Label", "success");
       } catch (err) {
         showSnackbar("Failed to Upload Return Shipping Label", "error");
-        console.log(err);
       }
     }
   };
@@ -1157,7 +1170,7 @@ export default function OrderMilestonePage() {
                                   .toString()
                                   .toUpperCase()}
                               </Typography>
-                              {doc.isRush && (
+                              {/* {doc.isRush && (
                                 <>
                                 <Image
                                   src="/sprint-icon-rush.png"
@@ -1169,7 +1182,7 @@ export default function OrderMilestonePage() {
                                   />
                                 </>
                                 
-                              )}
+                              )} */}
                                 
                                 </Box>
                               
@@ -1361,8 +1374,10 @@ export default function OrderMilestonePage() {
                                   steps={getTimelineWithCompletion(
                                     doc.docStops,
                                     doc.estCompletionDate,
+                                    doc.isRush
+                                    
                                   )}
-                                  activeStep={doc.docStops.length - 1}
+                                  activeStep={doc.docStops.length}
                                 />
                               </Grid>
 
@@ -1426,7 +1441,7 @@ export default function OrderMilestonePage() {
                                     );
                                   })}
                                   {checked.option === "courier" &&
-                                    docIndex === 0 &&
+                                    docIndex === firstNumberOfCard-1 &&
                                     !hasFedex60Fee &&
                                     fedExFee > 0 && (
                                       <ListItem>
@@ -1445,7 +1460,7 @@ export default function OrderMilestonePage() {
                                       }}
                                     />
                                     {checked.option === "courier" &&
-                                    docIndex === 0 ? (
+                                    docIndex === firstNumberOfCard-1 ? (
                                       <Typography fontWeight={700}>
                                         $
                                         {(
@@ -1845,7 +1860,6 @@ export default function OrderMilestonePage() {
                             (a: any) =>
                               a.addressId === customer?.billingAddressId,
                           );
-                          console.log("addr ----------> ", addr);
 
                           if (!addr) {
                             return <Typography variant="body2">-</Typography>;
