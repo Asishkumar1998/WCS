@@ -18,8 +18,8 @@ import FlagCircleIcon from "@mui/icons-material/FlagCircle";
 // ===== Types =====
 interface StepData {
   label: string;
-  subLabel?: string;
-  icon?: React.ReactNode; // optional icon override
+  subLabel?: React.ReactNode;
+  icon?: React.ReactNode; 
 }
 
 interface StatusStepperProps {
@@ -114,11 +114,17 @@ function CustomStepIcon(props: any) {
 
   // If this is the last step, always show the check icon
   const isLastStep = icon === totalSteps;
-  const displayIcon = isLastStep ? (
-   <CheckCircleIcon fontSize="small" /> 
-  ) : (
-   (iconMap?.[icon] || defaultIcons[icon] || defaultIcons[1])
-  );
+  const customIcon = iconMap?.[icon - 1];
+  // const displayIcon = isLastStep ? (
+  //  <CheckCircleIcon fontSize="small" /> 
+  // ) : (
+  //  (iconMap?.[icon] || defaultIcons[icon] || defaultIcons[1])
+  // );
+  const displayIcon = customIcon
+  ? customIcon
+  : isLastStep
+    ? <CheckCircleIcon fontSize="small" />
+    : (defaultIcons[icon] || defaultIcons[1]);
 
   return (
     <StepIconRoot ownerState={{ active, completed, isCart: !uniformColor }}>
