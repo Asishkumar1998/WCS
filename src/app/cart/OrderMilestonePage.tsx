@@ -725,7 +725,7 @@ export default function OrderMilestonePage() {
       if (!shippingSaved) return;
 
       if (!hasFedex60Fee && checked.option === "courier") {
-        const payload = allDocs[0];
+        const payload = allDocs[allDocs.length - 1];
         const updatedPayload = {
           ...payload,
           docFees: [
@@ -738,6 +738,7 @@ export default function OrderMilestonePage() {
             },
           ],
         };
+
         await restoreFee(updatedPayload);
       }
       const paymentCard = {
