@@ -160,6 +160,8 @@ export default function GlobalAuthenticationForm() {
     clearFieldErrors("documents");
 
     try {
+      setLoader(true);                        
+      setLoaderMessage("Uploading document...");
       const formData = new FormData();
       formData.append("file_0", file);
 
@@ -174,6 +176,8 @@ export default function GlobalAuthenticationForm() {
     } catch (err) {
       showSnackbar("Failed to upload file.", "error");
       console.error(err);
+    } finally{
+        setLoader(false);
     }
   }
 

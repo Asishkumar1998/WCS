@@ -186,6 +186,8 @@ export default function BulkOrderingFormTypeOne() {
 
     if (file) {
       try {
+        setLoader(true);
+        setLoaderMessage("Uploading documents...")
         const formData = new FormData();
         formData.append("file_0", file);
         const data = await uploadFile(formData);
@@ -194,6 +196,8 @@ export default function BulkOrderingFormTypeOne() {
       } catch (err) {
         console.log(err);
         showSnackbar("Error while uploading document.File size should be below 50MB", "error");
+      } finally{
+        setLoader(false)
       }
     }
   };

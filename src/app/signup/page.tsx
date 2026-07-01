@@ -245,7 +245,7 @@ const CustomerSignup = () => {
 
   const validateField = async (fieldName: string, updatedForm: any) => {
     try {
-      await signupSchema.validateAt(fieldName, updatedForm);
+      await signupSchema.validateAt(fieldName, updatedForm,{ abortEarly: true });
 
       setErrors((prev) => ({
         ...prev,
