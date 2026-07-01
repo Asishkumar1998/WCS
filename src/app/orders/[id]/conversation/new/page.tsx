@@ -88,6 +88,7 @@ export default function NewConversationPage() {
     if (!file) return;
 
     try {
+      setLoaderMessage("Uploading document...")
       const formData = new FormData();
       formData.append("file_0", file);
       const data = await uploadFile(formData);

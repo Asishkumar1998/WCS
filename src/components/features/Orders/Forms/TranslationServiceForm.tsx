@@ -118,6 +118,8 @@ export default function TranslationServiceForm() {
 
     if (file) {
       try {
+        setLoader(true);                        
+        setLoaderMessage("Uploading document...");
         const formData = new FormData();
         formData.append("file_0", file);
 
@@ -131,6 +133,8 @@ export default function TranslationServiceForm() {
       } catch (err) {
         console.log(err);
         showSnackbar("Error while uploading document.File size should be below 50MB", "error");
+      } finally{
+        setLoader(false);
       }
     }
   }

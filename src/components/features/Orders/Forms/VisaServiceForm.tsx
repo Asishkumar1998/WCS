@@ -248,11 +248,17 @@ export default function VisaServiceForm() {
   };
 
   async function uploadAndStore(file: any) {
-    if (!file) return;
+    if (!file) {
+    setFileName("");           
+    setUploadedDocumentId(undefined);  
+    return;
+  }
     clearFieldErrors("uploadDocument");
 
     if (file) {
       try {
+        setLoader(true);                        
+        setMessage("Uploading document...");
         const formData = new FormData();
         formData.append("file_0", file);
 
@@ -263,6 +269,8 @@ export default function VisaServiceForm() {
       } catch (err) {
         console.log(err);
        showSnackbar("Error while uploading document.File size should be below 50MB", "error");
+      } finally {
+        setLoader(false);   
       }
     }
   }

@@ -17,6 +17,7 @@ import {
   DialogContent,
   DialogActions,
   Tooltip,
+  Alert,
 } from "@mui/material";
 import InputField from "@/components/ui/Input/Input";
 import FormLayout from "@/components/ui/Forms/FormLayout";
@@ -165,6 +166,8 @@ export default function USAppostileAndLegalizationForm({
   const [allOOSAddresses, setAllOOSAddresses] = useState<any[]>([]);
   const [documentStops, setDocumentStops] = useState<Stop[]>([]);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [cartDocCount, setCartDocCount] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const resetForm = () => {
     setCountry(null);
@@ -657,6 +660,7 @@ export default function USAppostileAndLegalizationForm({
 
     if (file) {
       try {
+        setIsUploading(true);
         const formData = new FormData();
         formData.append("file_0", file);
         const data = await uploadFile(formData);
@@ -665,6 +669,8 @@ export default function USAppostileAndLegalizationForm({
       } catch (err:any) {
         console.log(err);
         showSnackbar("Error while uploading document.File size should be below 50MB", "error");
+      } finally {
+        setIsUploading(false); 
       }
     }
   };
@@ -793,6 +799,12 @@ export default function USAppostileAndLegalizationForm({
       if (orderId != null) {
         const response = await getOrderDetails({ orderId: orderId });
         const orderData = response[0];
+
+        const totalDocs = orderData?.dockets?.reduce(
+          (sum: number, docket: any) => sum + (docket.docs?.length ?? 0), 0
+        ) ?? 0;
+
+        setCartDocCount(totalDocs);
         setBasePayload(orderData);
       }
     } catch (error) {
@@ -1011,6 +1023,7 @@ export default function USAppostileAndLegalizationForm({
         </DialogActions>
       </Dialog>
       <OverlayLoader open={isSubmitting} message={message} />
+      <OverlayLoader open={isUploading} message="Uploading document..." />
       <FormLayout
         key={formResetKey}
         title="U.S. Apostilles and Legalizations"
@@ -1256,6 +1269,15 @@ export default function USAppostileAndLegalizationForm({
               onChange={(e) => setCustomerReference(e.target.value)}
             />
           </Grid>
+          {cartDocCount > 0 && (
+            <Grid size={{ xs: 12 }}>
+              <Alert severity="warning" variant="outlined">
+                <Typography variant="body2">
+                  Please submit separate orders for documents requiring different return <b>SHIPPING LABEL / RETURN INSTRUCTIONS</b>.
+                </Typography>
+              </Alert>
+            </Grid>
+          )}
 
           {country && document && documentStops.length > 0 && (
             <Grid size={{ xs: 12 }}>

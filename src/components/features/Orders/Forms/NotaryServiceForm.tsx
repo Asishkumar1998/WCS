@@ -11,6 +11,8 @@ import {
   OutlinedInput,
   Box,
   Tooltip,
+  Alert,
+  Typography,
 } from "@mui/material";
 import InputField from "@/components/ui/Input/Input";
 import FormLayout from "@/components/ui/Forms/FormLayout";
@@ -74,6 +76,8 @@ export default function NotaryServiceForm() {
   const [trackingNo, setTrackingNo] = useState<any>(null);
   const [courierType, setCourierType] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [cartDocCount, setCartDocCount] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const resetForm = () => {
     setCountry(null);
@@ -126,6 +130,7 @@ export default function NotaryServiceForm() {
     }
     lastUploadedRef.current = fileKey;
     try {
+      setIsUploading(true);
       const formData = new FormData();
       formData.append("file_0", file);
       const response = await uploadFile(formData);
@@ -134,6 +139,8 @@ export default function NotaryServiceForm() {
     } catch (err) {
       console.error(err);
       showSnackbar("Error while uploading document.File size should be below 50MB", "error");
+    } finally {
+        setIsUploading(false); 
     }
   };
 
@@ -262,6 +269,12 @@ export default function NotaryServiceForm() {
         const response = await getOrderDetails({ orderId: orderId });
         const orderData = response[0];
         setExistingDocIds(getAllDocIds(orderData));
+
+         const totalDocs = orderData?.dockets?.reduce(
+        (sum: number, docket: any) => sum + (docket.docs?.length ?? 0), 0
+        ) ?? 0;
+
+        setCartDocCount(totalDocs);
         setBasePayload(orderData);
       }
     } catch (error) {
@@ -291,6 +304,7 @@ export default function NotaryServiceForm() {
   return (
     <>
       <OverlayLoader open={isSubmitting} message="Submitting your order..." />
+      <OverlayLoader open={isUploading} message="Uploading document..." />
       <FormLayout
         key={formResetKey}
         title="Notary Service"
@@ -504,6 +518,15 @@ export default function NotaryServiceForm() {
               onChange={(e) => setAdditionalComments(e.target.value)}
             />
           </Grid>
+          {cartDocCount > 0 && (
+            <Grid size={{ xs: 12 }}>
+              <Alert severity="warning" variant="outlined">
+                <Typography variant="body2">
+                  Please submit separate orders for documents requiring different return <b>SHIPPING LABEL / RETURN INSTRUCTIONS</b>.
+                </Typography>
+              </Alert>
+            </Grid>
+          )}
         </Grid>
       </FormLayout>
     </>

@@ -27,16 +27,19 @@ export const signupSchema = yup.object().shape({
 
     addressLine1: yup
       .string()
-      .required("Address Line 1 is mandatory"),
+      .required("Address Line 1 is mandatory")
+      .max(49, "Address Line 1 must be less than 50 characters"),
     
     addressLine2: yup
     .string()
     .nullable()
-    .notRequired(),
+    .notRequired()
+    .max(49, "Address Line 2 must be 50 characters or less"),
 
     city: yup
       .string()
-      .required("City is mandatory"),
+      .required("City is mandatory")
+      .max(19, "City name must be less than 20 characters"),
 
     state: yup
       .string()

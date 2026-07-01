@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import BoltIcon from '@mui/icons-material/Bolt';
+import BoltIcon from "@mui/icons-material/Bolt";
 import {
   Box,
   Typography,
@@ -29,6 +29,10 @@ import {
   DialogContent,
   DialogActions,
   Dialog,
+  Badge,
+  Avatar,
+  Tab,
+  Tabs,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -89,6 +93,8 @@ import { AppDispatch, RootState } from "../store/store";
 import { fetchFormsSharedData } from "../store/features/formsSlice";
 import OverlayLoader from "@/components/ui/Loader/OverlayLoader";
 import { emitCartUpdated } from "@/lib/cartBadgeEvents";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
 interface CardDetails {
   amount: number | null;
@@ -159,6 +165,44 @@ const initialForm = {
   emailId: "",
   regionName: "",
 };
+
+const SERVICES = [
+  {
+    key: "us-authentication",
+    label: "U.S Authentication Cart",
+    icon: "/usembassy-dashboard-logo.png",
+  },
+  {
+    key: "global-authentication",
+    label: "Global Authentication Cart",
+    icon: "/globalembassy-dashboard-logo.png",
+  },
+  {
+    key: "translation-service",
+    label: "Translation Service Cart",
+    icon: "/translation-dashboard-logo.png",
+  },
+  {
+    key: "visa-service",
+    label: "Visa Service cart",
+    icon: "/visaservice-dashboard-logo.png",
+  },
+  {
+    key: "notary-service",
+    label: "Notary Service Cart",
+    icon: "/notary-dashboard-logo.png",
+  },
+  {
+    key: "dispatch-service",
+    label: "Dispatch Service Cart",
+    icon: "/dispatch-dashboard-logo.png",
+  },
+  {
+    key: "bulk-ordering",
+    label: "Bulk Ordering Cart",
+    icon: "/usembassy-dashboard-logo.png",
+  },
+];
 
 const E_COPY_REGION_ID = -1;
 
@@ -237,18 +281,16 @@ export default function OrderMilestonePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expanded, setExpanded] = useState<number[]>([]);
   const hasInitializedExpanded = useRef(false);
+  const [cartCounts, setCartCounts] = useState<Record<string, number>>({});
 
   const allDocIds = allDocs.map((doc: any) => doc.docId);
   const apostilleDocs = allDocs.filter((doc: any) => doc.countryTypeId === 501);
   const legalizeDocs = allDocs.filter((doc: any) => doc.countryTypeId === 502);
-  
-  const showApostilleWarning =
-    apostilleDocs.length > 15
-    //  ||(apostilleDocs.length >= 1 && legalizeDocs.length >= 1);
+  const showApostilleWarning = apostilleDocs.length > 15;
+  //  ||(apostilleDocs.length >= 1 && legalizeDocs.length >= 1);
 
-  const showLegalizeWarning =
-    legalizeDocs.length > 5
-    //  ||(apostilleDocs.length >= 1 && legalizeDocs.length >= 1);
+  const showLegalizeWarning = legalizeDocs.length > 5;
+  //  ||(apostilleDocs.length >= 1 && legalizeDocs.length >= 1);
 
   const showSplitOrderWarning =apostilleDocs.length > 0 && legalizeDocs.length > 0;
 
@@ -268,8 +310,39 @@ export default function OrderMilestonePage() {
     if (allDocs.length >0) {
       setFirstNumberOfCard(Number(allDocs.length ?? 0));
     }
-  },[allDocs]);
+  }, [allDocs]);
 
+  const fetchAllCartCounts = async () => {
+    if (!customerId || !userId) return;
+    const results = await Promise.allSettled(
+      SERVICES.map(async (svc) => {
+        const basePayload = CART_SERVICE_MAP[svc.key];
+        if (!basePayload) return { key: svc.key, count: 0 };
+        try {
+          const orderId = await getOrderIdOfCart({
+            userId,
+            customerId,
+            ...basePayload,
+          });
+          if (!orderId) return { key: svc.key, count: 0 };
+          const details = await getOrderDetails({ orderId });
+          const orderData = details?.[0];
+          const count = (orderData?.dockets ?? []).reduce(
+            (sum: number, d: any) => sum + (d.docs?.length ?? 0),
+            0,
+          );
+          return { key: svc.key, count };
+        } catch {
+          return { key: svc.key, count: 0 };
+        }
+      }),
+    );
+    const counts: Record<string, number> = {};
+    for (const r of results) {
+      if (r.status === "fulfilled") counts[r.value.key] = r.value.count;
+    }
+    setCartCounts(counts);
+  };
 
   const getRegions = async () => {
 
@@ -277,7 +350,7 @@ export default function OrderMilestonePage() {
       const response = await getRegion();
       setAllRegions(response);
     } catch (e) {
-      showSnackbar("Error in getting Region ", "error")
+      showSnackbar("Error in getting Region ", "error");
     }
   };
 
@@ -360,7 +433,7 @@ export default function OrderMilestonePage() {
 
   const confirmDeleteDocument = async () => {
     if (!docToDelete) return;
-
+    setDeleteDialogOpen(false);
     try {
       setLoading(true);
       const docketId =
@@ -408,6 +481,7 @@ export default function OrderMilestonePage() {
       }
       showSnackbar("Document deleted successfully", "success");
       await getCartOrder();
+      await fetchAllCartCounts();
       emitCartUpdated();
     } catch (error) {
       showSnackbar("Failed to delete document", "error");
@@ -449,6 +523,7 @@ export default function OrderMilestonePage() {
         console.error("No orderId returned");
         setOrderInCart(false);
         setAllDocs([]);
+        await fetchAllCartCounts();
         return;
       }
       setOrderInCart(true);
@@ -529,6 +604,7 @@ export default function OrderMilestonePage() {
       getCartOrder();
       getCustomerDetails();
       getRegions();
+      fetchAllCartCounts();
     }
   }, [customerId]);
 
@@ -610,7 +686,7 @@ export default function OrderMilestonePage() {
   const getTimelineWithCompletion = (
     stops: any[],
     estCompletionDate: string,
-    isRush: boolean
+    isRush: boolean,
   ) => {
     return [
       ...convertStopsToTimeline(stops),
@@ -995,12 +1071,232 @@ export default function OrderMilestonePage() {
     }
   };
 
+  const selectedDoc = allDocs.find((doc: any) => doc.docId === docToDelete);
+
+  const countryName = selectedDoc
+    ? getCountryShortName(selectedDoc.countryId)
+    : "";
+
+  const documentType = selectedDoc
+    ? docTypes?.find((d: any) => d.lookupId === selectedDoc.docCategoryId)
+        ?.lookupName || ""
+    : "";
+
+  const serviceName =
+    SERVICES.find((svc) => svc.key === service)?.label || "selected";
+
   if (loading) return <Loader />;
 
   return (
     <>
       <OverlayLoader open={isSubmitting} message="Processing Payment..." />
-      <Box sx={{ p: 3, bgcolor: "background.default", mt: "64px" }}>
+      {/* ── Service Tab Bar ── */}
+      <Box
+        sx={{
+          display: "flex",
+          mt: "75px",
+          boxShadow: "0px 2px 4px rgba(0,0,0,0.08)",
+        }}
+      >
+        <Tabs
+          value={[...SERVICES]
+            .filter(
+              (svc) => (cartCounts[svc.key] ?? 0) > 0 || svc.key === service,
+            )
+            .findIndex((s) => s.key === service)}
+          variant="scrollable"
+          scrollButtons={true}
+          allowScrollButtonsMobile
+          ScrollButtonComponent={({ direction, onClick, disabled }) => (
+            <IconButton
+              onClick={onClick}
+              disabled={disabled}
+              sx={{
+                height: "100%",
+                px: 1,
+                borderRight:
+                  direction === "left" ? "1px solid #e0e0e0" : "none",
+                borderLeft:
+                  direction === "right" ? "1px solid #e0e0e0" : "none",
+                bgcolor: "#c30010",
+                color: "#fff",
+                borderRadius: "50%",
+                boxShadow:
+                  direction === "left"
+                    ? "2px 0 6px rgba(0,0,0,0.1)"
+                    : "-2px 0 6px rgba(0,0,0,0.1)",
+                "&:hover": { bgcolor: "#f5f5f5" },
+              }}
+            >
+              {direction === "left" ? (
+                <ChevronLeftIcon fontSize="small" />
+              ) : (
+                <ChevronRightIcon fontSize="small" />
+              )}
+            </IconButton>
+          )}
+          sx={{
+            minHeight: 64,
+            "& .MuiTabs-indicator": {
+              backgroundColor: "transparent",
+              height: "100%",
+              borderBottom: "4px solid #c30010",
+              borderRadius:"5px"
+
+            },
+
+            "& .MuiTabs-flexContainer": {
+              height: "100%",
+            },
+
+            "& .MuiTabs-scroller": {
+              height: "100%",
+            },
+
+            // Scroll button icon color
+            "& .MuiTabs-scrollButtons": {
+              color: "#c30010",
+              opacity: 1,
+            },
+
+            // Arrow icon size
+            "& .MuiTabs-scrollButtons .MuiSvgIcon-root": {
+              fontSize: 32,
+              color: "#c30010",
+            },
+
+            // Disabled arrow color
+            "& .MuiTabs-scrollButtons.Mui-disabled": {
+               display: "none !important",
+            },
+           
+          }}
+        >
+          {[...SERVICES]
+            .filter(
+              (svc) => (cartCounts[svc.key] ?? 0) > 0 || svc.key === service,
+            )
+            .map((svc) => {
+              const isActive = svc.key === service;
+              const count = cartCounts[svc.key] ?? 0;
+              return (
+                <Tab
+                  key={svc.key}
+                  onClick={() => {
+                    window.location.href = `/cart?service=${svc.key}`;
+                  }}
+                  disableRipple={false}
+                  sx={{
+                    textTransform: "none",
+                    minHeight: 64,
+                    px: 2,
+                    py: 0,
+                    mx: 0.3,
+                    borderRight: "1px solid #e0e0e0",
+                    borderLeft: "1px solid #e0e0e0",
+                    borderRadius:"5px",
+                    bgcolor: isActive ? "#ffffff" : "#f2f2f2",
+                    "&:hover": {
+                      bgcolor: isActive ? "#ffffff" : "#e8e8e8",
+                    },
+                    "&.Mui-selected": {
+                      color: "#c30010",
+                    },
+                  }}
+                  label={
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        width: "100%",
+                      }}
+                    >
+                      {/* Badge row */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "flex-end",
+                          height: 24,
+                          pt: "5px",
+                          mr: -1.5,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            bgcolor: isActive ? "#c30010" : "#9e9e9e",
+                            color: "white",
+                            borderRadius: "50%",
+                            width: 18,
+                            height: 18,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 10,
+                            fontWeight: 700,
+                          }}
+                        >
+                          {count}
+                        </Box>
+                      </Box>
+
+                      {/* Icon + label row */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          pb: 1.5,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: "50%",
+                            bgcolor: isActive ? "#c30010" : "#9e9e9e",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            overflow: "hidden",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Avatar
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              bgcolor: "#f5f5f5",
+                            }}
+                          >
+                            <img
+                              src={svc.icon}
+                              alt={svc.label}
+                              height={36}
+                              width={36}
+                            />
+                          </Avatar>
+                        </Box>
+
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontWeight: isActive ? 700 : 500,
+                            fontSize: 14,
+                            whiteSpace: "nowrap",
+                            color: isActive ? "#c30010" : "#333333",
+                          }}
+                        >
+                          {svc.label}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  }
+                />
+              );
+            })}
+        </Tabs>
+      </Box>
+      <Box sx={{ p: 3, bgcolor: "background.default" }}>
         {/* ===== Shipping Section ===== */}
         {orderInCart ? (
           <Box>
@@ -1014,36 +1310,79 @@ export default function OrderMilestonePage() {
                 //   pr: 1,
                 // }}
                 >
-                  {(service === "us-authentication" ||
-                    service === "notary-service" ||
-                    service === "dispatch-service") && (
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      startIcon={<AddCircleOutlineIcon />}
-                      onClick={() =>
-                        (window.location.href = `/orders/new/${service}`)
-                      }
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "flex-end",
+                      gap: 2,
+                    }}
+                  >
+                    <Box sx={{ flex: 9 }}>
+                      {(service === "us-authentication" ||
+                        service === "notary-service" ||
+                        service === "dispatch-service") && (
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          startIcon={<AddCircleOutlineIcon />}
+                          onClick={() =>
+                            (window.location.href = `/orders/new/${service}`)
+                          }
+                          sx={{
+                            borderRadius: 0,
+                            mb: 3,
+                            // height: 48,
+                            textTransform: "none",
+                            fontWeight: 600,
+                            borderWidth: 2,
+                            borderColor: "primary.main",
+                            color: "primary.main",
+                            backgroundColor: "#f5f9ff",
+                            "&:hover": {
+                              backgroundColor: "#e3f2fd",
+                              borderColor: "primary.dark",
+                            },
+                          }}
+                        >
+                          Add More Documents
+                        </Button>
+                      )}
+                    </Box>
+                    <Box
                       sx={{
-                        borderRadius: 0,
-                        mb: 3,
-                        height: 48,
-                        textTransform: "none",
-                        fontWeight: 600,
-                        borderWidth: 2,
-                        borderColor: "primary.main",
-                        color: "primary.main",
-                        backgroundColor: "#f5f9ff",
-                        "&:hover": {
-                          backgroundColor: "#e3f2fd",
-                          borderColor: "primary.dark",
-                        },
+                        flex: 3,
+                        display: "flex",
+                        justifyContent: "flex-end",
                       }}
                     >
-                      Add More Documents
-                    </Button>
-                  )}
-                  {showSplitOrderWarning &&!showApostilleWarning && !showLegalizeWarning && (
+                      <Grid
+                        sx={{
+                          display: "flex",
+                          width: "100%",
+                          justifyContent: "end",
+                          mb: 2,
+                        }}
+                      >
+                        <Button
+                          variant="outlined"
+                          startIcon={
+                            allExpanded ? (
+                              <UnfoldLessIcon />
+                            ) : (
+                              <UnfoldMoreIcon />
+                            )
+                          }
+                          onClick={toggleExpandAll}
+                        >
+                          {allExpanded ? "Collapse All" : "Expand All"}
+                        </Button>
+                      </Grid>
+                    </Box>
+                  </Box>
+                  {showSplitOrderWarning &&
+                    !showApostilleWarning &&
+                    !showLegalizeWarning && (
                       <Box
                         sx={{
                           display: "flex",
@@ -1063,7 +1402,7 @@ export default function OrderMilestonePage() {
                           of processing documents.
                         </Typography>
                       </Box>
-                  )}
+                    )}
                   {(showApostilleWarning || showLegalizeWarning) && (
                     <Grid sx={{ mb: 2 }}>
                       {showApostilleWarning && (
@@ -1110,24 +1449,6 @@ export default function OrderMilestonePage() {
                       )}
                     </Grid>
                   )}
-                  <Grid
-                    sx={{
-                      display: "flex",
-                      width: "100%",
-                      justifyContent: "end",
-                      mb: 2,
-                    }}
-                  >
-                    <Button
-                      variant="outlined"
-                      startIcon={
-                        allExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />
-                      }
-                      onClick={toggleExpandAll}
-                    >
-                      {allExpanded ? "Collapse All" : "Expand All"}
-                    </Button>
-                  </Grid>
 
                   {allDocs.map((doc: any, docIndex: number) => (
                     <Card
@@ -1184,10 +1505,7 @@ export default function OrderMilestonePage() {
                                 </>
                                 
                               )} */}
-                                
-                                </Box>
-                              
-                              
+                             </Box>
                             </Grid>
                             <Grid size={{ xs: 3 }}>
                               <Typography variant="subtitle1">
@@ -1198,14 +1516,16 @@ export default function OrderMilestonePage() {
                             </Grid>
                             <Grid size={{ xs: 4 }}>
                               <Typography variant="subtitle1">
-                                Customer Ref: {doc.visa && doc.visa.length > 0 ? <b>{doc.visa[0].customerReference}</b> : <b>{doc.internalReference}</b>}
+                                Customer Ref: {doc.visa && doc.visa.length > 0 ? (<b>{doc.visa[0].customerReference}</b>) : (<b>{doc.internalReference}</b>)}
                               </Typography>
                             </Grid>
                             <Grid size={{ xs: 1 }}>
                               <Tooltip title="Remove document">
                                 <IconButton
                                   size="small"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
                                     setDocToDelete(doc.docId);
                                     setDeleteDialogOpen(true);
                                   }}
@@ -1329,7 +1649,7 @@ export default function OrderMilestonePage() {
                                 >
                                   {doc.attachments[0].fileName}
                                 </Link>)
-                                : ""}
+                                :( "")}
                             </Box>
                           </Paper>
                           <Box
@@ -2486,7 +2806,8 @@ export default function OrderMilestonePage() {
           >
             {/* Heading */}
             <Typography variant="h6" fontWeight={600} gutterBottom>
-              Your cart is empty
+              {SERVICES.find((svc) => svc.key === service)?.label ??
+                "Your cart"}{" "} is empty
             </Typography>
 
             {/* Description */}
@@ -2533,9 +2854,13 @@ export default function OrderMilestonePage() {
 
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            Are you sure you want to delete this document?
+            Are you sure you want to delete{" "}
+            <strong>
+              {countryName} - {documentType}
+            </strong>{" "}
+            document from the <strong>{serviceName}</strong>?
             <br />
-            This action <strong>cannot be undone</strong>.
+             This action <strong>cannot be undone</strong>.
           </Typography>
         </DialogContent>
 

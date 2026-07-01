@@ -11,6 +11,8 @@ import {
   OutlinedInput,
   Box,
   Tooltip,
+  Alert,
+  Typography,
 } from "@mui/material";
 import InputField from "@/components/ui/Input/Input";
 import FormLayout from "@/components/ui/Forms/FormLayout";
@@ -69,6 +71,8 @@ export default function DispatchServiceForm() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [formResetKey, setFormResetKey] = useState(0);
+  const [cartDocCount, setCartDocCount] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const resetForm = () => {
     setCountry(null);
@@ -121,6 +125,7 @@ export default function DispatchServiceForm() {
     lastUploadedRef.current = fileKey;
 
     try {
+      setIsUploading(true);
       const formData = new FormData();
       formData.append("file_0", file);
       const data = await uploadFile(formData);
@@ -129,7 +134,9 @@ export default function DispatchServiceForm() {
     } catch (err) {
       console.log(err);
       showSnackbar("Error while uploading document.File size should be below 50MB", "error");
-    }
+    } finally {
+        setIsUploading(false); 
+      }
   };
 
   const submitOrder = async (): Promise<boolean> => {
@@ -236,6 +243,12 @@ export default function DispatchServiceForm() {
       if (orderId != null) {
         const response = await getOrderDetails({ orderId: orderId });
         const orderData = response[0];
+
+        const totalDocs = orderData?.dockets?.reduce(
+          (sum: number, docket: any) => sum + (docket.docs?.length ?? 0), 0
+        ) ?? 0;
+
+        setCartDocCount(totalDocs);
         setBasePayload(orderData);
       }
     } catch (error) {
@@ -265,6 +278,7 @@ export default function DispatchServiceForm() {
   return (
     <>
       <OverlayLoader open={isSubmitting} message="Submitting your order..." />
+      <OverlayLoader open={isUploading} message="Uploading document..." />
       <FormLayout
         key={formResetKey}
         title="Dispatch Service"
@@ -461,6 +475,15 @@ export default function DispatchServiceForm() {
               }}
             />
           </Grid>
+          {cartDocCount > 0 && (
+            <Grid size={{ xs: 12 }}>
+              <Alert severity="warning" variant="outlined">
+                <Typography variant="body2">
+                  Please submit separate orders for documents requiring different return <b>SHIPPING LABEL / RETURN INSTRUCTIONS</b>.
+                </Typography>
+              </Alert>
+            </Grid>
+          )}
         </Grid>
       </FormLayout>
     </>

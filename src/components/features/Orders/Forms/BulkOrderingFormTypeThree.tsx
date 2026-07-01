@@ -604,7 +604,7 @@ export default function BulkOrderingFormTypeThree() {
     setFieldErrors({});
     try {
       setLoader(true);
-      setLoaderMessage("Processing checkout...");
+      setLoaderMessage("Uploading documents...")
 
       const uploadTasks: Array<{
         countryName: string;
@@ -639,6 +639,7 @@ export default function BulkOrderingFormTypeThree() {
           uploadedAttachments: await uploadEntryFiles(entry),
         })),
       );
+      setLoaderMessage("Processing checkout...");
 
       const countryDocuments: Record<
         string,

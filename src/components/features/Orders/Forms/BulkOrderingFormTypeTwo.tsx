@@ -474,7 +474,7 @@ export default function BulkOrderingFormTypeTwo() {
     setFieldErrors({});
     try {
       setLoader(true);
-      setLoaderMessage("Processing checkout...");
+      setLoaderMessage("Uploading documents...");
 
       const entriesWithUploads = await Promise.all(
         docEntries.map(async (entry) => ({
@@ -482,6 +482,7 @@ export default function BulkOrderingFormTypeTwo() {
           uploadedAttachments: await uploadEntryFiles(entry),
         })),
       );
+      setLoaderMessage("Processing checkout...");
 
       entriesWithUploads.forEach((entry: any, ei: number) => {
         console.log(`[Entry ${ei}] type=${entry.type}`);
