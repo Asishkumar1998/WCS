@@ -237,6 +237,7 @@ export default function OrderMilestonePage() {
   const [cardNumberError, setCardNumberError] = useState<string>("");
   const [cvvError, setCvvError] = useState<string>("");
   const [showCard, setShowCard] = useState<boolean>(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [addressErrors, setAddressErrors] = useState<Record<string, string>>(
     {},
   );
@@ -1021,6 +1022,7 @@ export default function OrderMilestonePage() {
     setFileName(file?.name || "");
     if (file) {
       try {
+        setIsUploading(true);
         const formData = new FormData();
         formData.append("file_0", file);
         const data = await uploadFile(formData);
@@ -1028,6 +1030,8 @@ export default function OrderMilestonePage() {
         showSnackbar("Successfully Upload Return Shipping Label", "success");
       } catch (err) {
         showSnackbar("Failed to Upload Return Shipping Label", "error");
+      } finally {
+        setIsUploading(false);
       }
     }
   };
@@ -1090,6 +1094,7 @@ export default function OrderMilestonePage() {
   return (
     <>
       <OverlayLoader open={isSubmitting} message="Processing Payment..." />
+      <OverlayLoader open={isUploading} message="Uploading document..." />
       {/* ── Service Tab Bar ── */}
       <Box
         sx={{
