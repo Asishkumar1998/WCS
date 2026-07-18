@@ -15,6 +15,7 @@ import { useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import IconButton from "@mui/material/IconButton";
 import { fetchAttachment } from "@/services/dashboardService";
+import { sanitize } from 'isomorphic-dompurify';
 
 const UpdatesSection = ({ updates }: { updates: UpdateItem[] }) => {
   const [selectedUpdate, setSelectedUpdate] = useState<UpdateItem | null>(null);
@@ -172,9 +173,7 @@ const UpdatesSection = ({ updates }: { updates: UpdateItem[] }) => {
                     color: "#e34c4c",
                   },
                 }}
-                dangerouslySetInnerHTML={{
-                  __html: selectedUpdate?.description || "",
-                }}
+                dangerouslySetInnerHTML={{ __html: sanitize(selectedUpdate?.description ||"")}}
               />
             </Box>
           )}

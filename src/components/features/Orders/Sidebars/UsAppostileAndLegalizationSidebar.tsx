@@ -4,6 +4,7 @@ import { Typography, Divider, Box, List, ListItem } from "@mui/material";
 import Image from "next/image";
 import FAQSidebarLayout from "@/components/layout/SideDrawer/FAQSideDrawerLayout";
 import { getSidebarContent } from "./US Rules/getSidebarContent";
+import { sanitize } from "isomorphic-dompurify";
 
 interface Props {
   country: any;
@@ -65,7 +66,7 @@ export default function USAppostileAndLegalizationSidebar({
                   fontFamily: "Inter, Roboto, Helvetica, Arial, sans-serif",
                   lineHeight: 1.43,
                 }}
-                dangerouslySetInnerHTML={{ __html: text }}
+                dangerouslySetInnerHTML={{ __html: sanitize(text) }}
               />
             </ListItem>
           ))}
