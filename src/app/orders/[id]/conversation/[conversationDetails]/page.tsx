@@ -26,6 +26,7 @@ import OneLineUpload from "@/components/features/Orders/Common/OneLineUpload";
 import { uploadFile } from "@/services/formsService";
 import Loader from "@/components/ui/Loader/Loader";
 import { getAuth } from "@/app/utils/auth";
+import { sanitize } from 'isomorphic-dompurify';
 
 export default function ConversationPage() {
   const [orderDetails, setOrderDetails] = useState<any>();
@@ -268,7 +269,7 @@ export default function ConversationPage() {
                       </Typography>
                       <Typography
                         variant="body2"
-                        dangerouslySetInnerHTML={{ __html: msg.messageBody }}
+                        dangerouslySetInnerHTML={{ __html: sanitize(msg.messageBody) }}
                         sx={{ padding: "0px", margin: "0px" }}
                       />
                       { msg.attachments?.length>0 &&
